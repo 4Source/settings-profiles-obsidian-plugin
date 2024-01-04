@@ -1,4 +1,4 @@
-# Settings Profiles Obsidian Plugin
+# Setting Profiles Obsidian Plugin
 > [!WARNING]  
 > This Plugin is under Development!
 
