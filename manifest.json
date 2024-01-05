@@ -1,0 +1,11 @@
+{
+	"id": "settings-profiles",
+	"name": "SettingsProfiles",
+	"version": "0.0.1",
+	"minAppVersion": "0.15.0",
+	"description": "Let you create global settings profiles and let you switch between them in each vault.",
+	"author": "4Source",
+	"authorUrl": "https://github.com/4Source",
+	"isDesktopOnly": true,
+	"fundingUrl": "https://www.buymeacoffee.com/4Source"
+}
