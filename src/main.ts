@@ -1,22 +1,11 @@
-import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import * as os from 'os';
+import {Plugin} from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
-
-
-// Remember to rename these classes and interfaces!
-
-interface SettingsProfilesSettings {
-	ProfilesPath: string;
-}
-
-const DEFAULT_SETTINGS: SettingsProfilesSettings = {
-	ProfilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles')
-}
+import {DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab} from "src/Settings";
 
 export default class SettingsProfilesPlugin extends Plugin {
-	settings: SettingsProfilesSettings;
-	previousSettings: SettingsProfilesSettings;
+	settings: Settings;
+	previousSettings: Settings;
 
 	async onload() {
 		await this.loadSettings();
@@ -97,33 +86,5 @@ function removeDirectoryRecursiveSync(directory: string) {
   
 	  // Remove the empty directory
 	  fs.rmdirSync(directory);
-	}
-}
-
-class SettingsProfilesSettingTab extends PluginSettingTab {
-	plugin: SettingsProfilesPlugin;
-
-	constructor(app: App, plugin: SettingsProfilesPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const {containerEl} = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Profile save path')
-			.setDesc('The path to store the profile settings')
-			.addText(text => text
-				.setValue(this.plugin.settings.ProfilesPath)
-				.onChange(async (value) => {
-					// Make a Copy of this previous Setting
-					this.plugin.previousSettings.ProfilesPath = structuredClone(this.plugin.settings.ProfilesPath);
-					// Assign value of this Setting an save it
-					this.plugin.settings.ProfilesPath = value;
-					await this.plugin.saveSettings();
-				}));
 	}
 }
