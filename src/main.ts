@@ -26,6 +26,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 		this.previousSettings = structuredClone(this.settings);
+
+		// Sync Profiles
+		if(this.settings.AutoSync) {
+			// ToDo Sync Profiles
+		}
 	}
 
 	async saveSettings() {
@@ -38,6 +43,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 			copyFolderRecursiveSync(this.previousSettings.ProfilesPath, this.settings.ProfilesPath);
 			// Remove old profiles path
 			removeDirectoryRecursiveSync(this.previousSettings.ProfilesPath);
+		}
+
+		// Sync Profiles
+		if(this.settings.AutoSync) {
+			// ToDo Sync Profiles
 		}
 	}
 }

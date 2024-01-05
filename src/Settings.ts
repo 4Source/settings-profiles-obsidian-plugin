@@ -5,10 +5,12 @@ import SettingsProfilesPlugin from './main';
 
 export interface Settings {
 	ProfilesPath: string;
+    AutoSync: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-	ProfilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles')
+	ProfilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
+    AutoSync: true
 }
 
 
@@ -39,5 +41,18 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.plugin.settings.ProfilesPath = value;
 					await this.plugin.saveSettings();
 				}));
+        new Setting(containerEl)
+                .setName('Auto Sync')
+                .setDesc('If enabled syncronize the profiles on startup.')       
+                .addToggle(toggle => toggle 
+                    .setValue(this.plugin.settings.AutoSync)
+                    .onChange(async (value) => {
+                        // Assign value of this Setting an save it
+                        this.plugin.settings.AutoSync = value;
+                        await this.plugin.saveSettings();
+                    }));
+        // ToDo Add DropDown Setting to select Activ Profile
+        
+        this.containerEl.createEl("h2", { text: "Profiles" });
 	}
 }
