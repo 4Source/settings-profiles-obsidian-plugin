@@ -1,7 +1,8 @@
-import {Plugin} from 'obsidian';
+import {Notice, Plugin} from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import {DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab} from "src/Settings";
+import { ProfileSwitcherModal } from './ProfileSwitcherModal';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	settings: Settings;
@@ -11,12 +12,27 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Make sure Profile path exists
-		if (!fs.existsSync(this.settings.ProfilesPath)) {
-			fs.mkdirSync(this.settings.ProfilesPath, {recursive: true});
+		if (!fs.existsSync(this.settings.profilesPath)) {
+			fs.mkdirSync(this.settings.profilesPath, {recursive: true});
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
+
+		// Add Command to Switch between profiles
+		this.addCommand({
+			id: "switch-settings-profile",
+			name: "Switch settings profile",
+			hotkeys: [{modifiers: ["Ctrl", "Shift"], key: "p"}],
+			callback: () => {
+				new ProfileSwitcherModal(this.app, this, (result) => {
+					new Notice(`Switched to Profile ${result.name}`);
+					this.previousSettings.profile = structuredClone(this.settings.profile)
+					this.settings.profile = result.name;
+					this.saveSettings();
+				}).open();
+			}
+		})
 	}
 
 	onunload() {
@@ -28,9 +44,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.previousSettings = structuredClone(this.settings);
 
 		// Sync Profiles
-		if(this.settings.AutoSync) {
-			// ToDo Sync Profiles
-		}
+		// if(this.settings.autoSync) {
+		 	// ToDo Sync Profiles
+		// }
 	}
 
 	async saveSettings() {
@@ -38,17 +54,27 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.saveData(this.settings);
 
 		// Check profilePath has changed
-		if(this.previousSettings.ProfilesPath != this.settings.ProfilesPath) {
+		if(this.previousSettings.profilesPath != this.settings.profilesPath) {
 			// Copy profiles to new path
-			copyFolderRecursiveSync(this.previousSettings.ProfilesPath, this.settings.ProfilesPath);
+			copyFolderRecursiveSync(this.previousSettings.profilesPath, this.settings.profilesPath);
 			// Remove old profiles path
-			removeDirectoryRecursiveSync(this.previousSettings.ProfilesPath);
+			removeDirectoryRecursiveSync(this.previousSettings.profilesPath);
 		}
 
 		// Sync Profiles
-		if(this.settings.AutoSync) {
+		// if(this.settings.autoSync) {
 			// ToDo Sync Profiles
+		// }
+
+		// Check profile has changed
+		if(this.previousSettings.profile != this.settings.profile) {
+			// Switch to Profile		
+			this.switchSettings(this.settings.profile)
 		}
+	}
+
+	async switchSettings(profileName: string) {
+		// ToDo Switch to profile
 	}
 }
 

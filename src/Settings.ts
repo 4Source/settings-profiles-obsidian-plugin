@@ -1,16 +1,28 @@
-import { App, ButtonComponent, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 import SettingsProfilesPlugin from './main';
 
+export interface SettingsProfile {
+	name: string;
+	autoSync: boolean;
+}
+
+export const DEFAULT_PROFILE: SettingsProfile = {
+	name: 'Default',
+	autoSync: true,
+}
+
 export interface Settings {
-	ProfilesPath: string;
-    AutoSync: boolean;
+    profile: string;
+	profilesPath: string;
+	profilesList: SettingsProfile[]
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-	ProfilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
-    AutoSync: true
+    profile: DEFAULT_PROFILE.name,
+	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	profilesList: [DEFAULT_PROFILE]
 }
 
 
@@ -33,24 +45,24 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.setName('Profile save path')
 			.setDesc('The path to store the profile settings')
 			.addText(text => text
-				.setValue(this.plugin.settings.ProfilesPath)
+				.setValue(this.plugin.settings.profilesPath)
 				.onChange(async (value) => {
 					// Make a Copy of this previous Setting
-					this.plugin.previousSettings.ProfilesPath = structuredClone(this.plugin.settings.ProfilesPath);
+					this.plugin.previousSettings.profilesPath = structuredClone(this.plugin.settings.profilesPath);
 					// Assign value of this Setting an save it
-					this.plugin.settings.ProfilesPath = value;
+					this.plugin.settings.profilesPath = value;
 					await this.plugin.saveSettings();
 				}));
-        new Setting(containerEl)
-                .setName('Auto Sync')
-                .setDesc('If enabled syncronize the profiles on startup.')       
-                .addToggle(toggle => toggle 
-                    .setValue(this.plugin.settings.AutoSync)
-                    .onChange(async (value) => {
-                        // Assign value of this Setting an save it
-                        this.plugin.settings.AutoSync = value;
-                        await this.plugin.saveSettings();
-                    }));
+        // new Setting(containerEl)
+        //         .setName('Auto Sync')
+        //         .setDesc('If enabled syncronize the profiles on startup.')       
+        //         .addToggle(toggle => toggle 
+        //             .setValue(this.plugin.settings.autoSync)
+        //             .onChange(async (value) => {
+        //                 // Assign value of this Setting an save it
+        //                 this.plugin.settings.autoSync = value;
+        //                 await this.plugin.saveSettings();
+        //             }));
         // ToDo Add DropDown Setting to select Activ Profile
         
         this.containerEl.createEl("h2", { text: "Profiles" });
