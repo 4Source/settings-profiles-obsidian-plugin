@@ -1,8 +1,8 @@
 import { EventRef, FileSystemAdapter, Notice, Plugin } from 'obsidian';
 import { join } from 'path';
-import { constants, copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
+import { constants, copyFile, copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
 import { DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab } from "src/Settings";
-import { ProfileModal } from './ProfileModal';
+import { ProfileModal, ProfileState } from './ProfileModal';
 
 const settingsFiles = ['app.json', 'appearance.json', 'bookmarks.json', 'community-plugins.json', 'core-plugins.json', 'core-plugins-migration.json', 'graph.json', 'hotkeys.json'];
 
@@ -29,31 +29,37 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		}));
 
+		// Display Settings Profile on Startup
+		new Notice(`Current Profile: ${this.settings.profile}`);
+
 		// Add Command to Switch between profiles
 		this.addCommand({
 			id: "open-profile-switcher",
 			name: "Open profile switcher",
 			hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "p" }],
 			callback: () => {
-				new ProfileModal(this.app, this, (result) => {
-					if (!this.settings.profilesList.find(value => value.name === result.name)) {
-						console.log("new")
-						let current = structuredClone(this.settings.profilesList.find(value => value.name === this.settings.profile));
-						if (!current) {
-							new Notice('Failed to create Profile!');
+				new ProfileModal(this.app, this, (result, state) => {
+					switch (state) {
+						case ProfileState.CURRENT:
 							return;
-						}
-						current.name = result.name;
-						this.settings.profilesList.push(current);
+						case ProfileState.NEW:
+							// Create new Profile
+							let current = structuredClone(this.settings.profilesList.find(value => value.name === this.settings.profile));
+							if (!current) {
+								new Notice('Failed to create Profile!');
+								return;
+							}
+							current.name = result.name;
+							this.settings.profilesList.push(current);
 
-						// Copy profile config
-						const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
-						const configTarget = join(this.settings.profilesPath, result.name);
-						this.copyConfig(configSource, configTarget);
+							// Copy profile config
+							const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
+							const configTarget = join(this.settings.profilesPath, result.name);
+							this.copyConfig(configSource, configTarget);
+							break;
 					}
-					this.previousSettings.profile = structuredClone(this.settings.profile)
-					this.settings.profile = result.name;
-					// this.saveSettings();
+					this.switchProfile(result.name);
+					this.saveSettings();
 				}).open();
 			}
 		});
@@ -71,6 +77,10 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	onunload() { }
 
+	/**
+	 * Load Plugin Settings from file or default.
+	 * Sync Profiles if enabeled.
+	 */
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 		this.previousSettings = structuredClone(this.settings);
@@ -81,6 +91,10 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * Save Plugin Settings to file.
+	 * Sync Profiles if enabeled.
+	 */
 	async saveSettings() {
 		// Save settings
 		await this.saveData(this.settings);
@@ -97,27 +111,40 @@ export default class SettingsProfilesPlugin extends Plugin {
 		if (this.settings.autoSync) {
 			this.syncSettings();
 		}
+	}
 
-		// Check profile has changed
-		if (this.previousSettings.profile != this.settings.profile) {
-			// Switch to Profile		
-			const configSource = join(this.settings.profilesPath, this.settings.profile);
-			const configTarget = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
+	/**
+	 * Switch to other Settings Profile.
+	 */
+	async switchProfile(profileName: string) {
+		// Check profile Exist
+		if (!this.settings.profilesList.find(value => value.name === profileName)) {
+			new Notice(`Failed to switch ${profileName} Profile!`, 10000);
+			return;
+		}
 
-			// Load profile config
-			if (this.copyConfig(configSource, configTarget)) {
-				new Notice(`Switched to Profile ${this.settings.profile}`);
-				// Reload obsidian so changed settings can take effect
-				// @ts-ignore
-				this.app.commands.executeCommandById("app:reload");
-			}
-			else {
-				new Notice(`Failed to switch ${this.settings.profile} Profile!`);
-				this.settings.profile = this.previousSettings.profile;
-			}
+		this.previousSettings.profile = structuredClone(this.settings.profile)
+		this.settings.profile = profileName;
+		// Switch to Profile		
+		const configSource = join(this.settings.profilesPath, this.settings.profile);
+		const configTarget = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
+
+		// Load profile config
+		if (this.copyConfig(configSource, configTarget)) {
+			new Notice(`Switched to Profile ${this.settings.profile}`);
+			// Reload obsidian so changed settings can take effect
+			// @ts-ignore
+			this.app.commands.executeCommandById("app:reload");
+		}
+		else {
+			new Notice(`Failed to switch ${this.settings.profile} Profile!`, 10000);
+			this.settings.profile = this.previousSettings.profile;
 		}
 	}
 
+	/**
+	 * Sync Settings for active Profile.
+	 */
 	async syncSettings() {
 		const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
 		const configTarget = join(this.settings.profilesPath, this.previousSettings.profile);
@@ -132,6 +159,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			const sourcePath = join(configSource, file);
 			const targetPath = join(configTarget, file);
 
+			// Keep newest settings
 			if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
 				copyFileSync(sourcePath, targetPath);
 			}
@@ -141,6 +169,12 @@ export default class SettingsProfilesPlugin extends Plugin {
 		});
 	}
 
+	/**
+	 * Copy the Config form source to target.
+	 * @param source Source Config
+	 * @param target Target Config
+	 * @returns True if was successfull.
+	 */
 	copyConfig(source: string, target: string) {
 		if (!isVaildPath(source) || !isVaildPath(target) || !existsSync(source)) {
 			return false;
@@ -149,6 +183,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			mkdirSync(target, { recursive: true });
 		}
 
+		// Check each Setting File
 		settingsFiles.forEach(file => {
 			const sourcePath = join(source, file);
 			const targetPath = join(target, file);
@@ -157,7 +192,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 				return;
 			}
 
-			copyFileSync(sourcePath, targetPath, constants.O_DSYNC)
+			copyFileSync(sourcePath, targetPath);
 		});
 
 		return true;
@@ -193,8 +228,11 @@ function copyFolderRecursiveSync(source: string, target: string) {
 	return true;
 }
 
-
-
+/**
+ * Check Path is Valid.
+ * @param path Path to Check
+ * @returns True if is Valid
+ */
 function isVaildPath(path: string) {
 	try {
 		if (path === "") {

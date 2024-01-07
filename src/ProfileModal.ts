@@ -2,17 +2,23 @@ import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "./main";
 import { SettingsProfile } from "./Settings";
 
+export enum ProfileState {
+    EXIST,
+    CURRENT,
+    NEW
+}
+
 interface SettingsProfileSuggestion extends SettingsProfile {
-    exist: boolean;
+    state: ProfileState;
 }
 
 export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
     plugin: SettingsProfilesPlugin;
-    onSubmit: (result: SettingsProfile) => void;
+    onSubmit: (result: SettingsProfile, state: ProfileState) => void;
 
-	constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: SettingsProfile) => void) {
-		super(app);
-		this.plugin = plugin;
+    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: SettingsProfile, state: ProfileState) => void) {
+        super(app);
+        this.plugin = plugin;
         this.onSubmit = onSubmit;
 
         this.setPlaceholder("Find or create a profile...")
@@ -29,8 +35,8 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
             command: "esc",
             purpose: "to dismiss"
         }]);
-     
-	}
+
+    }
 
     // Returns all available suggestions.
     getSuggestions(query: string): SettingsProfileSuggestion[] {
@@ -43,14 +49,14 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
         profiles.forEach(profile => {
             suggestions.push({
                 ...profile,
-                exist: true
+                state: profile.name === this.plugin.settings.profile ? ProfileState.CURRENT : ProfileState.EXIST
             });
         });
         // If nothing Matches add createable
-        if(suggestions.length <= 0) {
+        if (suggestions.length <= 0) {
             suggestions.push({
                 name: query,
-                exist: false
+                state: ProfileState.NEW
             })
         }
         return suggestions
@@ -60,22 +66,27 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
     renderSuggestion(suggestion: SettingsProfileSuggestion, el: HTMLElement) {
         // Create Item 
         el.addClass("mod-complex");
-        let content = el.createEl("div", {cls: "suggestion-content"});
-        content.createEl("div", {cls: "suggestion-title"})
-        .createEl("span", {text: suggestion.name})
+        let content = el.createEl("div", { cls: "suggestion-content" });
+        content.createEl("div", { cls: "suggestion-title" })
+            .createEl("span", { text: suggestion.name })
         // Profile not existing 
-        if(!suggestion.exist) {
-            content.parentElement?.createEl("div", {cls: "suggestion-aux"})
-            .createEl("span", {text: "Enter to create", cls: "suggestion-hotkey"})
+        if (suggestion.state === ProfileState.NEW) {
+            content.parentElement?.createEl("div", { cls: "suggestion-aux" })
+                .createEl("span", { text: "Enter to create", cls: "suggestion-hotkey" })
+        }
+        // Profile is current
+        if (suggestion.state === ProfileState.CURRENT) {
+            content.parentElement?.createEl("div", { cls: "suggestion-aux" })
+                .createEl("span", { text: "Current Profile", cls: "suggestion-hotkey" })
         }
     }
 
     // Perform action on the selected suggestion.
     onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
-        const {exist, ...rest} = suggestion;
-        const profile: SettingsProfile = {...rest};
+        const { state: state, ...rest } = suggestion;
+        const profile: SettingsProfile = { ...rest };
         // Submit profile
-        this.onSubmit(profile);
+        this.onSubmit(profile, state);
     }
 }

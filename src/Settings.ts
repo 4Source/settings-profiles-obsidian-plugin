@@ -12,14 +12,14 @@ export const DEFAULT_PROFILE: SettingsProfile = {
 }
 
 export interface Settings {
-    profile: string;
+	profile: string;
 	profilesPath: string;
 	profilesList: SettingsProfile[]
 	autoSync: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-    profile: DEFAULT_PROFILE.name,
+	profile: DEFAULT_PROFILE.name,
 	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
 	profilesList: [DEFAULT_PROFILE],
 	autoSync: true
@@ -35,12 +35,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
-        this.containerEl.createEl("h2", { text: "General" });
+		// Heading for General Settings
+		this.containerEl.createEl("h2", { text: "General" });
 
+		// Path where the Profiles are Saved
 		new Setting(containerEl)
 			.setName('Profile save path')
 			.setDesc('The path to store the profile settings')
@@ -53,17 +55,19 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.plugin.settings.profilesPath = value;
 					await this.plugin.saveSettings();
 				}));
-        new Setting(containerEl)
-                .setName('Auto Sync')
-                .setDesc('If enabled syncronize the profiles on startup.')       
-                .addToggle(toggle => toggle 
-                    .setValue(this.plugin.settings.autoSync)
-                    .onChange(async (value) => {
-                        // Assign value of this Setting an save it
-                        this.plugin.settings.autoSync = value;
-                        await this.plugin.saveSettings();
-                    }));
-        
-        this.containerEl.createEl("h2", { text: "Profiles" });
+		// Auto Sync Profiles
+		new Setting(containerEl)
+			.setName('Auto Sync')
+			.setDesc('If enabled syncronize the profiles on startup.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.autoSync)
+				.onChange(async (value) => {
+					// Assign value of this Setting an save it
+					this.plugin.settings.autoSync = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Heading for Profiles overview
+		this.containerEl.createEl("h2", { text: "Profiles" });
 	}
 }
