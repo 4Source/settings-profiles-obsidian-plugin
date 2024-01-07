@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 import SettingsProfilesPlugin from './main';
@@ -52,7 +52,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					// Make a Copy of this previous Setting
 					this.plugin.previousSettings.profilesPath = structuredClone(this.plugin.settings.profilesPath);
 					// Assign value of this Setting an save it
-					this.plugin.settings.profilesPath = value;
+					this.plugin.settings.profilesPath = normalizePath(value);
 					await this.plugin.saveSettings();
 				}));
 		// Auto Sync Profiles
@@ -68,6 +68,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				}));
 
 		// Heading for Profiles overview
-		this.containerEl.createEl("h2", { text: "Profiles" });
+		// this.containerEl.createEl("h2", { text: "Profiles" });
 	}
 }

@@ -36,7 +36,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.addCommand({
 			id: "open-profile-switcher",
 			name: "Open profile switcher",
-			hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "p" }],
 			callback: () => {
 				new ProfileModal(this.app, this, (result, state) => {
 					switch (state) {
@@ -68,7 +67,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.addCommand({
 			id: "current-profile",
 			name: "Show current profile",
-			hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "s" }],
 			callback: () => {
 				new Notice(`Current Profile: ${this.settings.profile}`);
 			}
