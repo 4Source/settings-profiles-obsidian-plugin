@@ -2,7 +2,7 @@
 > [!WARNING]  
 > This Plugin is under Development!
 
-This plugin for [Obsidian](https://obsidian.md/) let you create different global settings profiles. You can Sync them between different Vaults. To keep all your settings Sync so you don't need to change them again for each vault you have or create in future.
+This plugin for [Obsidian](https://obsidian.md/) allows you to create various global settings profiles. You can sync them between different vaults. To keep all your settings in sync, you'll never have to manually adjust them again for every vault you have or create in the future.
 
 ## Usage
 After enabling the plugin in the settings menu, you allready have an **Default** Profile with your current settings. 
