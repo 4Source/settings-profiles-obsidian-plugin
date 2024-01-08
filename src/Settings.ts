@@ -18,6 +18,7 @@ export interface Settings {
 	profilesPath: string;
 	profilesList: SettingsProfile[]
 	autoSync: boolean;
+	settings: boolean;
 	snippets: boolean;
 }
 
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
 	profilesList: [DEFAULT_PROFILE],
 	autoSync: true,
+	settings: true,
 	snippets: false,
 }
 
@@ -102,10 +104,23 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		// Heading for Profiles overview
 		// this.containerEl.createEl("h2", { text: "Profiles" });
-
+		
+		// Settings Sync
 		new Setting(containerEl)
-			.setName('Copy CSS snippets')
-			.setDesc('Copy CSS snippets from the current profile to the new profile.')
+			.setName('Sync settings')
+			.setDesc('Change settings on profile switch.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.settings)
+				.onChange(async (value) => {
+					// Assign value of this Setting an save it
+					this.plugin.settings.settings = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// CSS Snippets Sync
+		new Setting(containerEl)
+			.setName('Sync CSS snippets')
+			.setDesc('Change CSS snippets on profile switch.')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.snippets)
 				.onChange(async (value) => {

@@ -1,10 +1,8 @@
 import { FileSystemAdapter, Notice, Plugin } from 'obsidian';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
 import { DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileModal, ProfileState } from './ProfileModal';
-
-const settingsFiles = ['app.json', 'appearance.json', 'bookmarks.json', 'community-plugins.json', 'core-plugins.json', 'core-plugins-migration.json', 'graph.json', 'hotkeys.json'];
 
 export default class SettingsProfilesPlugin extends Plugin {
 	settings: Settings;
@@ -14,8 +12,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Make sure Profile path exists
-		if (!existsSync(this.settings.profilesPath)) {
-			mkdirSync(this.settings.profilesPath, { recursive: true });
+		if(!ensurePathExist(this.settings.profilesPath)) {
+			new Notice("Profile save path is not valid!");
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -117,7 +115,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async switchProfile(profileName: string) {
 		// Check profile Exist
 		if (!this.settings.profilesList.find(value => value.name === profileName)) {
-			new Notice(`Failed to switch ${profileName} Profile!`, 10000);
+			new Notice(`Failed to switch ${profileName} Profile!`);
 			return;
 		}
 
@@ -135,7 +133,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.app.commands.executeCommandById("app:reload");
 		}
 		else {
-			new Notice(`Failed to switch ${this.settings.profile} Profile!`, 10000);
+			new Notice(`Failed to switch ${this.settings.profile} Profile!`);
 			this.settings.profile = this.previousSettings.profile;
 		}
 	}
@@ -148,35 +146,25 @@ export default class SettingsProfilesPlugin extends Plugin {
 		const configTarget = join(this.settings.profilesPath, this.previousSettings.profile);
 
 		// Check target dir exist
-		if (!existsSync(configTarget) && isValidPath(configTarget)) {
-			mkdirSync(configTarget, { recursive: true });
+		if(!ensurePathExist(configTarget)) {
+			new Notice(`Failed to sync ${this.settings.profile} Profile!`);
+			return;
 		}
 
 		// Check for modified settings
-		settingsFiles.forEach(file => {
+		this.getAllConfigFiles(configSource).forEach(file => {
 			const sourcePath = join(configSource, file);
 			const targetPath = join(configTarget, file);
 
-			this.keepNewestSettings(sourcePath, targetPath);
+			keepNewestFile(sourcePath, targetPath);
 		});
-
-		this.getAllCSSFiles(configTarget).forEach(file => {
+		// Check for modifies snippets
+		this.getAllCSSFiles(configSource).forEach(file => {
 			const sourcePath = join(configSource, 'snippets', file);
 			const targetPath = join(configTarget, 'snippets', file);
 
-			this.keepNewestSettings(sourcePath, targetPath);
+			keepNewestFile(sourcePath, targetPath);
 		});
-	}
-
-	keepNewestSettings(sourcePath: string, targetPath: string) {
-		// Keep newest settings
-
-		if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
-			copyFileSync(sourcePath, targetPath);
-		}
-		else if (existsSync(targetPath)) {
-			copyFileSync(targetPath, sourcePath);
-		}
 	}
 
 	/**
@@ -189,12 +177,17 @@ export default class SettingsProfilesPlugin extends Plugin {
 		if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
 			return false;
 		}
-		if (!existsSync(target)) {
-			mkdirSync(target, { recursive: true });
+		if(!ensurePathExist(target)) {
+			new Notice(`Failed to copy config!`);
+			return;
+		}
+		if(!ensurePathExist(source)) {
+			new Notice(`Failed to copy config!`);
+			return;
 		}
 
 		// Check each Setting File
-		settingsFiles.forEach(file => {
+		this.getAllConfigFiles(source).forEach(file => {
 			const sourcePath = join(source, file);
 			const targetPath = join(target, file);
 
@@ -205,29 +198,55 @@ export default class SettingsProfilesPlugin extends Plugin {
 			copyFileSync(sourcePath, targetPath);
 		});
 
-		this.getAllCSSFiles(target).forEach(file => {
+		// Check each snippets File
+		this.getAllCSSFiles(source).forEach(file => {
 			const sourcePath = join(source, 'snippets', file);
 			const targetPath = join(target, 'snippets', file);
+
 			if (!existsSync(sourcePath)) {
 				return;
 			}
+
 			copyFileSync(sourcePath, targetPath);
 		});
 		return true;
 	}
 
-	getAllCSSFiles(target: string):string[] {
+	getAllConfigFiles(source: string):string[] {
 		if (!this.settings.snippets) {
 			return [];
 		}
-		const parent = join(target, 'snippets');
-		console.log(parent, existsSync(parent), target)
-		if (!existsSync(parent)) {
-			mkdirSync(parent, { recursive: true });
-		}
 
-		//@ts-ignore
-		return this.app.customCss.snippets.map(name => `${name}.css`);
+		return getAllFiles(source);
+	}
+
+	getAllCSSFiles(source: string):string[] {
+		if (!this.settings.snippets) {
+			return [];
+		}
+		const parent = join(source, 'snippets');
+
+		return getAllFiles(parent);
+	}
+}
+
+function getAllFiles(path: string):string[] {
+	const files = readdirSync(path);
+	return files.filter((name) => {
+		const currentPath = join(path, name);
+		return !statSync(currentPath).isDirectory();
+	});
+}
+
+function keepNewestFile(sourcePath: string, targetPath: string) {
+	// Check target dir exist
+	ensurePathExist(dirname(targetPath));
+	// Keep newest file
+	if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
+		copyFileSync(sourcePath, targetPath);
+	}
+	else if (existsSync(targetPath)) {
+		copyFileSync(targetPath, sourcePath);
 	}
 }
 
@@ -240,8 +259,9 @@ function copyFolderRecursiveSync(source: string, target: string) {
 	if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
 		return false;
 	}
-	if (!existsSync(target)) {
-		mkdirSync(target, { recursive: true });
+	if(!ensurePathExist(target)) {
+		new Notice(`Failed to copy folder!`);
+		return;
 	}
 
 	const files = readdirSync(source);
@@ -258,6 +278,19 @@ function copyFolderRecursiveSync(source: string, target: string) {
 	});
 
 	return true;
+}
+
+/**
+ * Ensure the path exist if not try to create it.
+ * @param path The path to ensure
+ * @param recursive [true] Indicates whether parent folders should be created.
+ * @returns Returns ``true`` if the path exists, ``false`` if failed to create the path.
+ */
+function ensurePathExist(path: string, recursive: boolean=true):boolean {
+	if (!existsSync(path)) {
+		mkdirSync(path, { recursive });
+	}
+	return existsSync(path);
 }
 
 /**
