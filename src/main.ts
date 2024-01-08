@@ -110,16 +110,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async switchProfile(profileName: string) {
 		// Check profile Exist
 		if (!this.settings.profilesList.find(value => value.name === profileName)) {
-			new Notice(`Failed to switch ${profileName} profile!`);
-			return;
-		}
-
-		// Save current Profile to possible switch back if failed
-		const previousProfile = structuredClone(this.getCurrentProfile());
-
-		// Check is current profile
-		if (previousProfile.name === profileName) {
-			new Notice('Allready current Profile!');
+			new Notice(`Failed to switch ${profileName} Profile!`);
 			return;
 		}
 
@@ -231,7 +222,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async syncSettings(profileName: string = this.getCurrentProfile().name) {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
-			new Notice(`Failed to sync ${profileName} Profile!`);
+			new Notice(`Failed to sync ${profileName} profile!`);
 			return;
 		}
 
