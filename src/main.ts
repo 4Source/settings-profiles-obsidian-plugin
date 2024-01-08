@@ -1,6 +1,6 @@
-import { EventRef, FileSystemAdapter, Notice, Plugin } from 'obsidian';
+import { FileSystemAdapter, Notice, Plugin } from 'obsidian';
 import { join } from 'path';
-import { constants, copyFile, copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
 import { DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileModal, ProfileState } from './ProfileModal';
 
@@ -43,7 +43,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							let current = structuredClone(this.settings.profilesList.find(value => value.name === this.settings.profile));
+							const current = structuredClone(this.settings.profilesList.find(value => value.name === this.settings.profile));
 							if (!current) {
 								new Notice('Failed to create Profile!');
 								return;
@@ -123,7 +123,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		this.previousSettings.profile = structuredClone(this.settings.profile)
 		this.settings.profile = profileName;
-		// Switch to Profile		
+		// Switch to Profile
 		const configSource = join(this.settings.profilesPath, this.settings.profile);
 		const configTarget = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
 
@@ -148,23 +148,35 @@ export default class SettingsProfilesPlugin extends Plugin {
 		const configTarget = join(this.settings.profilesPath, this.previousSettings.profile);
 
 		// Check target dir exist
-		if (!existsSync(configTarget) && isVaildPath(configTarget)) {
+		if (!existsSync(configTarget) && isValidPath(configTarget)) {
 			mkdirSync(configTarget, { recursive: true });
 		}
 
-		// Check for modified settings 
+		// Check for modified settings
 		settingsFiles.forEach(file => {
 			const sourcePath = join(configSource, file);
 			const targetPath = join(configTarget, file);
 
-			// Keep newest settings
-			if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
-				copyFileSync(sourcePath, targetPath);
-			}
-			else if (existsSync(targetPath)) {
-				copyFileSync(targetPath, sourcePath);
-			}
+			this.keepNewestSettings(sourcePath, targetPath);
 		});
+
+		this.getAllCSSFiles(configTarget).forEach(file => {
+			const sourcePath = join(configSource, 'snippets', file);
+			const targetPath = join(configTarget, 'snippets', file);
+
+			this.keepNewestSettings(sourcePath, targetPath);
+		});
+	}
+
+	keepNewestSettings(sourcePath: string, targetPath: string) {
+		// Keep newest settings
+
+		if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
+			copyFileSync(sourcePath, targetPath);
+		}
+		else if (existsSync(targetPath)) {
+			copyFileSync(targetPath, sourcePath);
+		}
 	}
 
 	/**
@@ -174,7 +186,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns True if was successfull.
 	 */
 	copyConfig(source: string, target: string) {
-		if (!isVaildPath(source) || !isVaildPath(target) || !existsSync(source)) {
+		if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
 			return false;
 		}
 		if (!existsSync(target)) {
@@ -193,17 +205,39 @@ export default class SettingsProfilesPlugin extends Plugin {
 			copyFileSync(sourcePath, targetPath);
 		});
 
+		this.getAllCSSFiles(target).forEach(file => {
+			const sourcePath = join(source, 'snippets', file);
+			const targetPath = join(target, 'snippets', file);
+			if (!existsSync(sourcePath)) {
+				return;
+			}
+			copyFileSync(sourcePath, targetPath);
+		});
 		return true;
+	}
+
+	getAllCSSFiles(target: string):string[] {
+		if (!this.settings.snippets) {
+			return [];
+		}
+		const parent = join(target, 'snippets');
+		console.log(parent, existsSync(parent), target)
+		if (!existsSync(parent)) {
+			mkdirSync(parent, { recursive: true });
+		}
+
+		//@ts-ignore
+		return this.app.customCss.snippets.map(name => `${name}.css`);
 	}
 }
 
 /**
- * Copy recursive Folder Strucure 
+ * Copy recursive Folder Strucure
  * @param source The source folder to copy the subfolders/files
  * @param target The target folder where to copy the subfolders/files to
  */
 function copyFolderRecursiveSync(source: string, target: string) {
-	if (!isVaildPath(source) || !isVaildPath(target) || !existsSync(source)) {
+	if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
 		return false;
 	}
 	if (!existsSync(target)) {
@@ -231,7 +265,7 @@ function copyFolderRecursiveSync(source: string, target: string) {
  * @param path Path to Check
  * @returns True if is Valid
  */
-function isVaildPath(path: string) {
+function isValidPath(path: string) {
 	try {
 		if (path === "") {
 			return false;
@@ -244,8 +278,8 @@ function isVaildPath(path: string) {
 }
 
 /**
- * Remove recursive Folder Strucure 
- * @param directory The folder to remove 
+ * Remove recursive Folder Strucure
+ * @param directory The folder to remove
  */
 function removeDirectoryRecursiveSync(directory: string) {
 	if (existsSync(directory)) {
@@ -270,8 +304,8 @@ function removeDirectoryRecursiveSync(directory: string) {
  * Get the absolute path of this vault
  * @returns Returns the Absolut path
  */
-function getVaultPath() {
-	let adapter = this.app.vault.adapter;
+export function getVaultPath() {
+	const adapter = this.app.vault.adapter;
 	if (adapter instanceof FileSystemAdapter) {
 		return adapter.getBasePath();
 	}
