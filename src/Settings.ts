@@ -1,4 +1,4 @@
-import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
+import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 import SettingsProfilesPlugin, { getVaultPath } from './main';
@@ -18,15 +18,13 @@ export interface Settings {
 	profilesPath: string;
 	profilesList: SettingsProfile[]
 	autoSync: boolean;
-	snippets: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
 	profile: DEFAULT_PROFILE.name,
 	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
 	profilesList: [DEFAULT_PROFILE],
-	autoSync: true,
-	snippets: false,
+	autoSync: true
 }
 
 
