@@ -41,11 +41,11 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
     // Returns all available suggestions.
     getSuggestions(query: string): SettingsProfileSuggestion[] {
         // Get all matching SettingsProfiles
-        let profiles = this.plugin.settings.profilesList.filter((profile) =>
+        const profiles = this.plugin.settings.profilesList.filter((profile) =>
             profile.name.toLowerCase().includes(query.toLowerCase())
         );
         // Expand SettingsProfile to SettingsProfileSuggestion
-        let suggestions: SettingsProfileSuggestion[] = [];
+        const suggestions: SettingsProfileSuggestion[] = [];
         profiles.forEach(profile => {
             suggestions.push({
                 ...profile,
@@ -64,12 +64,12 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
 
     // Renders each suggestion item.
     renderSuggestion(suggestion: SettingsProfileSuggestion, el: HTMLElement) {
-        // Create Item 
+        // Create Item
         el.addClass("mod-complex");
-        let content = el.createEl("div", { cls: "suggestion-content" });
+        const content = el.createEl("div", { cls: "suggestion-content" });
         content.createEl("div", { cls: "suggestion-title" })
             .createEl("span", { text: suggestion.name })
-        // Profile not existing 
+        // Profile not existing
         if (suggestion.state === ProfileState.NEW) {
             content.parentElement?.createEl("div", { cls: "suggestion-aux" })
                 .createEl("span", { text: "Enter to create", cls: "suggestion-hotkey" })
@@ -84,7 +84,7 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
     // Perform action on the selected suggestion.
     onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
-        const { state: state, ...rest } = suggestion;
+        const { state, ...rest } = suggestion;
         const profile: SettingsProfile = { ...rest };
         // Submit profile
         this.onSubmit(profile, state);
