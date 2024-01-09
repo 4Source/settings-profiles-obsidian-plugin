@@ -1,7 +1,7 @@
 import { Notice, Plugin } from 'obsidian';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { DEFAULT_PROFILE, DEFAULT_SETTINGS, Settings, SettingsProfile, SettingsProfilesSettingTab } from "src/Settings";
+import { DEFAULT_PROFILE, DEFAULT_SETTINGS, SETTINGS_PROFILE_MAP, Settings, SettingsProfile, SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
 
@@ -236,7 +236,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		// Check for modified settings
-		this.getAllConfigFiles(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : []).forEach(file => {
+		this.getAllConfigFiles().forEach(file => {
+			console.log(file);
 			keepNewestFile(getVaultPath() !== "" ?
 				[
 					getVaultPath(),
@@ -245,21 +246,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 				[
 					this.settings.profilesPath,
 					profileName,
-					file
-				]);
-		});
-		// Check for modifies snippets
-		this.getAllCSSFiles(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : []).forEach(file => {
-			keepNewestFile(getVaultPath() !== "" ?
-				[
-					getVaultPath(),
-					this.app.vault.configDir,
-					'snippets',
-					file] : [],
-				[
-					this.settings.profilesPath,
-					profileName,
-					'snippets',
 					file
 				]);
 		});
@@ -285,49 +271,47 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return;
 		}
 
-		// Check each Setting File
-		this.getAllConfigFiles(sourcePath).forEach(file => {
+		// Check each Config File
+		this.getAllConfigFiles().forEach(file => {
+			console.log(file);
 			if (!copyFile(sourcePath, targetPath, file)) {
 				new Notice(`Failed to copy config!`);
 				return;
 			}
 		});
 
-		// Check each snippets File
-		this.getAllCSSFiles(sourcePath).forEach(file => {
-			if (!copyFile([...sourcePath, 'snippets'], [...targetPath, 'snippets'], file)) {
-				new Notice(`Failed to copy config!`);
-				return;
-			}
-		});
 		return true;
 	}
 
 	/**
-	 * Returns all configs if is enabeled in current profile
-	 * @param sourcePath The path to check for config files
+	 * Returns all configs if they are enabeled in current profile
 	 * @returns an array of file names
 	 */
-	getAllConfigFiles(sourcePath: string[]): string[] {
-		if (!this.getCurrentProfile().settings) {
-			return [];
+	getAllConfigFiles(): string[] { // {add: string[], remove: string[]}
+		let files = [];
+		for (const key in this.getCurrentProfile()) {
+			if (this.getCurrentProfile().hasOwnProperty(key)) {
+				const value = this.getCurrentProfile()[key as keyof SettingsProfile];
+
+				if (typeof value === 'boolean' && key !== 'enabled') {
+					if (value) {
+						const file = SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].file;
+						const dir = SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].path;
+						if (typeof file === 'string') {
+							files.push(file);
+						}
+						else if (Array.isArray(file)) {
+							files.push(...file);
+						}
+					}
+				}
+			}
 		}
 
-		return getAllFiles(sourcePath);
+		console.log(files);
+		return files;
 	}
 
-	/**
-	 * Returns all CSS snippets if is enabeled in current profile
-	 * @param sourcePath The path to check for CSS snippet files
-	 * @returns an array of file names
-	 */
-	getAllCSSFiles(sourcePath: string[]): string[] {
-		if (!this.getCurrentProfile().snippets) {
-			return [];
-		}
-
-		return getAllFiles([...sourcePath, 'snippets']);
-	}
 
 	/**
 	 * Gets the currently enabeled profile.
