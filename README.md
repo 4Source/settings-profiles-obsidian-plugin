@@ -1,6 +1,6 @@
 # Settings Profiles Obsidian Plugin
 > [!WARNING]  
-> This Plugin is under Development!
+> This Plugin is under Development! There could be major changes in future.
 
 Allows you to create various global settings profiles. You can sync them between different vaults. To keep all your settings in sync, you'll never have to manually adjust them again for every vault you have or create in the future.
 
