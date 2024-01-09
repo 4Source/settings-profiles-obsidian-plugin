@@ -9,7 +9,13 @@ export interface SettingsProfile {
 	name: string;
 	enabled: boolean;
 	autoSync: boolean;
-	settings: boolean;
+	appearance: boolean;
+	app: boolean;
+	bookmarks: boolean;
+	communityPlugins: boolean; //include core-plugins and core-plugins-migration
+	corePlugins: boolean;
+	graph: boolean;
+	hotkeys: boolean;
 	snippets: boolean;
 }
 
@@ -17,37 +23,75 @@ type SettingsProfileMap = {
 	[key in keyof SettingsProfile]: {
 	  name: string;
 	  description: string;
+	  file?: string|string[];
 	};
   };
 
 export const SETTINGS_PROFILE_MAP: SettingsProfileMap = {
 	name: {
 		name: 'Name',
-		description: 'Naming of this Profile.'
+		description: 'Naming of this Profile.',
 	},
 	enabled: {
 		name: 'Enabled',
-		description: 'Says whether this profile is selected.'
+		description: 'Says whether this profile is selected.',
 	},
 	autoSync: {
 		name: 'Auto Sync',
-		description: 'Auto Sync this profile on startup.'
+		description: 'Auto Sync this profile on startup.',
 	},
-	settings: {
-		name: 'Settings',
-		description: 'Says whether the obsidian settings will sync.'
+	appearance: {
+		name: 'Appearance',
+		description: 'Says whether the obsidian appearance settings will sync.',
+		file: 'appearance.json'
+	},
+	app: {
+		name: 'App',
+		description: 'Says whether the obsidian app settings will sync.',
+		file: 'app.json'
+	},
+	bookmarks: {
+		name: 'Bookmarks',
+		description: 'Says whether the obsidian bookmarks will sync.',
+		file: 'bookmarks.json'
+	},
+	communityPlugins: {
+		name: 'Community Plugins',
+		description: 'Says whether the community plugins and there settings will sync.',
+		file: 'community-plugins.json',
+	},
+	corePlugins: {
+		name: 'Core Plugins',
+		description: 'Says whether the obsidian core plugin settings will sync.',
+		file: ['core-plugins.json', 'core-plugins-migration.json']
+	},
+	graph: {
+		name: 'Graph',
+		description: 'Says whether the obsidian graph settings will sync.',
+		file: 'graph.json'
+	},
+	hotkeys: {
+		name: 'Hotkeys',
+		description: 'Says whether the obsidian hotkey settings will sync.',
+		file: 'hotkeys.json'
 	},
 	snippets: {
 		name: 'CSS snippets',
-		description: 'Says whether the CSS snippets will sync.'
-	}
+		description: 'Says whether the CSS snippets will sync.',
+	},
 }
 
 export const DEFAULT_PROFILE: SettingsProfile = {
 	name: 'Default',
 	enabled: true,
 	autoSync: true,
-	settings: true,
+	appearance: true,
+	app: true,
+	bookmarks: true,
+	communityPlugins: false,
+	corePlugins: true,
+	graph: true,
+	hotkeys: true,
 	snippets: false,
 }
 
