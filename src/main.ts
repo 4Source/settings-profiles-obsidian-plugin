@@ -42,7 +42,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							this.createProfile(result);
+							this.creatProfile(result.name);
 							break;
 					}
 					this.switchProfile(result.name);
@@ -114,11 +114,23 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return;
 		}
 
-		this.previousSettings.profile = structuredClone(this.settings.profile)
-		this.settings.profile = profileName;
-		// Switch to Profile
-		const configSource = join(this.settings.profilesPath, this.settings.profile);
-		const configTarget = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
+		// Save current Profile to possible switch back if failed
+		const previousProfile = structuredClone(this.getCurrentProfile());
+
+		// Check is current profile
+		if (previousProfile.name === profileName) {
+			new Notice('Allready current Profile!');
+			return;
+		}
+
+		// Disabel current profile
+		this.getCurrentProfile().enabled = false;
+
+		// Enabel new Profile
+		const newProfile = this.settings.profilesList.find(profile => profile.name === profileName);
+		if (newProfile) {
+			newProfile.enabled = true;
+		}
 
 		// Load profile config
 		if (await this.copyConfig(
@@ -151,7 +163,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async createProfile(newProfile: PerProfileSetting) {
 		if (this.settings.profilesList.find(profile => profile.name === newProfile.name)) {
-			new Notice('Failed to create Profile! Already exist.')
+			new Notice('Failed to create profile! Already exist.')
 			return;
 		}
 
@@ -168,7 +180,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		const profile = this.settings.profilesList.find(value => value.name === profileName);
 		// Check profile Exist
 		if (!profile) {
-			new Notice(`Failed to remove ${profileName} Profile!`);
+			new Notice(`Failed to remove ${profileName} profile!`);
 			return;
 		}
 
@@ -196,7 +208,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		const profile = this.settings.profilesList.find(value => value.name === profileName);
 		// Check profile Exist
 		if (!profile) {
-			new Notice(`Failed to remove ${profileName} Profile!`);
+			new Notice(`Failed to remove ${profileName} profile!`);
 			return;
 		}
 
