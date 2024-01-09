@@ -234,7 +234,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Check for modified settings
 		this.getAllConfigFiles().forEach(file => {
-			console.log(file);
 			keepNewestFile(getVaultPath() !== "" ?
 				[
 					getVaultPath(),
@@ -246,7 +245,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 					file
 				]);
 		});
-		await this.saveSettings();
 	}
 
 	/**
@@ -270,7 +268,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Check each Config File
 		this.getAllConfigFiles().forEach(file => {
-			console.log(file);
 			if (!copyFile(sourcePath, targetPath, file)) {
 				new Notice(`Failed to copy config!`);
 				return;
@@ -304,10 +301,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		}
 
-		console.log(files);
+		console.log("files: " + files);
 		return files;
 	}
-
 
 	/**
 	 * Gets the currently enabeled profile.
