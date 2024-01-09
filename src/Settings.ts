@@ -66,7 +66,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 				.addButton(button => button
-					.setButtonText('Sync Profile')
+					.setButtonText('Sync profile')
 					.onClick(() => {
 						this.plugin.syncSettings(this.plugin.getCurrentProfile().name);
 					}));
