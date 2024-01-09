@@ -385,6 +385,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		return paths;
 	}
 
+
 	/**
 	 * Gets the currently enabeled profile.
 	 * @returns The SettingsProfile object.
