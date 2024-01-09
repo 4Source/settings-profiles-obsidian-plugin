@@ -165,6 +165,13 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.inputEl.id = 'profile-path')
 			;
 
+		new Setting(containerEl)
+				.addButton(button => button 
+					.setButtonText('Sync Profile')
+					.onClick(() => {
+						this.plugin.syncSettings(this.plugin.getCurrentProfile().name);
+					}));
+
 		// Heading for Profiles
 		new Setting(containerEl)
 			.setHeading()
