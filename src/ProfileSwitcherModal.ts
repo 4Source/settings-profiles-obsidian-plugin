@@ -1,6 +1,6 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "./main";
-import { SettingsProfile } from "./Settings";
+import { DEFAULT_PROFILE, SettingsProfile } from "./Settings";
 
 export enum ProfileState {
     EXIST,
@@ -12,7 +12,7 @@ interface SettingsProfileSuggestion extends SettingsProfile {
     state: ProfileState;
 }
 
-export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
+export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion> {
     plugin: SettingsProfilesPlugin;
     onSubmit: (result: SettingsProfile, state: ProfileState) => void;
 
@@ -49,15 +49,16 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
         profiles.forEach(profile => {
             suggestions.push({
                 ...profile,
-                state: profile.name === this.plugin.settings.profile ? ProfileState.CURRENT : ProfileState.EXIST
+                state: profile.enabled ? ProfileState.CURRENT : ProfileState.EXIST
             });
         });
         // If nothing Matches add createable
         if (suggestions.length <= 0) {
             suggestions.push({
+                ...DEFAULT_PROFILE,
                 name: query,
                 state: ProfileState.NEW
-            })
+            });
         }
         return suggestions
     }
