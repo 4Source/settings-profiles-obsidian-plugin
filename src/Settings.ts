@@ -1,39 +1,70 @@
-import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
+import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
-import SettingsProfilesPlugin, { getVaultPath } from './main';
-import { ProfileModal, ProfileState } from './ProfileModal';
-import { join } from 'path';
+import SettingsProfilesPlugin from './main';
+import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
+import { ProfileConfigModal } from './ProfileConfigModal';
 
 export interface SettingsProfile {
 	name: string;
-}
-
-export const DEFAULT_PROFILE: SettingsProfile = {
-	name: 'Default',
-}
-
-export interface Settings {
-	profile: string;
-	profilesPath: string;
-	profilesList: SettingsProfile[]
+	enabled: boolean;
 	autoSync: boolean;
 	settings: boolean;
 	snippets: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = {
-	profile: DEFAULT_PROFILE.name,
-	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
-	profilesList: [DEFAULT_PROFILE],
+type SettingsProfileMap = {
+	[key in keyof SettingsProfile]: {
+	  name: string;
+	  description: string;
+	};
+  };
+
+export const SETTINGS_PROFILE_MAP: SettingsProfileMap = {
+	name: {
+		name: 'Name',
+		description: 'Naming of this Profile.'
+	},
+	enabled: {
+		name: 'Enabled',
+		description: 'Says whether this profile is selected.'
+	},
+	autoSync: {
+		name: 'Auto Sync',
+		description: 'Auto Sync this profile on startup.'
+	},
+	settings: {
+		name: 'Settings',
+		description: 'Says whether the obsidian settings will sync.'
+	},
+	snippets: {
+		name: 'CSS snippets',
+		description: 'Says whether the CSS snippets will sync.'
+	}
+}
+
+export const DEFAULT_PROFILE: SettingsProfile = {
+	name: 'Default',
+	enabled: true,
 	autoSync: true,
 	settings: true,
 	snippets: false,
 }
 
+export interface Settings {
+	profilesPath: string;
+	profilesList: SettingsProfile[]
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	profilesList: [DEFAULT_PROFILE]
+}
+
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
+	profilesSettings: Setting[];
 
 	constructor(app: App, plugin: SettingsProfilesPlugin) {
 		super(app, plugin);
@@ -45,88 +76,112 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.addButton(button => button
-				.setButtonText('Open profile switcher')
-				.onClick(async () => {
-					new ProfileModal(this.app, this.plugin, (result, state) => {
-						switch (state) {
-							case ProfileState.CURRENT:
-								return;
-							case ProfileState.NEW:
-								// Create new Profile
-								const current = structuredClone(this.plugin.settings.profilesList.find(value => value.name === this.plugin.settings.profile));
-								if (!current) {
-									new Notice('Failed to create Profile!');
-									return;
-								}
-								current.name = result.name;
-								this.plugin.settings.profilesList.push(current);
-
-								// Copy profile config
-								const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
-								const configTarget = join(this.plugin.settings.profilesPath, result.name);
-								this.plugin.copyConfig(configSource, configTarget);
-								break;
-						}
-						this.plugin.switchProfile(result.name);
-						this.plugin.saveSettings();
-					}).open();
-				}));
-
 		// Heading for General Settings
-		this.containerEl.createEl("h2", { text: "General" });
+		new Setting(containerEl)
+			.setHeading()
+			.setName('General');
 
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
 			.setName('Profile save path')
 			.setDesc('The path to store the profile settings')
+			.addButton(button => button
+				.setButtonText('Change')
+				.setWarning()
+				.onClick(async () => {
+					const input:HTMLInputElement|null = this.containerEl.querySelector('#profile-path');
+					if(input) {
+						await this.plugin.changeProfilePath(normalizePath(input.value));
+					}
+					const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
+					if(button) {
+						button.toggleVisibility(false);
+					}
+				})
+				.buttonEl.setAttrs({'id': 'profile-change', 'style': 'visibility:hidden'}))
 			.addText(text => text
 				.setValue(this.plugin.settings.profilesPath)
-				.onChange(async (value) => {
-					// Make a Copy of this previous Setting
-					this.plugin.previousSettings.profilesPath = structuredClone(this.plugin.settings.profilesPath);
-					// Assign value of this Setting an save it
-					this.plugin.settings.profilesPath = normalizePath(value);
-					await this.plugin.saveSettings();
-				}));
-		// Auto Sync Profiles
+				.onChange(value => {
+					if(value !== this.plugin.settings.profilesPath) {
+						const input:HTMLInputElement|null = this.containerEl.querySelector('#profile-path');
+						if(input) {
+							const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
+							if(button) {
+								button.toggleVisibility(true);
+							}
+						}
+					}
+					else {
+						const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
+							if(button) {
+								button.toggleVisibility(false);
+							}
+					}
+				})
+				.inputEl.id = 'profile-path')
+			;
+
+		// Heading for Profiles
 		new Setting(containerEl)
-			.setName('Auto Sync')
-			.setDesc('If enabled syncronize the profiles on startup.')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.autoSync)
-				.onChange(async (value) => {
-					// Assign value of this Setting an save it
-					this.plugin.settings.autoSync = value;
-					await this.plugin.saveSettings();
+			.setHeading()
+			.setName('Profiles')
+			.addExtraButton(button => button
+				.setIcon('plus')
+				.setTooltip('Add new profile')
+				.onClick(() => {
+					new ProfileSwitcherModal(this.app, this.plugin, (result, state) => {
+						switch (state) {
+							case ProfileState.CURRENT:
+								return;
+							case ProfileState.NEW:
+								// Create new Profile
+								this.plugin.creatProfile(result.name);
+								break;
+						}
+						this.display();
+					}).open();
+				}))
+			.addExtraButton(button => button
+				.setIcon('refresh-cw')
+				.setTooltip('Reload profiles')
+				.onClick(() => {
+					this.display();
 				}));
 
-		// Heading for Profiles overview
-		// this.containerEl.createEl("h2", { text: "Profiles" });
-		
-		// Settings Sync
-		new Setting(containerEl)
-			.setName('Sync settings')
-			.setDesc('Change settings on profile switch.')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.settings)
-				.onChange(async (value) => {
-					// Assign value of this Setting an save it
-					this.plugin.settings.settings = value;
-					await this.plugin.saveSettings();
-				}));
+		this.plugin.settings.profilesList.forEach(profile => {
+			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
+				.setName(profile.name)
+				.addExtraButton(button => button
+					.setIcon('settings')
+					.setTooltip('Options')
+					.onClick(() => {
+						new ProfileConfigModal(this.app, structuredClone(profile), (result) => {
+							this.plugin.editProfile(result.name, result);
+						}).open();
+					}))
+				// .addExtraButton(button => button
+				// 	.setIcon('plus-circle')
+				// 	.setTooltip('Hotkeys')
+				// 	.onClick(() => {
 
-		// CSS Snippets Sync
-		new Setting(containerEl)
-			.setName('Sync CSS snippets')
-			.setDesc('Change CSS snippets on profile switch.')
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.snippets)
-				.onChange(async (value) => {
-					// Assign value of this Setting an save it
-					this.plugin.settings.snippets = value;
-					await this.plugin.saveSettings();
-				}));
+				// 	}))
+				.addExtraButton(button => button
+					.setIcon('trash-2')
+					.setTooltip('Remove')
+					.onClick(() => {
+						this.plugin.removeProfile(profile.name);
+						this.display();
+					}))
+
+				.addExtraButton(button => button
+					.setIcon(profile.enabled ? 'check' : 'download')
+					.setTooltip('Switch to Profile')
+					.onClick(async () => {
+						if (!profile.enabled) {
+							this.plugin.switchProfile(profile.name);
+							this.display();
+						}
+					}));
+		})
 	}
 }

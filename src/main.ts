@@ -1,18 +1,18 @@
-import { FileSystemAdapter, Notice, Plugin } from 'obsidian';
-import { dirname, join } from 'path';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
-import { DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab } from "src/Settings";
-import { ProfileModal, ProfileState } from './ProfileModal';
+import { Notice, Plugin } from 'obsidian';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { DEFAULT_PROFILE, DEFAULT_SETTINGS, Settings, SettingsProfile, SettingsProfilesSettingTab } from "src/Settings";
+import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
+import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	settings: Settings;
-	previousSettings: Settings;
 
 	async onload() {
 		await this.loadSettings();
 
 		// Make sure Profile path exists
-		if(!ensurePathExist(this.settings.profilesPath)) {
+		if (!ensurePathExist([this.settings.profilesPath])) {
 			new Notice("Profile save path is not valid!");
 		}
 
@@ -22,41 +22,29 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Register to close obsidian
 		this.registerEvent(this.app.workspace.on('quit', () => {
 			// Sync Profiles
-			if (this.settings.autoSync) {
+			if (this.getCurrentProfile().autoSync) {
 				this.syncSettings();
 			}
 		}));
 
 		// Display Settings Profile on Startup
-		new Notice(`Current Profile: ${this.settings.profile}`);
+		new Notice(`Current Profile: ${this.getCurrentProfile().name}`);
 
 		// Add Command to Switch between profiles
 		this.addCommand({
 			id: "open-profile-switcher",
 			name: "Open profile switcher",
 			callback: () => {
-				new ProfileModal(this.app, this, (result, state) => {
+				new ProfileSwitcherModal(this.app, this, (result, state) => {
 					switch (state) {
 						case ProfileState.CURRENT:
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							const current = structuredClone(this.settings.profilesList.find(value => value.name === this.settings.profile));
-							if (!current) {
-								new Notice('Failed to create Profile!');
-								return;
-							}
-							current.name = result.name;
-							this.settings.profilesList.push(current);
-
-							// Copy profile config
-							const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
-							const configTarget = join(this.settings.profilesPath, result.name);
-							this.copyConfig(configSource, configTarget);
+							this.creatProfile(result.name);
 							break;
 					}
 					this.switchProfile(result.name);
-					this.saveSettings();
 				}).open();
 			}
 		});
@@ -66,7 +54,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			id: "current-profile",
 			name: "Show current profile",
 			callback: () => {
-				new Notice(`Current Profile: ${this.settings.profile}`);
+				new Notice(`Current Profile: ${this.getCurrentProfile().name}`);
 			}
 		});
 	}
@@ -77,12 +65,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Load Plugin Settings from file or default.
 	 * Sync Profiles if enabeled.
 	 */
-	async loadSettings() {
+	private async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-		this.previousSettings = structuredClone(this.settings);
 
 		// Sync Profiles
-		if (this.settings.autoSync) {
+		if (this.getCurrentProfile().autoSync) {
 			this.syncSettings();
 		}
 	}
@@ -91,22 +78,24 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Save Plugin Settings to file.
 	 * Sync Profiles if enabeled.
 	 */
-	async saveSettings() {
+	private async saveSettings() {
 		// Save settings
 		await this.saveData(this.settings);
 
-		// Check profilePath has changed
-		if (this.previousSettings.profilesPath != this.settings.profilesPath) {
-			// Copy profiles to new path
-			copyFolderRecursiveSync(this.previousSettings.profilesPath, this.settings.profilesPath);
-			// Remove old profiles path
-			removeDirectoryRecursiveSync(this.previousSettings.profilesPath);
-		}
-
 		// Sync Profiles
-		if (this.settings.autoSync) {
+		if (this.getCurrentProfile().autoSync) {
 			this.syncSettings();
 		}
+	}
+
+	async changeProfilePath(path: string) {
+		// Copy profiles to new path
+		copyFolderRecursiveSync([this.settings.profilesPath], [path]);
+		// Remove old profiles path
+		removeDirectoryRecursiveSync([this.settings.profilesPath]);
+
+		this.settings.profilesPath = path;
+		await this.saveSettings();
 	}
 
 	/**
@@ -119,228 +108,237 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return;
 		}
 
-		this.previousSettings.profile = structuredClone(this.settings.profile)
-		this.settings.profile = profileName;
-		// Switch to Profile
-		const configSource = join(this.settings.profilesPath, this.settings.profile);
-		const configTarget = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
+		// Save current Profile to possible switch back if failed
+		const previousProfile = structuredClone(this.getCurrentProfile());
+
+		// Check is current profile
+		if (previousProfile.name === profileName) {
+			new Notice('Allready current Profile!');
+			return;
+		}
+
+		// Disabel current profile
+		this.getCurrentProfile().enabled = false;
+
+		// Enabel new Profile
+		const newProfile = this.settings.profilesList.find(profile => profile.name === profileName);
+		if (newProfile) {
+			newProfile.enabled = true;
+		}
 
 		// Load profile config
-		if (this.copyConfig(configSource, configTarget)) {
-			new Notice(`Switched to Profile ${this.settings.profile}`);
+		if (await this.copyConfig(
+			[
+				this.settings.profilesPath,
+				this.getCurrentProfile().name],
+			getVaultPath() !== "" ? [
+				getVaultPath(),
+				this.app.vault.configDir
+			] : [])) {
+
+			new Notice(`Switched to Profile ${this.getCurrentProfile().name}`);
 			// Reload obsidian so changed settings can take effect
 			// @ts-ignore
 			this.app.commands.executeCommandById("app:reload");
 		}
 		else {
-			new Notice(`Failed to switch ${this.settings.profile} Profile!`);
-			this.settings.profile = this.previousSettings.profile;
+			new Notice(`Failed to switch ${this.getCurrentProfile().name} Profile!`);
+			this.getCurrentProfile().enabled = false;
+			previousProfile.enabled = true;
 		}
+		await this.saveSettings();
 	}
 
 	/**
-	 * Sync Settings for active Profile.
+	 * Create a new profile based on the current profile.
+	 * @param profileName The name of the new profile
 	 */
-	async syncSettings() {
-		const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
-		const configTarget = join(this.settings.profilesPath, this.previousSettings.profile);
+	async creatProfile(profileName: string) {
+		const current = structuredClone(this.settings.profilesList.find(value => value.name === this.getCurrentProfile().name));
+		if (!current) {
+			new Notice('Failed to create Profile!');
+			return;
+		}
+		if (this.settings.profilesList.find(profile => profile.name === profileName)) {
+			new Notice('Failed to create Profile! Allready exist.')
+			return;
+		}
 
+		current.name = profileName;
+		current.enabled = false;
+		this.settings.profilesList.push(current);
+
+		// Copy profile config
+		this.copyConfig(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : [], [this.settings.profilesPath, profileName]);
+		await this.saveSettings();
+	}
+
+	async editProfile(profileName: string, profileSettings: Partial<SettingsProfile>) {
+		const profile = this.settings.profilesList.find(value => value.name === profileName);
+		// Check profile Exist
+		if (!profile) {
+			new Notice(`Failed to remove ${profileName} Profile!`);
+			return;
+		}
+
+		Object.keys(profileSettings).forEach(key => {
+			const objKey = key as keyof SettingsProfile;
+
+			if (objKey === 'name' || objKey === 'enabled') {
+				return;
+			}
+
+			const value = profileSettings[objKey];
+			if (typeof value === 'boolean'){
+				profile[objKey] = value;
+			}
+		});
+
+		await this.saveSettings();
+	}
+
+	/**
+	 * Removes the profile and all its configs
+	 * @param profileName The name of the profile
+	 */
+	async removeProfile(profileName: string) {
+		const profile = this.settings.profilesList.find(value => value.name === profileName);
+		// Check profile Exist
+		if (!profile) {
+			new Notice(`Failed to remove ${profileName} Profile!`);
+			return;
+		}
+
+		// Is profile to remove current profile
+		if (profile.enabled) {
+			const otherProfile = this.settings.profilesList.first();
+			if (otherProfile) {
+				this.switchProfile(otherProfile.name);
+			}
+		}
+
+		// Remove to profile config
+		removeDirectoryRecursiveSync([this.settings.profilesPath, profileName]);
+
+		this.settings.profilesList.remove(profile);
+		await this.saveSettings();
+	}
+
+	/**
+	 * Sync Settings for the profile. With the current vault settings.
+	 * @param profileName [current profile] The name of the profile to sync.
+	 */
+	async syncSettings(profileName: string = this.getCurrentProfile().name) {
 		// Check target dir exist
-		if(!ensurePathExist(configTarget)) {
-			new Notice(`Failed to sync ${this.settings.profile} Profile!`);
+		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
+			new Notice(`Failed to sync ${profileName} Profile!`);
 			return;
 		}
 
 		// Check for modified settings
-		this.getAllConfigFiles(configSource).forEach(file => {
-			const sourcePath = join(configSource, file);
-			const targetPath = join(configTarget, file);
-
-			keepNewestFile(sourcePath, targetPath);
+		this.getAllConfigFiles(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : []).forEach(file => {
+			keepNewestFile(getVaultPath() !== "" ?
+				[
+					getVaultPath(),
+					this.app.vault.configDir,
+					file] : [],
+				[
+					this.settings.profilesPath,
+					profileName,
+					file
+				]);
 		});
 		// Check for modifies snippets
-		this.getAllCSSFiles(configSource).forEach(file => {
-			const sourcePath = join(configSource, 'snippets', file);
-			const targetPath = join(configTarget, 'snippets', file);
-
-			keepNewestFile(sourcePath, targetPath);
+		this.getAllCSSFiles(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : []).forEach(file => {
+			keepNewestFile(getVaultPath() !== "" ?
+				[
+					getVaultPath(),
+					this.app.vault.configDir,
+					'snippets',
+					file] : [],
+				[
+					this.settings.profilesPath,
+					profileName,
+					'snippets',
+					file
+				]);
 		});
+		await this.saveSettings();
 	}
 
 	/**
 	 * Copy the Config form source to target.
-	 * @param source Source Config
-	 * @param target Target Config
+	 * @param sourcePath Source Config
+	 * @param targetPath Target Config
 	 * @returns True if was successfull.
 	 */
-	copyConfig(source: string, target: string) {
-		if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
+	async copyConfig(sourcePath: string[], targetPath: string[]) {
+		if (!isValidPath(sourcePath) || !isValidPath(targetPath) || !existsSync(join(...sourcePath))) {
 			return false;
 		}
-		if(!ensurePathExist(target)) {
+		if (!ensurePathExist(targetPath)) {
 			new Notice(`Failed to copy config!`);
 			return;
 		}
-		if(!ensurePathExist(source)) {
+		if (!ensurePathExist(sourcePath)) {
 			new Notice(`Failed to copy config!`);
 			return;
 		}
 
 		// Check each Setting File
-		this.getAllConfigFiles(source).forEach(file => {
-			const sourcePath = join(source, file);
-			const targetPath = join(target, file);
-
-			if (!existsSync(sourcePath)) {
+		this.getAllConfigFiles(sourcePath).forEach(file => {
+			if (!copyFile(sourcePath, targetPath, file)) {
+				new Notice(`Failed to copy config!`);
 				return;
 			}
-
-			copyFileSync(sourcePath, targetPath);
 		});
 
 		// Check each snippets File
-		this.getAllCSSFiles(source).forEach(file => {
-			const sourcePath = join(source, 'snippets', file);
-			const targetPath = join(target, 'snippets', file);
-
-			if (!existsSync(sourcePath)) {
+		this.getAllCSSFiles(sourcePath).forEach(file => {
+			if (!copyFile([...sourcePath, 'snippets'], [...targetPath, 'snippets'], file)) {
+				new Notice(`Failed to copy config!`);
 				return;
 			}
-
-			copyFileSync(sourcePath, targetPath);
 		});
 		return true;
 	}
 
-	getAllConfigFiles(source: string):string[] {
-		if (!this.settings.snippets) {
+	/**
+	 * Returns all configs if is enabeled in current profile
+	 * @param sourcePath The path to check for config files
+	 * @returns an array of file names
+	 */
+	getAllConfigFiles(sourcePath: string[]): string[] {
+		if (!this.getCurrentProfile().settings) {
 			return [];
 		}
 
-		return getAllFiles(source);
+		return getAllFiles(sourcePath);
 	}
 
-	getAllCSSFiles(source: string):string[] {
-		if (!this.settings.snippets) {
+	/**
+	 * Returns all CSS snippets if is enabeled in current profile
+	 * @param sourcePath The path to check for CSS snippet files
+	 * @returns an array of file names
+	 */
+	getAllCSSFiles(sourcePath: string[]): string[] {
+		if (!this.getCurrentProfile().snippets) {
 			return [];
 		}
-		const parent = join(source, 'snippets');
 
-		return getAllFiles(parent);
-	}
-}
-
-function getAllFiles(path: string):string[] {
-	const files = readdirSync(path);
-	return files.filter((name) => {
-		const currentPath = join(path, name);
-		return !statSync(currentPath).isDirectory();
-	});
-}
-
-function keepNewestFile(sourcePath: string, targetPath: string) {
-	// Check target dir exist
-	ensurePathExist(dirname(targetPath));
-	// Keep newest file
-	if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
-		copyFileSync(sourcePath, targetPath);
-	}
-	else if (existsSync(targetPath)) {
-		copyFileSync(targetPath, sourcePath);
-	}
-}
-
-/**
- * Copy recursive Folder Strucure
- * @param source The source folder to copy the subfolders/files
- * @param target The target folder where to copy the subfolders/files to
- */
-function copyFolderRecursiveSync(source: string, target: string) {
-	if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
-		return false;
-	}
-	if(!ensurePathExist(target)) {
-		new Notice(`Failed to copy folder!`);
-		return;
+		return getAllFiles([...sourcePath, 'snippets']);
 	}
 
-	const files = readdirSync(source);
-
-	files.forEach(file => {
-		const sourcePath = join(source, file);
-		const targetPath = join(target, file);
-
-		if (statSync(sourcePath).isDirectory()) {
-			copyFolderRecursiveSync(sourcePath, targetPath);
-		} else {
-			copyFileSync(sourcePath, targetPath);
+	/**
+	 * Gets the currently enabeled profile.
+	 * @returns The SettingsProfile object.
+	 */
+	getCurrentProfile(): SettingsProfile {
+		let currentProfile = this.settings.profilesList.find(profile => profile.enabled === true);
+		if (!currentProfile) {
+			currentProfile = DEFAULT_PROFILE;
 		}
-	});
-
-	return true;
-}
-
-/**
- * Ensure the path exist if not try to create it.
- * @param path The path to ensure
- * @param recursive [true] Indicates whether parent folders should be created.
- * @returns Returns ``true`` if the path exists, ``false`` if failed to create the path.
- */
-function ensurePathExist(path: string, recursive: boolean=true):boolean {
-	if (!existsSync(path)) {
-		mkdirSync(path, { recursive });
-	}
-	return existsSync(path);
-}
-
-/**
- * Check Path is Valid.
- * @param path Path to Check
- * @returns True if is Valid
- */
-function isValidPath(path: string) {
-	try {
-		if (path === "") {
-			return false;
-		}
-		// accessSync(path, constants.F_OK);
-	} catch (err) {
-		return false;
-	}
-	return true;
-}
-
-/**
- * Remove recursive Folder Strucure
- * @param directory The folder to remove
- */
-function removeDirectoryRecursiveSync(directory: string) {
-	if (existsSync(directory)) {
-		readdirSync(directory).forEach(file => {
-			const filePath = join(directory, file);
-
-			if (statSync(filePath).isDirectory()) {
-				// Recursively remove subdirectories
-				removeDirectoryRecursiveSync(filePath);
-			} else {
-				// Remove files
-				unlinkSync(filePath);
-			}
-		});
-
-		// Remove the empty directory
-		rmdirSync(directory);
+		return currentProfile;
 	}
 }
 
-/**
- * Get the absolute path of this vault
- * @returns Returns the Absolut path
- */
-export function getVaultPath() {
-	const adapter = this.app.vault.adapter;
-	if (adapter instanceof FileSystemAdapter) {
-		return adapter.getBasePath();
-	}
-	return "";
-}
