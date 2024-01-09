@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
-import * as os from 'os';
-import * as path from 'path';
+import { homedir } from 'os';
+import { join } from 'path';
 import SettingsProfilesPlugin from './main';
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { ProfileConfigModal } from './ProfileConfigModal';
@@ -57,7 +57,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-	profilesPath: path.join(os.homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
 	profilesList: [DEFAULT_PROFILE]
 }
 
