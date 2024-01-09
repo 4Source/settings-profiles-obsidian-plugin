@@ -293,7 +293,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 				if (typeof value === 'boolean' && key !== 'enabled') {
 					if (value) {
 						const file = SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].file;
-						const dir = SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].path;
 						if (typeof file === 'string') {
 							files.push(file);
 						}
