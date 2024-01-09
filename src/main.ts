@@ -1,7 +1,7 @@
 import { FileSystemAdapter, Notice, Plugin } from 'obsidian';
 import { join } from 'path';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from 'fs';
-import { DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab } from "src/Settings";
+import { DEFAULT_SETTINGS, Settings, SettingsProfilesSettingTab, configFiles } from "src/Settings";
 import { ProfileModal, ProfileState } from './ProfileModal';
 
 const settingsFiles = ['app.json', 'appearance.json', 'bookmarks.json', 'community-plugins.json', 'core-plugins.json', 'core-plugins-migration.json', 'graph.json', 'hotkeys.json'];
@@ -157,7 +157,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			const sourcePath = join(configSource, file);
 			const targetPath = join(configTarget, file);
 
-			this.keepNewestSettings(sourcePath, targetPath);
+			this.keepNewestSettings(sourcePath, targetPath, file);
 		});
 
 		this.getAllCSSFiles(configTarget).forEach(file => {
@@ -168,8 +168,15 @@ export default class SettingsProfilesPlugin extends Plugin {
 		});
 	}
 
-	keepNewestSettings(sourcePath: string, targetPath: string) {
+	keepNewestSettings(sourcePath: string, targetPath: string, file?: string) {
 		// Keep newest settings
+		if (file !== undefined){
+			const fileEnabled = configFiles?.[file as keyof typeof configFiles];
+			const profile = this.settings.profilesList.find(value => value.name === this.settings.profile);
+			if (profile && fileEnabled && !profile[fileEnabled as keyof typeof profile]) {
+				return;
+			}
+		}
 
 		if ((!existsSync(targetPath) && existsSync(sourcePath)) || statSync(sourcePath).mtime >= statSync(targetPath).mtime) {
 			copyFileSync(sourcePath, targetPath);
@@ -186,6 +193,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns True if was successfull.
 	 */
 	copyConfig(source: string, target: string) {
+		console.log("COPY CONFIG", source, target)
 		if (!isValidPath(source) || !isValidPath(target) || !existsSync(source)) {
 			return false;
 		}
@@ -197,6 +205,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 		settingsFiles.forEach(file => {
 			const sourcePath = join(source, file);
 			const targetPath = join(target, file);
+			const fileEnabled = configFiles?.[file as keyof typeof configFiles];
+			const profile = this.settings.profilesList.find(value => value.name === this.settings.profile);
+			if (profile && fileEnabled && !profile[fileEnabled as keyof typeof profile]) {
+				return;
+			}
 
 			if (!existsSync(sourcePath)) {
 				return;
@@ -221,7 +234,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return [];
 		}
 		const parent = join(target, 'snippets');
-		console.log(parent, existsSync(parent), target)
 		if (!existsSync(parent)) {
 			mkdirSync(parent, { recursive: true });
 		}
@@ -259,6 +271,8 @@ function copyFolderRecursiveSync(source: string, target: string) {
 
 	return true;
 }
+
+
 
 /**
  * Check Path is Valid.

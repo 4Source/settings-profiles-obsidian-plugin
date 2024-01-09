@@ -1,8 +1,15 @@
-/*
+.settings-profiles-modal .setting-item-info {
+	display: none;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.settings-profiles-modal input {
+	width: 100%;
+}
 
-If your plugin does not need CSS, delete this file.
+.settings-profiles-current .setting-item-name {
+	font-weight: bold;
+}
 
-*/
+.settings-profiles-current .setting-item-name::before {
+	content: "⭐";
+}

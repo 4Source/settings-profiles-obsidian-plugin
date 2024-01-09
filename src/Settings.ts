@@ -2,15 +2,40 @@ import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian'
 import * as os from 'os';
 import * as path from 'path';
 import SettingsProfilesPlugin, { getVaultPath } from './main';
-import { ProfileModal, ProfileState } from './ProfileModal';
+import { AddProfileModal, ChooseSettingsToSync } from './ProfileModal';
 import { join } from 'path';
 
 export interface SettingsProfile {
 	name: string;
+	appearance: boolean;
+	app: boolean;
+	bookmarks: boolean;
+	communityPlugins: boolean; //include core-plugins and core-plugins-migration
+	corePlugins: boolean;
+	graph: boolean;
+	hotkeys: boolean;
+}
+
+export const configFiles = {
+	"appearance.json": "appearance",
+	"app.json": "app",
+	"bookmarks.json": "bookmarks",
+	"community-plugins.json": "communityPlugins",
+	"core-plugins.json": "corePlugins",
+	"core-plugins-migration.json": "corePlugins",
+	"graph.json": "graph",
+	"hotkeys.json": "hotkeys",
 }
 
 export const DEFAULT_PROFILE: SettingsProfile = {
 	name: 'Default',
+	appearance: true,
+	app: true,
+	bookmarks: true,
+	communityPlugins: true,
+	corePlugins: true,
+	graph: true,
+	hotkeys: true,
 }
 
 export interface Settings {
@@ -42,35 +67,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
-
-		new Setting(containerEl)
-			.addButton(button => button
-				.setButtonText('Open profile switcher')
-				.onClick(async () => {
-					new ProfileModal(this.app, this.plugin, (result, state) => {
-						switch (state) {
-							case ProfileState.CURRENT:
-								return;
-							case ProfileState.NEW:
-								// Create new Profile
-								const current = structuredClone(this.plugin.settings.profilesList.find(value => value.name === this.plugin.settings.profile));
-								if (!current) {
-									new Notice('Failed to create Profile!');
-									return;
-								}
-								current.name = result.name;
-								this.plugin.settings.profilesList.push(current);
-
-								// Copy profile config
-								const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
-								const configTarget = join(this.plugin.settings.profilesPath, result.name);
-								this.plugin.copyConfig(configSource, configTarget);
-								break;
-						}
-						this.plugin.switchProfile(result.name);
-						this.plugin.saveSettings();
-					}).open();
-				}));
 
 		// Heading for General Settings
 		this.containerEl.createEl("h2", { text: "General" });
@@ -113,5 +109,74 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.plugin.settings.snippets = value;
 					await this.plugin.saveSettings();
 				}));
+
+		this.containerEl.createEl("h2", { text: "Profiles" });
+		this.containerEl.createEl("p", { text: "The current profile is marked with a star." });
+		for (const profile of this.plugin.settings.profilesList) {
+			const profileSetting = new Setting(containerEl)
+				.setName(profile.name)
+				.setClass(this.plugin.settings.profile === profile.name ? "settings-profiles-current" : "settings-profiles")
+				.addExtraButton(button => button
+					.setIcon('pencil')
+					.setTooltip("Edit file used in the profile")
+					.onClick(async () => {
+						new ChooseSettingsToSync(this.app, this.plugin, profile, (profile) => {
+							const index = this.plugin.settings.profilesList.findIndex(value => value.name === profile.name);
+							this.plugin.settings.profilesList[index] = profile;
+							this.plugin.saveSettings();
+						}).open();
+					})
+				);
+			if (profile.name !== this.plugin.settings.profile) {
+				profileSetting.addExtraButton(button => button
+					.setIcon('trash')
+					.setTooltip('Delete Profile')
+					.onClick(async () => {
+						if (this.plugin.settings.profilesList.length === 1) {
+							new Notice('You cannot delete the last profile!');
+							return;
+						}
+						this.plugin.settings.profilesList = this.plugin.settings.profilesList.filter(value => value.name !== profile.name);
+						await this.plugin.saveSettings();
+						this.display();
+					}))
+					.addExtraButton(button => button
+					.setIcon("play")
+					.setTooltip("Switch to this profile")
+					.onClick(async () => {
+						this.plugin.settings.profile = profile.name;
+						this.plugin.switchProfile(profile.name);
+						await this.plugin.saveSettings();
+					}))
+
+			}
+		}
+
+		new Setting(containerEl)
+			.addButton(button => button
+				.setButtonText('Add profile')
+				.onClick(async () => {
+					new AddProfileModal(this.app, this.plugin, async (name) => {
+						this.plugin.settings.profilesList.push({
+							name,
+							appearance: true,
+							app: true,
+							bookmarks: true,
+							communityPlugins: true,
+							corePlugins: true,
+							graph: true,
+							hotkeys: true,
+						});
+
+						// Copy profile config
+						const configSource = getVaultPath() !== "" ? join(getVaultPath(), this.app.vault.configDir) : "";
+						const configTarget = join(this.plugin.settings.profilesPath, name);
+						this.plugin.copyConfig(configSource, configTarget);
+						this.display();
+						await this.plugin.saveSettings();
+					}).open();
+
+				}));
 	}
 }
+
