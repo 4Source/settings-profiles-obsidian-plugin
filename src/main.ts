@@ -7,7 +7,7 @@ import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVau
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
-	settings: ProfileSettings;
+	settings: Settings;
 
 	async onload() {
 		await this.loadSettings();
