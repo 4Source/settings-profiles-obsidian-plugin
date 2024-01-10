@@ -42,7 +42,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							this.createProfile(result.name);
+							this.createProfile(result);
 							break;
 					}
 					this.switchProfile(result.name);
