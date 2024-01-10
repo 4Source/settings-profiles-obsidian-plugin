@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from './main';
-import { ProfileConfigModal } from './ProfileConfigModal';
-import { AddNewProfileSettings } from './addNewProfileConfig';
+import { ProfileEditModal } from './ProfileEditModal';
+import { ProfileAddModal } from './ProfileAddModal';
 import { DEFAULT_PROFILE } from './interface';
 
 
@@ -79,9 +79,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					const newProfile = structuredClone(DEFAULT_PROFILE);
-					console.log(newProfile);
-					new AddNewProfileSettings(this.plugin, newProfile, (result) => {
+					new ProfileAddModal(this.app, this.plugin, this.plugin.getCurrentProfile(), (result) => {
 						this.plugin.createProfile(result);
 						this.display();
 					}).open();
@@ -101,7 +99,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon('settings')
 					.setTooltip('Options')
 					.onClick(() => {
-						new ProfileConfigModal(this.app, structuredClone(profile), (result) => {
+						new ProfileEditModal(this.app, this.plugin, profile, (result) => {
 							this.plugin.editProfile(result.name, result);
 						}).open();
 					}))

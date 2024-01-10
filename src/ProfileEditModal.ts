@@ -1,33 +1,36 @@
 import { App, Modal, Setting } from "obsidian";
-import { SETTINGS_PROFILE_MAP, PerProfileSetting } from "./interface";
+import { PER_PROFILE_SETTINGS_MAP, PerProfileSetting } from "./interface";
+import SettingsProfilesPlugin from "./main";
 
-export class ProfileConfigModal extends Modal {
+export class ProfileEditModal extends Modal {
+	plugin: SettingsProfilesPlugin;
 	profile: PerProfileSetting;
 	onSubmit: (result: PerProfileSetting) => void;
 
-	constructor(app: App, profile: PerProfileSetting, onSubmit: (result: PerProfileSetting) => void) {
+	constructor(app: App, plugin: SettingsProfilesPlugin, profile: PerProfileSetting, onSubmit: (result: PerProfileSetting) => void) {
 		super(app);
 
-		this.profile = profile;
+		this.plugin = plugin;
+		this.profile = structuredClone(profile);
 		this.onSubmit = onSubmit;
 	}
 
 	onOpen(): void {
 		const { contentEl } = this;
 
-		// Heading for General Settings
-		new Setting(contentEl)
-			.setHeading()
-			.setName(`Edit ${this.profile.name} profile`);
+		// Heading for Edit profile
+		contentEl.createEl('h1', {text: `Edit ${this.profile.name} profile`});
 
+		// Add All existing options
 		for (const key in this.profile) {
 			if (this.profile.hasOwnProperty(key)) {
 				const value = this.profile[key as keyof PerProfileSetting];
 
+				// Only toggle exclude enabled
 				if (typeof value === 'boolean' && key !== 'enabled') {
 					new Setting(contentEl)
-						.setName(SETTINGS_PROFILE_MAP[key as keyof PerProfileSetting].name)
-						.setDesc(SETTINGS_PROFILE_MAP[key as keyof PerProfileSetting].description)
+						.setName(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].name)
+						.setDesc(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].description)
 						.addToggle(toggle => toggle
 							.setValue(value)
 							.onChange(async (value) => {
