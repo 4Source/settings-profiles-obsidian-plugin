@@ -322,13 +322,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Gets the currently enabled profile.
-	 * @returns The SettingsProfile object.
+	 * @returns boolean.
 	 */
-	isEnabledOrDefault(profile: PerProfileSetting): boolean {
+	isEnabled(profile: PerProfileSetting): boolean {
 		//verify if a profil is already enabled
 		if (this.settings.profilesList.find(value => value.enabled === true) && !profile.enabled)
 			return false;
-		return profile.enabled ? true : profile.name === "Default";
+		return profile.enabled ?? profile.name === "Default";
 	}
 }
 

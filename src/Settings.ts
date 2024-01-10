@@ -96,7 +96,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		this.plugin.settings.profilesList.forEach(profile => {
 			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
 				.setName(profile.name)
-				.setClass(this.plugin.isEnabledOrDefault(profile) ? 'profile-enabled' : 'profile-disabled')
+				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
 				.addExtraButton(button => button
 					.setIcon('settings')
 					.setTooltip('Options')
@@ -120,9 +120,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					}))
 
 				.addExtraButton(button => button
-					.setIcon(this.plugin.isEnabledOrDefault(profile) ? 'check' : 'download')
-					.setTooltip(this.plugin.isEnabledOrDefault(profile) ? "" : 'Switch to Profile')
-					.setDisabled(this.plugin.isEnabledOrDefault(profile))
+					.setIcon(this.plugin.isEnabled(profile) ? 'check' : 'download')
+					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to Profile')
+					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(async () => {
 						if (!profile.enabled) {
 							this.plugin.switchProfile(profile.name);
