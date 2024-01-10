@@ -1,9 +1,8 @@
 import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from './main';
-import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { ProfileConfigModal } from './ProfileConfigModal';
-
-
+import { AddNewProfileSettings } from './addNewProfileConfig';
+import { DEFAULT_PROFILE } from './interface';
 
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
@@ -80,15 +79,10 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileSwitcherModal(this.app, this.plugin, (result, state) => {
-						switch (state) {
-							case ProfileState.CURRENT:
-								return;
-							case ProfileState.NEW:
-								// Create new Profile
-								this.plugin.createProfile(result.name);
-								break;
-						}
+					const newProfile = structuredClone(DEFAULT_PROFILE);
+					console.log(newProfile);
+					new AddNewProfileSettings(this.plugin, newProfile, (result) => {
+						this.plugin.createProfile(result);
 						this.display();
 					}).open();
 				}))
@@ -102,6 +96,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		this.plugin.settings.profilesList.forEach(profile => {
 			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
 				.setName(profile.name)
+				.setClass(this.plugin.isEnabledOrDefault(profile) ? 'profile-enabled' : 'profile-disabled')
 				.addExtraButton(button => button
 					.setIcon('settings')
 					.setTooltip('Options')
@@ -125,8 +120,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					}))
 
 				.addExtraButton(button => button
-					.setIcon(profile.enabled ? 'check' : 'download')
-					.setTooltip('Switch to Profile')
+					.setIcon(this.plugin.isEnabledOrDefault(profile) ? 'check' : 'download')
+					.setTooltip(this.plugin.isEnabledOrDefault(profile) ? "" : 'Switch to Profile')
+					.setDisabled(this.plugin.isEnabledOrDefault(profile))
 					.onClick(async () => {
 						if (!profile.enabled) {
 							this.plugin.switchProfile(profile.name);

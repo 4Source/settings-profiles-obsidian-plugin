@@ -18,7 +18,7 @@ export class ProfileConfigModal extends Modal {
 		// Heading for General Settings
 		new Setting(contentEl)
 			.setHeading()
-			.setName("Edit " + this.profile.name + " profile");
+			.setName(`Edit ${this.profile.name} profile`);
 
 		for (const key in this.profile) {
 			if (this.profile.hasOwnProperty(key)) {
