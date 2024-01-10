@@ -24,11 +24,14 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
 	const sourceFile = join(...sourcePath);
 	const targetFile = join(...targetPath);
 
+	console.log(sourceFile + ' ' , existsSync(sourceFile))
+	console.log(targetFile + ' ' , existsSync(targetFile))
+
 	// Check target dir exist
 	ensurePathExist([dirname(join(...targetPath))]);
 
 	// Keep newest file
-	if ((!existsSync(targetFile) && existsSync(sourceFile)) || statSync(sourceFile).mtime >= statSync(targetFile).mtime) {
+	if (existsSync(sourceFile) && (!existsSync(targetFile) || statSync(sourceFile).mtime > statSync(targetFile).mtime)) {
 		copyFileSync(sourceFile, targetFile);
 	}
 	else if (existsSync(targetFile)) {
