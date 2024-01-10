@@ -20,6 +20,7 @@ type PerProfileSettingMap = {
 		name: string;
 		description: string;
 		file?: string | string[];
+		path?: string | string[];
 	};
 };
 
@@ -55,6 +56,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 		name: 'Community Plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
 		file: 'community-plugins.json',
+		path: 'plugins'
 	},
 	corePlugins: {
 		name: 'Core Plugins',
@@ -74,6 +76,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	snippets: {
 		name: 'CSS snippets',
 		description: 'Says whether the CSS snippets will sync.',
+		path: 'snippets'
 	},
 }
 
