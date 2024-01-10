@@ -7,7 +7,7 @@ import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVau
 import { DEFAULT_PROFILE, DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
-	settings: Settings;
+	settings: ProfileSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -42,7 +42,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							this.creatProfile(result.name);
+							this.createProfile(result.name);
 							break;
 					}
 					this.switchProfile(result.name);

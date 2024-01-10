@@ -1,38 +1,38 @@
 import { App, Modal, Setting } from "obsidian";
-import { SETTINGS_PROFILE_MAP, SettingsProfile } from "./Settings";
+import { SETTINGS_PROFILE_MAP, PerProfileSetting } from "./interface";
 
-export class ProfileConfigModal extends Modal{
-	profile: SettingsProfile;
-    onSubmit: (result: SettingsProfile) => void;
+export class ProfileConfigModal extends Modal {
+	profile: PerProfileSetting;
+	onSubmit: (result: PerProfileSetting) => void;
 
-    constructor(app: App, profile: SettingsProfile, onSubmit: (result: SettingsProfile) => void) {
-        super(app);
+	constructor(app: App, profile: PerProfileSetting, onSubmit: (result: PerProfileSetting) => void) {
+		super(app);
 
 		this.profile = profile;
 		this.onSubmit = onSubmit;
-    }
+	}
 
 	onOpen(): void {
 		const { contentEl } = this;
 
-    	// Heading for General Settings
+		// Heading for General Settings
 		new Setting(contentEl)
 			.setHeading()
 			.setName("Edit " + this.profile.name + " profile");
 
 		for (const key in this.profile) {
-			if(this.profile.hasOwnProperty(key)) {
-				const value = this.profile[key as keyof SettingsProfile];
+			if (this.profile.hasOwnProperty(key)) {
+				const value = this.profile[key as keyof PerProfileSetting];
 
-				if(typeof value === 'boolean' && key !== 'enabled') {
+				if (typeof value === 'boolean' && key !== 'enabled') {
 					new Setting(contentEl)
-						.setName(SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].name)
-						.setDesc(SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].description)
+						.setName(SETTINGS_PROFILE_MAP[key as keyof PerProfileSetting].name)
+						.setDesc(SETTINGS_PROFILE_MAP[key as keyof PerProfileSetting].description)
 						.addToggle(toggle => toggle
 							.setValue(value)
 							.onChange(async (value) => {
 								// Assign value of this Setting an save it
-								(this.profile[key as keyof SettingsProfile] as boolean) = value;
+								(this.profile[key as keyof PerProfileSetting] as boolean) = value;
 							}));
 				}
 			}
@@ -54,8 +54,8 @@ export class ProfileConfigModal extends Modal{
 	}
 
 	onClose() {
-		let { contentEl } = this;
+		const { contentEl } = this;
 		contentEl.empty();
-	  }
-    
+	}
+
 }
