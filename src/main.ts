@@ -4,10 +4,10 @@ import { existsSync } from 'fs';
 import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_PROFILE, DEFAULT_SETTINGS, SETTINGS_PROFILE_MAP, ProfileSettings, PerProfileSetting } from './interface';
+import { DEFAULT_PROFILE, DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
-	settings: ProfileSettings;
+	settings: Settings;
 
 	async onload() {
 		await this.loadSettings();
@@ -89,6 +89,10 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * Change the path to save the profiles
+	 * @param path The target where to save the profiles
+	 */
 	async changeProfilePath(path: string) {
 		// Copy profiles to new path
 		copyFolderRecursiveSync([this.settings.profilesPath], [path]);
@@ -101,6 +105,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Switch to other Settings Profile.
+	 * @param profileName The name of the profile to switch to
 	 */
 	async switchProfile(profileName: string) {
 		// Check profile Exist
@@ -140,7 +145,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.app.commands.executeCommandById("app:reload");
 		}
 		else {
+			// Copy config failed.
 			new Notice(`Failed to switch ${this.getCurrentProfile().name} profile!`);
+			// Reset profile
 			this.getCurrentProfile().enabled = false;
 			previousProfile.enabled = true;
 		}
@@ -152,21 +159,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the new profile
 	 */
 	async createProfile(newProfile: PerProfileSetting) {
-		let current = structuredClone(this.settings.profilesList.find(value => value.name === this.getCurrentProfile().name));
-		if (!current) {
-			current = DEFAULT_PROFILE;
-		}
 		if (this.settings.profilesList.find(profile => profile.name === newProfile.name)) {
 			new Notice('Failed to create Profile! Already exist.')
 			return;
 		}
 
-		current.name = newProfile.name;
-		current.enabled = false;
-		current.autoSync = newProfile.autoSync;
-		current.snippets = newProfile.snippets;
+		newProfile.enabled = false;
 
-		this.settings.profilesList.push(current);
+		this.settings.profilesList.push(newProfile);
 
 		// Copy profile config
 		this.copyConfig(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : [], [this.settings.profilesPath, newProfile.name]);
@@ -292,7 +292,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 				if (typeof value === 'boolean' && key !== 'enabled') {
 					if (value) {
-						const file = SETTINGS_PROFILE_MAP[key as keyof PerProfileSetting].file;
+						const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
 						if (typeof file === 'string') {
 							files.push(file);
 						}
@@ -304,7 +304,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		}
 
-		console.log("files: " + files);
 		return files;
 	}
 

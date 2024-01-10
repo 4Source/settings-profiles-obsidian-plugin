@@ -15,7 +15,7 @@ export interface PerProfileSetting {
 	snippets: boolean;
 }
 
-type SettingsProfileMap = {
+type PerProfileSettingMap = {
 	[key in keyof PerProfileSetting]: {
 		name: string;
 		description: string;
@@ -23,7 +23,7 @@ type SettingsProfileMap = {
 	};
 };
 
-export const SETTINGS_PROFILE_MAP: SettingsProfileMap = {
+export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	name: {
 		name: 'Name',
 		description: 'Naming of this Profile.',
@@ -91,12 +91,12 @@ export const DEFAULT_PROFILE: PerProfileSetting = {
 	snippets: false,
 }
 
-export interface ProfileSettings {
+export interface Settings {
 	profilesPath: string;
 	profilesList: PerProfileSetting[]
 }
 
-export const DEFAULT_SETTINGS: ProfileSettings = {
+export const DEFAULT_SETTINGS: Settings = {
 	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
 	profilesList: [DEFAULT_PROFILE]
 }
