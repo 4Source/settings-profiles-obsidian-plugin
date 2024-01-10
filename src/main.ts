@@ -1,12 +1,13 @@
 import { Notice, Plugin } from 'obsidian';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { DEFAULT_PROFILE, DEFAULT_SETTINGS, SETTINGS_PROFILE_MAP, Settings, SettingsProfile, SettingsProfilesSettingTab } from "src/Settings";
+import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
-import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
+import { copyFile, copyFolderRecursiveSync, ensurePathExist, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
+import { DEFAULT_PROFILE, DEFAULT_SETTINGS, SETTINGS_PROFILE_MAP, ProfileSettings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
-	settings: Settings;
+	settings: ProfileSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -41,7 +42,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							this.creatProfile(result.name);
+							this.createProfile(result.name);
 							break;
 					}
 					this.switchProfile(result.name);
@@ -153,14 +154,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Create a new profile based on the current profile.
 	 * @param profileName The name of the new profile
 	 */
-	async creatProfile(profileName: string) {
+	async createProfile(profileName: string) {
 		const current = structuredClone(this.settings.profilesList.find(value => value.name === this.getCurrentProfile().name));
 		if (!current) {
 			new Notice('Failed to create Profile!');
 			return;
 		}
 		if (this.settings.profilesList.find(profile => profile.name === profileName)) {
-			new Notice('Failed to create Profile! Allready exist.')
+			new Notice('Failed to create Profile! Already exist.')
 			return;
 		}
 
@@ -173,7 +174,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.saveSettings();
 	}
 
-	async editProfile(profileName: string, profileSettings: Partial<SettingsProfile>) {
+	async editProfile(profileName: string, profileSettings: Partial<PerProfileSetting>) {
 		const profile = this.settings.profilesList.find(value => value.name === profileName);
 		// Check profile Exist
 		if (!profile) {
@@ -182,7 +183,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		Object.keys(profileSettings).forEach(key => {
-			const objKey = key as keyof SettingsProfile;
+			const objKey = key as keyof PerProfileSetting;
 
 			if (objKey === 'name' || objKey === 'enabled') {
 				return;
@@ -285,14 +286,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns an array of file names
 	 */
 	getAllConfigFiles(): string[] { // {add: string[], remove: string[]}
-		let files = [];
+		const files = [];
 		for (const key in this.getCurrentProfile()) {
 			if (this.getCurrentProfile().hasOwnProperty(key)) {
-				const value = this.getCurrentProfile()[key as keyof SettingsProfile];
+				const value = this.getCurrentProfile()[key as keyof PerProfileSetting];
 
 				if (typeof value === 'boolean' && key !== 'enabled') {
 					if (value) {
-						const file = SETTINGS_PROFILE_MAP[key as keyof SettingsProfile].file;
+						const file = SETTINGS_PROFILE_MAP[key as keyof PerProfileSetting].file;
 						if (typeof file === 'string') {
 							files.push(file);
 						}
@@ -312,7 +313,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Gets the currently enabeled profile.
 	 * @returns The SettingsProfile object.
 	 */
-	getCurrentProfile(): SettingsProfile {
+	getCurrentProfile(): PerProfileSetting {
 		let currentProfile = this.settings.profilesList.find(profile => profile.enabled === true);
 		if (!currentProfile) {
 			currentProfile = DEFAULT_PROFILE;
