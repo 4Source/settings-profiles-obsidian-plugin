@@ -98,7 +98,7 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
  * @param recursive [true] Indicates whether parent folders should be created.
  * @returns Returns ``true`` if the path exists, ``false`` if failed to create the path.
  */
-export function ensurePathExist(path: string[], recursive: boolean=true):boolean {
+export function ensurePathExist(path: string[], recursive=true):boolean {
 	if (!existsSync(join(...path))) {
 		mkdirSync(join(...path), { recursive });
 	}
