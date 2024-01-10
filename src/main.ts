@@ -42,7 +42,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							this.createProfile(result.name);
+							this.createProfile(result);
 							break;
 					}
 					this.switchProfile(result.name);
@@ -151,23 +151,25 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Create a new profile based on the current profile.
 	 * @param profileName The name of the new profile
 	 */
-	async createProfile(profileName: string) {
-		const current = structuredClone(this.settings.profilesList.find(value => value.name === this.getCurrentProfile().name));
+	async createProfile(newProfile: PerProfileSetting) {
+		let current = structuredClone(this.settings.profilesList.find(value => value.name === this.getCurrentProfile().name));
 		if (!current) {
-			new Notice('Failed to create Profile!');
-			return;
+			current = DEFAULT_PROFILE;
 		}
-		if (this.settings.profilesList.find(profile => profile.name === profileName)) {
+		if (this.settings.profilesList.find(profile => profile.name === newProfile.name)) {
 			new Notice('Failed to create Profile! Already exist.')
 			return;
 		}
 
-		current.name = profileName;
+		current.name = newProfile.name;
 		current.enabled = false;
+		current.autoSync = newProfile.autoSync;
+		current.snippets = newProfile.snippets;
+
 		this.settings.profilesList.push(current);
 
 		// Copy profile config
-		this.copyConfig(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : [], [this.settings.profilesPath, profileName]);
+		this.copyConfig(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : [], [this.settings.profilesPath, newProfile.name]);
 		await this.saveSettings();
 	}
 
@@ -311,11 +313,22 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns The SettingsProfile object.
 	 */
 	getCurrentProfile(): PerProfileSetting {
-		let currentProfile = this.settings.profilesList.find(profile => profile.enabled === true);
+		const currentProfile = this.settings.profilesList.find(profile => profile.enabled === true);
 		if (!currentProfile) {
-			currentProfile = DEFAULT_PROFILE;
+			return DEFAULT_PROFILE;
 		}
 		return currentProfile;
+	}
+
+	/**
+	 * Gets the currently enabled profile.
+	 * @returns The SettingsProfile object.
+	 */
+	isEnabledOrDefault(profile: PerProfileSetting): boolean {
+		//verify if a profil is already enabled
+		if (this.settings.profilesList.find(value => value.enabled === true) && !profile.enabled)
+			return false;
+		return profile.enabled ? true : profile.name === "Default";
 	}
 }
 
