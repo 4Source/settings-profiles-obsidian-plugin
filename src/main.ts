@@ -368,15 +368,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 			if (this.getCurrentProfile().hasOwnProperty(key)) {
 				const value = this.getCurrentProfile()[key as keyof PerProfileSetting];
 
-				if (typeof value === 'boolean' && key !== 'enabled') {
-					if (value) {
-						const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
-						if (typeof path === 'string') {
-							paths.push(path);
-						}
-						else if (Array.isArray(path)) {
-							paths.push(...path);
-						}
+				if (typeof value === 'boolean' && key !== 'enabled' && value) {
+					const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
+					if (typeof path === 'string') {
+						paths.push(path);
+					}
+					else if (Array.isArray(path)) {
+						paths.push(...path);
 					}
 				}
 			}
