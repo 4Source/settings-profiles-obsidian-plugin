@@ -255,8 +255,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 		console.log('sync')
 		// Check for modified files in paths
 		this.getAllConfigPaths().forEach(path => {
-			console.log('path ' + path)
-			let files = getAllFiles(getVaultPath() !== "" ?
+			console.log('path ', path)
+			const files = getAllFiles(getVaultPath() !== "" ?
 				[
 					getVaultPath(),
 					this.app.vault.configDir,
@@ -318,8 +318,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 				return;
 			}
 
-			let files = getAllFiles([...sourcePath, path]);
-			console.log('files ' + files);
+			const files = getAllFiles([...sourcePath, path]);
+			console.log('files ', files);
 
 			files.forEach(file => {
 				if (!copyFile([...sourcePath, path], [...targetPath, path], file)) {
@@ -363,7 +363,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns an array of paths
 	 */
 	getAllConfigPaths(): string[] { // {add: string[], remove: string[]}
-		let paths = [];
+		const paths = [];
 		for (const key in this.getCurrentProfile()) {
 			if (this.getCurrentProfile().hasOwnProperty(key)) {
 				const value = this.getCurrentProfile()[key as keyof PerProfileSetting];
