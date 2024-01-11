@@ -15,15 +15,16 @@ export interface PerProfileSetting {
 	snippets: boolean;
 }
 
-type SettingsProfileMap = {
+type PerProfileSettingMap = {
 	[key in keyof PerProfileSetting]: {
 		name: string;
 		description: string;
 		file?: string | string[];
+		path?: string | string[];
 	};
 };
 
-export const SETTINGS_PROFILE_MAP: SettingsProfileMap = {
+export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	name: {
 		name: 'Name',
 		description: 'Naming of this Profile.',
@@ -55,6 +56,7 @@ export const SETTINGS_PROFILE_MAP: SettingsProfileMap = {
 		name: 'Community Plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
 		file: 'community-plugins.json',
+		path: 'plugins'
 	},
 	corePlugins: {
 		name: 'Core Plugins',
@@ -74,6 +76,7 @@ export const SETTINGS_PROFILE_MAP: SettingsProfileMap = {
 	snippets: {
 		name: 'CSS snippets',
 		description: 'Says whether the CSS snippets will sync.',
+		path: 'snippets'
 	},
 }
 
@@ -91,12 +94,12 @@ export const DEFAULT_PROFILE: PerProfileSetting = {
 	snippets: false,
 }
 
-export interface ProfileSettings {
+export interface Settings {
 	profilesPath: string;
 	profilesList: PerProfileSetting[]
 }
 
-export const DEFAULT_SETTINGS: ProfileSettings = {
+export const DEFAULT_SETTINGS: Settings = {
 	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
 	profilesList: [DEFAULT_PROFILE]
 }

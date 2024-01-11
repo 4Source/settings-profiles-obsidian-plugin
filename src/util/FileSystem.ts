@@ -7,7 +7,7 @@ import { dirname, join } from "path";
  * @param path Path to check for files
  * @returns an array of file names
  */
-export function getAllFiles(path: string[]):string[] {
+export function getAllFiles(path: string[]): string[] {
 	const files = readdirSync(join(...path));
 	return files.filter((name) => {
 		const currentFile = join(...path, name);
@@ -21,14 +21,17 @@ export function getAllFiles(path: string[]):string[] {
  * @param targetPath The target file
  */
 export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
-    const sourceFile = join(...sourcePath);
-    const targetFile = join(...targetPath);
+	const sourceFile = join(...sourcePath);
+	const targetFile = join(...targetPath);
+
+	console.log(sourceFile + ' ' , existsSync(sourceFile))
+	console.log(targetFile + ' ' , existsSync(targetFile))
 
 	// Check target dir exist
 	ensurePathExist([dirname(join(...targetPath))]);
 
 	// Keep newest file
-	if ((!existsSync(targetFile) && existsSync(sourceFile)) || statSync(sourceFile).mtime >= statSync(targetFile).mtime) {
+	if (existsSync(sourceFile) && (!existsSync(targetFile) || statSync(sourceFile).mtime > statSync(targetFile).mtime)) {
 		copyFileSync(sourceFile, targetFile);
 	}
 	else if (existsSync(targetFile)) {
@@ -44,19 +47,19 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
  * @param fileNameTarget [fileName] The name of the file at target
  * @returns Copy was successfull
  */
-export function copyFile(sourcePath: string[], targetPath: string[], fileName: string, fileNameTarget: string = fileName):boolean {
-    const sourceFile = join(...sourcePath, fileName);
+export function copyFile(sourcePath: string[], targetPath: string[], fileName: string, fileNameTarget: string = fileName): boolean {
+	const sourceFile = join(...sourcePath, fileName);
 	const targetFile = join(...targetPath, fileNameTarget);
 
-    if (!existsSync(sourceFile)) {
-        return false;
-    }
-    if(!ensurePathExist(targetPath)) {
-        return false;
-    }
+	if (!existsSync(sourceFile)) {
+		return false;
+	}
+	if (!ensurePathExist(targetPath)) {
+		return false;
+	}
 
-    copyFileSync(sourceFile, targetFile);
-    return true;
+	copyFileSync(sourceFile, targetFile);
+	return true;
 }
 
 /**
@@ -65,13 +68,13 @@ export function copyFile(sourcePath: string[], targetPath: string[], fileName: s
  * @param targetPath The target path where to copy the subfolders/files to
  */
 export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string[]) {
-    const source = join(...sourcePath);
-    const target = join(...targetPath);
+	const source = join(...sourcePath);
+	const target = join(...targetPath);
 
 	if (!isValidPath([source]) || !isValidPath([target]) || !existsSync(source)) {
 		return false;
 	}
-	if(!ensurePathExist([target])) {
+	if (!ensurePathExist([target])) {
 		new Notice(`Failed to copy folder!`);
 		return;
 	}
@@ -98,7 +101,7 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
  * @param recursive [true] Indicates whether parent folders should be created.
  * @returns Returns ``true`` if the path exists, ``false`` if failed to create the path.
  */
-export function ensurePathExist(path: string[], recursive=true):boolean {
+export function ensurePathExist(path: string[], recursive = true): boolean {
 	if (!existsSync(join(...path))) {
 		mkdirSync(join(...path), { recursive });
 	}
@@ -127,7 +130,7 @@ export function isValidPath(path: string[]) {
  * @param path The folder to remove
  */
 export function removeDirectoryRecursiveSync(path: string[]) {
-    const pathS = join(...path);
+	const pathS = join(...path);
 
 	if (existsSync(pathS)) {
 		readdirSync(pathS).forEach(file => {
