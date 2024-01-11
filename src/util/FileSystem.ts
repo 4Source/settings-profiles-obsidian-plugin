@@ -3,7 +3,7 @@ import { FileSystemAdapter, Notice } from "obsidian";
 import { dirname, join } from "path";
 
 /**
- * Retruns all files in this direcory. Sub-directorys are not includes.
+ * Retruns all files in this direcory. Subdirectorys are not includes.
  * @param path Path to check for files
  * @returns an array of file names
  */
@@ -12,6 +12,19 @@ export function getAllFiles(path: string[]): string[] {
 	return files.filter((name) => {
 		const currentFile = join(...path, name);
 		return !statSync(currentFile).isDirectory();
+	});
+}
+
+/**
+ * Retruns all first level paths in this direcory. Subdirectorys are not includes.
+ * @param path Path to check for Subdirectorys
+ * @returns an array of path names
+ */
+export function getAllPaths(path: string[]): string[] {
+	const files = readdirSync(join(...path));
+	return files.filter((name) => {
+		const currentFile = join(...path, name);
+		return statSync(currentFile).isDirectory();
 	});
 }
 

@@ -24,6 +24,7 @@ type PerProfileSettingMap = {
 	};
 };
 
+
 export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	name: {
 		name: 'Name',
@@ -56,7 +57,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 		name: 'Community Plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
 		file: 'community-plugins.json',
-		path: 'plugins'
+		path: 'plugins/*/data.json'
 	},
 	corePlugins: {
 		name: 'Core Plugins',
