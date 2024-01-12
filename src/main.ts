@@ -108,17 +108,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the profile to switch to
 	 */
 	async switchProfile(profileName: string) {
-		// Check profile Exist
-		if (!this.settings.profilesList.find(value => value.name === profileName)) {
-			new Notice(`Failed to switch ${profileName} Profile!`);
-			return;
-		}
-
 		// Save current Profile to possible switch back if failed
-		const previousProfile = structuredClone(this.getCurrentProfile());
+		const previousProfile = this.getCurrentProfile();
 
 		if (!previousProfile) {
-			new Notice(`Failed to switch ${this.getCurrentProfile()?.name} Profile!`);
+			new Notice(`Failed to switch ${profileName} Profile!`);
 			return;
 		}
 
@@ -127,11 +121,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			new Notice('Allready current Profile!');
 			return;
 		}
-
-		// Disabel current profile
-		const current = this.getCurrentProfile();
-		if (current)
-			current.enabled = false;
 
 		// Enabel new Profile
 		const newProfile = this.settings.profilesList.find(profile => profile.name === profileName);
@@ -162,6 +151,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 			previousProfile.enabled = true;
 		}
 		await this.saveSettings();
+		// Reload obsidian so changed settings can take effect
+		// @ts-ignore
+		this.app.commands.executeCommandById("app:reload");
 	}
 
 	/**
@@ -347,22 +339,22 @@ export default class SettingsProfilesPlugin extends Plugin {
 	getAllConfigFiles(): string[] {
 		const profile = this.getCurrentProfile();
 		const files = [];
-			for (const key in profile) {
-				if (profile.hasOwnProperty(key)) {
-					const value = profile[key as keyof PerProfileSetting];
-					if (typeof value === 'boolean' && key !== 'enabled') {
-						if (value) {
-							const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
-							if (typeof file === 'string') {
-								files.push(file);
-							}
-							else if (Array.isArray(file)) {
-								files.push(...file);
-							}
+		for (const key in profile) {
+			if (profile.hasOwnProperty(key)) {
+				const value = profile[key as keyof PerProfileSetting];
+				if (typeof value === 'boolean' && key !== 'enabled') {
+					if (value) {
+						const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
+						if (typeof file === 'string') {
+							files.push(file);
+						}
+						else if (Array.isArray(file)) {
+							files.push(...file);
 						}
 					}
 				}
 			}
+		}
 
 		return files;
 	}
@@ -375,22 +367,22 @@ export default class SettingsProfilesPlugin extends Plugin {
 	getAllConfigPaths(): string[] {
 		const profile = this.getCurrentProfile();
 		let paths = [];
-			for (const key in profile) {
-				if (profile.hasOwnProperty(key)) {
-					const value = profile[key as keyof PerProfileSetting];
-					if (typeof value === 'boolean' && key !== 'enabled') {
-						if (value) {
-							const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
-							if (typeof path === 'string') {
-								paths.push(path);
-							}
-							else if (Array.isArray(path)) {
-								paths.push(...path);
-							}
+		for (const key in profile) {
+			if (profile.hasOwnProperty(key)) {
+				const value = profile[key as keyof PerProfileSetting];
+				if (typeof value === 'boolean' && key !== 'enabled') {
+					if (value) {
+						const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
+						if (typeof path === 'string') {
+							paths.push(path);
+						}
+						else if (Array.isArray(path)) {
+							paths.push(...path);
 						}
 					}
 				}
 			}
+		}
 
 		return paths;
 	}
