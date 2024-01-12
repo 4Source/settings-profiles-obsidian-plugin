@@ -238,31 +238,27 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return;
 		}
 
-		// Check for modified settings
+		// Check for modified files
 		this.getAllConfigFiles().forEach(file => {
-			keepNewestFile(getVaultPath() !== "" ?
-				[
-					getVaultPath(),
-					this.app.vault.configDir,
-					file] : [],
-				[
-					this.settings.profilesPath,
-					profileName,
-					file
-				]);
+			if (file.includes("/*/") && getVaultPath() !== "") {
+				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+
+				pathVariants.forEach(value => {
+					keepNewestFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value]);
+				})
+			}
+			else if (getVaultPath() !== "") {
+				keepNewestFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file]);
+			}
 		});
 
-		console.log('sync')
 		// Check for modified files in paths
 		this.getAllConfigPaths().forEach(path => {
-			console.log('path ' + path)
 			let files = getAllFiles(getVaultPath() !== "" ?
 				[
 					getVaultPath(),
 					this.app.vault.configDir,
 					path] : [],);
-
-			console.log('files ' + files);
 
 			files.forEach(file => {
 				keepNewestFile(getVaultPath() !== "" ?
@@ -309,17 +305,35 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		});
 
-		console.log('copy')
+		// Check for modified files
+		this.getAllConfigFiles().forEach(file => {
+			if (file.includes("/*/") && getVaultPath() !== "") {
+				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+
+				pathVariants.forEach(value => {
+					if (!copyFile([...sourcePath, ...value.slice(0, value.length - 1)], [...targetPath, ...value.slice(0, value.length - 1)], value.slice(value.length - 1)[0])) {
+						new Notice(`Failed to copy config!`);
+						return;
+					}
+				})
+			}
+			else {
+				if (!copyFile(sourcePath, targetPath, file)) {
+					new Notice(`Failed to copy config!`);
+					return;
+				}
+			}
+		});
+
+
 		// Check each file in paths
 		this.getAllConfigPaths().forEach(path => {
-			console.log('path ' + path)
 			if (!existsSync(join(...sourcePath, path))) {
 				new Notice(`Failed to copy config!`);
 				return;
 			}
 
 			let files = getAllFiles([...sourcePath, path]);
-			console.log('files ' + files);
 
 			files.forEach(file => {
 				if (!copyFile([...sourcePath, path], [...targetPath, path], file)) {
