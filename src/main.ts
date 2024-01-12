@@ -4,7 +4,7 @@ import { existsSync } from 'fs';
 import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_PROFILE, DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
+import { DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	settings: Settings;
@@ -237,8 +237,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 	/**
 	 * Sync Settings for the profile. With the current vault settings.
 	 * @param profileName [profileName='Default'] The name of the profile to sync.
+	 * @param force [force=false] Enable this option to force the use of profile settings
 	 */
-	async syncSettings(profileName = 'Default') {
+	async syncSettings(profileName: string = 'Default', force = false) {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
 			new Notice(`Failed to sync ${profileName} profile!`);
@@ -250,11 +251,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
-					keepNewestFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value]);
+					keepNewestFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value], force);
 				})
 			}
 			else if (getVaultPath() !== "") {
-				keepNewestFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file]);
+				keepNewestFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file], force);
 			}
 		});
 
@@ -264,11 +265,10 @@ export default class SettingsProfilesPlugin extends Plugin {
 				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
 				files.forEach(file => {
-					keepNewestFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file]);
+					keepNewestFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file], force);
 				});
 			}
 		});
-
 	}
 
 	/**
@@ -276,6 +276,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param sourcePath Source Config
 	 * @param targetPath Target Config
 	 * @returns True if was successfull.
+	 * @deprecated will be removed on release
 	 */
 	async copyConfig(sourcePath: string[], targetPath: string[]) {
 		if (!isValidPath(sourcePath) || !isValidPath(targetPath) || !existsSync(join(...sourcePath))) {
