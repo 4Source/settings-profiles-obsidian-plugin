@@ -20,13 +20,20 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
+		const profile = this.getCurrentProfile();
 		// Register to close obsidian
 		this.registerEvent(this.app.workspace.on('quit', () => {
-			// Sync Profiles
-			if (this.getCurrentProfile()?.autoSync) {
-				this.syncSettings();
+			// Sync profiles
+			if (profile?.autoSync) {
+				this.syncSettings(profile.name);
 			}
 		}));
+
+		// Sync profile on startup
+		if (profile?.autoSync) {
+			this.syncSettings(profile.name, true);
+		}
+
 
 		// Display Settings Profile on Startup
 		new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
@@ -70,8 +77,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
 		// Sync Profiles
-		if (this.getCurrentProfile()?.autoSync) {
-			this.syncSettings();
+		const profile = this.getCurrentProfile();
+		if (profile?.autoSync) {
+			this.syncSettings(profile.name);
 		}
 	}
 
@@ -84,8 +92,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.saveData(this.settings);
 
 		// Sync Profiles
-		if (this.getCurrentProfile()?.autoSync) {
-			this.syncSettings();
+		const profile = this.getCurrentProfile();
+		if (profile?.autoSync) {
+			this.syncSettings(profile.name);
 		}
 	}
 
@@ -151,9 +160,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 			previousProfile.enabled = true;
 		}
 		await this.saveSettings();
-		// Reload obsidian so changed settings can take effect
-		// @ts-ignore
-		this.app.commands.executeCommandById("app:reload");
+				// Reload obsidian so changed settings can take effect
+				// @ts-ignore
+				this.app.commands.executeCommandById("app:reload");
 	}
 
 	/**
