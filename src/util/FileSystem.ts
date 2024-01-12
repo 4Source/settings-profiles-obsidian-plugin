@@ -81,7 +81,7 @@ export function copyFile(sourcePath: string[], targetPath: string[]): boolean {
 	if (!existsSync(sourceFile)) {
 		return false;
 	}
-	if (!ensurePathExist(targetPath)) {
+	if (!ensurePathExist(targetPath.slice(0, targetPath.length - 1))) {
 		return false;
 	}
 
