@@ -32,33 +32,33 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setButtonText('Change')
 				.setWarning()
 				.onClick(async () => {
-					const input:HTMLInputElement|null = this.containerEl.querySelector('#profile-path');
-					if(input) {
+					const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
+					if (input) {
 						await this.plugin.changeProfilePath(normalizePath(input.value));
 					}
-					const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
-					if(button) {
+					const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+					if (button) {
 						button.toggleVisibility(false);
 					}
 				})
-				.buttonEl.setAttrs({'id': 'profile-change', 'style': 'visibility:hidden'}))
+				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
 				.setValue(this.plugin.settings.profilesPath)
 				.onChange(value => {
-					if(value !== this.plugin.settings.profilesPath) {
-						const input:HTMLInputElement|null = this.containerEl.querySelector('#profile-path');
-						if(input) {
-							const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
-							if(button) {
+					if (value !== this.plugin.settings.profilesPath) {
+						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
+						if (input) {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							if (button) {
 								button.toggleVisibility(true);
 							}
 						}
 					}
 					else {
-						const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
-							if(button) {
-								button.toggleVisibility(false);
-							}
+						const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+						if (button) {
+							button.toggleVisibility(false);
+						}
 					}
 				})
 				.inputEl.id = 'profile-path')
