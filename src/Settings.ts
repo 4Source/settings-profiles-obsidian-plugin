@@ -63,11 +63,21 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			;
 
 		new Setting(containerEl)
-				.addButton(button => button
-					.setButtonText('Sync profile')
-					.onClick(() => {
-						this.plugin.syncSettings(this.plugin.getCurrentProfile().name);
-					}));
+			.addButton(button => button
+				.setButtonText('Save profile')
+				.onClick(() => {
+					const profile = this.plugin.getCurrentProfile();
+					if (profile)
+						this.plugin.saveProfile(profile.name);
+				}))
+			.addButton(button => button
+				.setButtonText('Load profile')
+				.onClick(() => {
+					const profile = this.plugin.getCurrentProfile();
+					if (profile)
+						this.plugin.loadProfile(profile.name);
+				}));
+
 
 		// Heading for Profiles
 		new Setting(containerEl)
