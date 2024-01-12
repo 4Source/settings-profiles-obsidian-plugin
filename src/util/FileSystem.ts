@@ -46,8 +46,9 @@ export function getAllFiles(path: string[]): string[] {
  * Compares to files and make them in both direcories equal.
  * @param sourcePath The source file
  * @param targetPath The target file
+ * @param force [force=false] Enable this option to force the source to be preserved
  */
-export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
+export function keepNewestFile(sourcePath: string[], targetPath: string[], force = false) {
 	const sourceFile = join(...sourcePath);
 	const targetFile = join(...targetPath);
 
