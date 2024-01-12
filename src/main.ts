@@ -222,11 +222,98 @@ export default class SettingsProfilesPlugin extends Plugin {
 	}
 
 	/**
+	 * Save the profile settings
+	 * @param profileName [profileName='Default'] The name of the profile to load.
+	 */
+	async saveProfile(profileName: string = 'Default') {
+		// Check target dir exist
+		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
+			new Notice(`Failed to save ${profileName} Profile!`);
+			return;
+		}
+		// Check for modified files
+		this.getAllConfigFiles().forEach(file => {
+			if (file.includes("/*/") && getVaultPath() !== "") {
+				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+
+				pathVariants.forEach(value => {
+					console.log('save variants', value)
+					if(!copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value])) {
+						new Notice(`Failed to save ${profileName} Profile!`);
+						return;
+					}
+				})
+			}
+			else if (getVaultPath() !== "") {
+				console.log('save file', file)
+				if(!copyFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file])) {
+					new Notice(`Failed to save ${profileName} Profile!`);
+					return;
+				}
+			}
+		});
+
+		// Check for modified files in paths
+		this.getAllConfigPaths().forEach(path => {
+			if (getVaultPath() !== '') {
+				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
+
+				files.forEach(file => {
+					console.log('save path', file)
+					if(!copyFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file])) {
+						new Notice(`Failed to save ${profileName} Profile!`);
+						return;
+					}
+				});
+			}
+		});
+	}
+
+	/**
+	 * Load the profile settings
+	 * @param profileName [profileName='Default'] The name of the profile to load.
+	 */
+	async loadProfile(profileName: string = 'Default') {
+		// Check target dir exist
+		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
+			new Notice(`Failed to load ${profileName} Profile!`);
+			return;
+		}
+		// Check for modified files
+		this.getAllConfigFiles().forEach(file => {
+			if (file.includes("/*/") && getVaultPath() !== "") {
+				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+
+				pathVariants.forEach(value => {
+					console.log('load variants', value)
+					copyFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
+				})
+			}
+			else if (getVaultPath() !== "") {
+				console.log('load file', file)
+				copyFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
+			}
+		});
+
+		// Check for modified files in paths
+		this.getAllConfigPaths().forEach(path => {
+			if (getVaultPath() !== '') {
+				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
+
+				files.forEach(file => {
+					console.log('load path', file)
+					copyFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file]);
+				});
+			}
+		});
+	}
+
+	/**
 	 * Sync Settings for the profile. With the current vault settings.
 	 * @param profileName [profileName='Default'] The name of the profile to sync.
-	 * @param force [force=false] Enable this option to force the use of profile settings
+	 * @deprecated will be removed on release. Replaced with saveProfile/loadProfile
 	 */
-	async syncSettings(profileName: string = 'Default', force = false) {
+	async syncSettings(profileName: string = 'Default') {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
 			new Notice(`Failed to sync ${profileName} Profile!`);
@@ -238,11 +325,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
-					keepNewestFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value], force);
+					keepNewestFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
 				})
 			}
 			else if (getVaultPath() !== "") {
-				keepNewestFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file], force);
+				keepNewestFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
 			}
 		});
 
@@ -252,7 +339,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
 				files.forEach(file => {
-					keepNewestFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file], force);
+					keepNewestFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file]);
 				});
 			}
 		});
