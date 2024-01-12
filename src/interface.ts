@@ -95,5 +95,5 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
 	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
-	profilesList: [DEFAULT_PROFILE]
+	profilesList: []
 }
