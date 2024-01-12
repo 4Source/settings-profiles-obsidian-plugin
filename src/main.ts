@@ -25,15 +25,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.registerEvent(this.app.workspace.on('quit', () => {
 			// Sync profiles
 			if (profile?.autoSync) {
-				this.syncSettings(profile.name);
+				this.saveProfile(profile.name);
 			}
 		}));
-
-		// Sync profile on startup
-		if (profile?.autoSync) {
-			this.syncSettings(profile.name, true);
-		}
-
 
 		// Display Settings Profile on Startup
 		new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
@@ -77,9 +71,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
 		// Sync Profiles
-		const profile = this.getCurrentProfile();
+		let profile = this.getCurrentProfile();
 		if (profile?.autoSync) {
-			this.syncSettings(profile.name);
+			this.loadProfile(profile.name);
 		}
 	}
 
@@ -94,7 +88,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Sync Profiles
 		const profile = this.getCurrentProfile();
 		if (profile?.autoSync) {
-			this.syncSettings(profile.name);
+			this.saveProfile(profile.name);
 		}
 	}
 
@@ -154,33 +148,48 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.app.commands.executeCommandById("app:reload");
 		}
 		else {
-			// Copy config failed.
-			new Notice(`Failed to switch ${this.getCurrentProfile()?.name} profile!`);
-			// Reset profile
-			previousProfile.enabled = true;
+			// Copy settings failed.
+			new Notice(`Failed to switch ${profileName} Profile!`);
 		}
-		await this.saveSettings();
+
+		this.loadProfile(profileName)
+			.then(() => {
+				this.saveSettings();
+			})
+			.finally(() => {
 				// Reload obsidian so changed settings can take effect
 				// @ts-ignore
 				this.app.commands.executeCommandById("app:reload");
+			})
 	}
 
 	/**
 	 * Create a new profile based on the current profile.
 	 * @param profileName The name of the new profile
 	 */
-	async createProfile(newProfile: PerProfileSetting) {
-		if (this.settings.profilesList.find(profile => profile.name === newProfile.name)) {
-			new Notice('Failed to create profile! Already exist.')
+	async createProfile(profile: PerProfileSetting) {
+		// Check profile Exist
+		if (this.settings.profilesList.find(value => value.name === profile.name)) {
+			new Notice('Failed to create Profile! Already exist.')
 			return;
 		}
 
-		newProfile.enabled = false;
+		// Add profile to profileList
+		this.settings.profilesList.push(profile);
 
-		this.settings.profilesList.push(newProfile);
+		// Enabel new Profile
+		const selectedProfile = this.settings.profilesList.find(value => value.name === profile.name);
+		if (selectedProfile) {
+			// Sync the profile settings
+			this.saveProfile(selectedProfile.name);
+			// Disable selected profile
+			selectedProfile.enabled = false;
+		}
+		else {
+			new Notice(`Failed to create Profile ${profile.name}!`);
+			this.settings.profilesList.pop();
+		}
 
-		// Copy profile config
-		this.copyConfig(getVaultPath() !== "" ? [getVaultPath(), this.app.vault.configDir] : [], [this.settings.profilesPath, newProfile.name]);
 		await this.saveSettings();
 	}
 
@@ -209,7 +218,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	}
 
 	/**
-	 * Removes the profile and all its configs
+	 * Removes the profile and all its settings
 	 * @param profileName The name of the profile
 	 */
 	async removeProfile(profileName: string) {
@@ -228,7 +237,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		}
 
-		// Remove to profile config
+		// Remove to profile settings
 		removeDirectoryRecursiveSync([this.settings.profilesPath, profileName]);
 
 		this.settings.profilesList.remove(profile);
@@ -251,16 +260,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
-					console.log('save variants', value)
-					if(!copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value])) {
+					if (!copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value])) {
 						new Notice(`Failed to save ${profileName} Profile!`);
 						return;
 					}
 				})
 			}
 			else if (getVaultPath() !== "") {
-				console.log('save file', file)
-				if(!copyFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file])) {
+				if (!copyFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file])) {
 					new Notice(`Failed to save ${profileName} Profile!`);
 					return;
 				}
@@ -273,8 +280,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
 				files.forEach(file => {
-					console.log('save path', file)
-					if(!copyFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file])) {
+					if (!copyFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file])) {
 						new Notice(`Failed to save ${profileName} Profile!`);
 						return;
 					}
@@ -299,12 +305,10 @@ export default class SettingsProfilesPlugin extends Plugin {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
-					console.log('load variants', value)
 					copyFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
 				})
 			}
 			else if (getVaultPath() !== "") {
-				console.log('load file', file)
 				copyFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
 			}
 		});
@@ -315,7 +319,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
 				files.forEach(file => {
-					console.log('load path', file)
 					copyFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file]);
 				});
 			}
