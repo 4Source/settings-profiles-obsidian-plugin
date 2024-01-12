@@ -12,7 +12,6 @@ export interface PerProfileSetting {
 	corePlugins: boolean;
 	graph: boolean;
 	hotkeys: boolean;
-	snippets: boolean;
 }
 
 type PerProfileSettingMap = {
@@ -41,7 +40,8 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	appearance: {
 		name: 'Appearance',
 		description: 'Says whether the obsidian appearance settings will sync.',
-		file: 'appearance.json'
+		file: 'appearance.json',
+		path: 'snippets'
 	},
 	app: {
 		name: 'App',
@@ -72,12 +72,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 		name: 'Hotkeys',
 		description: 'Says whether the obsidian hotkey settings will sync.',
 		file: 'hotkeys.json'
-	},
-	snippets: {
-		name: 'CSS snippets',
-		description: 'Says whether the CSS snippets will sync.',
-		path: 'snippets'
-	},
+	}
 }
 
 export const DEFAULT_PROFILE: PerProfileSetting = {
@@ -91,7 +86,6 @@ export const DEFAULT_PROFILE: PerProfileSetting = {
 	corePlugins: true,
 	graph: true,
 	hotkeys: true,
-	snippets: true,
 }
 
 export interface Settings {

@@ -52,7 +52,9 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
 	const targetFile = join(...targetPath);
 
 	// Check target dir exist
-	ensurePathExist([dirname(join(...targetPath))]);
+	if (!ensurePathExist([dirname(join(...targetPath))])) {
+		return;
+	}
 
 	// Keep newest file
 	if (existsSync(sourceFile) && (!existsSync(targetFile) || statSync(sourceFile).mtime > statSync(targetFile).mtime)) {

@@ -237,7 +237,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			new Notice(`Failed to sync ${profileName} Profile!`);
 			return;
 		}
-
 		// Check for modified files
 		this.getAllConfigFiles().forEach(file => {
 			if (file.includes("/*/") && getVaultPath() !== "") {
@@ -254,26 +253,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Check for modified files in paths
 		this.getAllConfigPaths().forEach(path => {
-			let files = getAllFiles(getVaultPath() !== "" ?
-				[
-					getVaultPath(),
-					this.app.vault.configDir,
-					path] : [],);
+			if (getVaultPath() !== '') {
+				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
-			files.forEach(file => {
-				keepNewestFile(getVaultPath() !== "" ?
-					[
-						getVaultPath(),
-						this.app.vault.configDir,
-						path,
-						file] : [],
-					[
-						this.settings.profilesPath,
-						profileName,
-						path,
-						file
-					]);
-			});
+				files.forEach(file => {
+					keepNewestFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file]);
+				});
+			}
 		});
 
 	}
