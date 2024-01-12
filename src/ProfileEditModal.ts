@@ -19,7 +19,7 @@ export class ProfileEditModal extends Modal {
 		const { contentEl } = this;
 
 		// Heading for Edit profile
-		contentEl.createEl('h1', {text: `Edit ${this.profile.name} profile`});
+		contentEl.createEl('h1', { text: `Edit ${this.profile.name} profile` });
 
 		// Add All existing options
 		for (const key in this.profile) {
