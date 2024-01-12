@@ -3,8 +3,6 @@ import SettingsProfilesPlugin from './main';
 import { ProfileEditModal } from './ProfileEditModal';
 import { ProfileAddModal } from './ProfileAddModal';
 import { DEFAULT_PROFILE } from './interface';
-
-
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -79,7 +77,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileAddModal(this.app, this.plugin, this.plugin.getCurrentProfile(), (result) => {
+					new ProfileAddModal(this.app, this.plugin, DEFAULT_PROFILE, (result) => {
 						this.plugin.createProfile(result);
 						this.display();
 					}).open();

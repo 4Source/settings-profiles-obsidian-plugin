@@ -23,13 +23,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Register to close obsidian
 		this.registerEvent(this.app.workspace.on('quit', () => {
 			// Sync Profiles
-			if (this.getCurrentProfile().autoSync) {
+			if (this.getCurrentProfile()?.autoSync) {
 				this.syncSettings();
 			}
 		}));
 
 		// Display Settings Profile on Startup
-		new Notice(`Current profile: ${this.getCurrentProfile().name}`);
+		new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
 
 		// Add Command to Switch between profiles
 		this.addCommand({
@@ -55,7 +55,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			id: "current-profile",
 			name: "Show current profile",
 			callback: () => {
-				new Notice(`Current profile: ${this.getCurrentProfile().name}`);
+				new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
 			}
 		});
 	}
@@ -70,7 +70,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
 		// Sync Profiles
-		if (this.getCurrentProfile().autoSync) {
+		if (this.getCurrentProfile()?.autoSync) {
 			this.syncSettings();
 		}
 	}
@@ -84,7 +84,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.saveData(this.settings);
 
 		// Sync Profiles
-		if (this.getCurrentProfile().autoSync) {
+		if (this.getCurrentProfile()?.autoSync) {
 			this.syncSettings();
 		}
 	}
@@ -117,6 +117,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Save current Profile to possible switch back if failed
 		const previousProfile = structuredClone(this.getCurrentProfile());
 
+		if (!previousProfile) {
+			new Notice(`Failed to switch ${this.getCurrentProfile()?.name} Profile!`);
+			return;
+		}
+
 		// Check is current profile
 		if (previousProfile.name === profileName) {
 			new Notice('Allready current Profile!');
@@ -124,7 +129,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		// Disabel current profile
-		this.getCurrentProfile().enabled = false;
+		const current = this.getCurrentProfile();
+		if (current)
+			current.enabled = false;
 
 		// Enabel new Profile
 		const newProfile = this.settings.profilesList.find(profile => profile.name === profileName);
@@ -133,25 +140,25 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		// Load profile config
-		if (await this.copyConfig(
+		const profile = this.getCurrentProfile();
+		if (profile && await this.copyConfig(
 			[
 				this.settings.profilesPath,
-				this.getCurrentProfile().name],
+				profile.name],
 			getVaultPath() !== "" ? [
 				getVaultPath(),
 				this.app.vault.configDir
 			] : [])) {
 
-			new Notice(`Switched to profile ${this.getCurrentProfile().name}`);
+			new Notice(`Switched to profile ${this.getCurrentProfile()?.name}`);
 			// Reload obsidian so changed settings can take effect
 			// @ts-ignore
 			this.app.commands.executeCommandById("app:reload");
 		}
 		else {
 			// Copy config failed.
-			new Notice(`Failed to switch ${this.getCurrentProfile().name} profile!`);
+			new Notice(`Failed to switch ${this.getCurrentProfile()?.name} profile!`);
 			// Reset profile
-			this.getCurrentProfile().enabled = false;
 			previousProfile.enabled = true;
 		}
 		await this.saveSettings();
@@ -229,9 +236,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Sync Settings for the profile. With the current vault settings.
-	 * @param profileName [current profile] The name of the profile to sync.
+	 * @param profileName [profileName='Default'] The name of the profile to sync.
 	 */
-	async syncSettings(profileName: string = this.getCurrentProfile().name) {
+	async syncSettings(profileName = 'Default') {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
 			new Notice(`Failed to sync ${profileName} profile!`);
@@ -337,18 +344,21 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	getAllConfigFiles(): string[] { // {add: string[], remove: string[]}
 		const files = [];
-		for (const key in this.getCurrentProfile()) {
-			if (this.getCurrentProfile().hasOwnProperty(key)) {
-				const value = this.getCurrentProfile()[key as keyof PerProfileSetting];
+		const profile = this.getCurrentProfile();
+		if (profile) {
+			for (const key in profile) {
+				if (profile.hasOwnProperty(key)) {
+					const value = profile[key as keyof PerProfileSetting];
 
-				if (typeof value === 'boolean' && key !== 'enabled') {
-					if (value) {
-						const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
-						if (typeof file === 'string') {
-							files.push(file);
-						}
-						else if (Array.isArray(file)) {
-							files.push(...file);
+					if (typeof value === 'boolean' && key !== 'enabled') {
+						if (value) {
+							const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
+							if (typeof file === 'string') {
+								files.push(file);
+							}
+							else if (Array.isArray(file)) {
+								files.push(...file);
+							}
 						}
 					}
 				}
@@ -364,18 +374,21 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	getAllConfigPaths(): string[] { // {add: string[], remove: string[]}
 		let paths = [];
-		for (const key in this.getCurrentProfile()) {
-			if (this.getCurrentProfile().hasOwnProperty(key)) {
-				const value = this.getCurrentProfile()[key as keyof PerProfileSetting];
+		const profile = this.getCurrentProfile();
+		if (profile) {
+			for (const key in profile) {
+				if (profile.hasOwnProperty(key)) {
+					const value = profile[key as keyof PerProfileSetting];
 
-				if (typeof value === 'boolean' && key !== 'enabled') {
-					if (value) {
-						const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
-						if (typeof path === 'string') {
-							paths.push(path);
-						}
-						else if (Array.isArray(path)) {
-							paths.push(...path);
+					if (typeof value === 'boolean' && key !== 'enabled') {
+						if (value) {
+							const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
+							if (typeof path === 'string') {
+								paths.push(path);
+							}
+							else if (Array.isArray(path)) {
+								paths.push(...path);
+							}
 						}
 					}
 				}
@@ -388,12 +401,12 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Gets the currently enabeled profile.
-	 * @returns The SettingsProfile object.
+	 * @returns The SettingsProfile object. Or undefined if not found.
 	 */
-	getCurrentProfile(): PerProfileSetting {
+	getCurrentProfile(): PerProfileSetting | undefined {
 		const currentProfile = this.settings.profilesList.find(profile => profile.enabled === true);
 		if (!currentProfile) {
-			return DEFAULT_PROFILE;
+			return;
 		}
 		return currentProfile;
 	}
