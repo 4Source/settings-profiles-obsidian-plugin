@@ -46,22 +46,24 @@ export function getAllFiles(path: string[]): string[] {
  * Compares to files and make them in both direcories equal.
  * @param sourcePath The source file
  * @param targetPath The target file
- * @param force [force=false] Enable this option to force the source to be preserved
  */
-export function keepNewestFile(sourcePath: string[], targetPath: string[], force = false) {
+export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
 	const sourceFile = join(...sourcePath);
 	const targetFile = join(...targetPath);
 
-	// Check target dir exist
-	if (!ensurePathExist([dirname(join(...targetPath))])) {
-		return;
-	}
-
 	// Keep newest file
 	if (existsSync(sourceFile) && (!existsSync(targetFile) || statSync(sourceFile).mtime > statSync(targetFile).mtime)) {
+		// Check target dir exist
+		if (!ensurePathExist([dirname(targetFile)])) {
+			return;
+		}
 		copyFileSync(sourceFile, targetFile);
 	}
 	else if (existsSync(targetFile)) {
+		// Check target dir exist
+		if (!ensurePathExist([dirname(sourceFile)])) {
+			return;
+		}
 		copyFileSync(targetFile, sourceFile);
 	}
 }
