@@ -70,15 +70,13 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
 
 /**
  * Copies a file from a source path to a target path
- * @param sourcePath The source path
- * @param targetPath The target path
- * @param fileName The name of the file
- * @param fileNameTarget [fileName] The name of the file at target
+ * @param sourcePath The source file
+ * @param targetPath The target file
  * @returns Copy was successfull
  */
-export function copyFile(sourcePath: string[], targetPath: string[], fileName: string, fileNameTarget: string = fileName): boolean {
-	const sourceFile = join(...sourcePath, fileName);
-	const targetFile = join(...targetPath, fileNameTarget);
+export function copyFile(sourcePath: string[], targetPath: string[]): boolean {
+	const sourceFile = join(...sourcePath);
+	const targetFile = join(...targetPath);
 
 	if (!existsSync(sourceFile)) {
 		return false;

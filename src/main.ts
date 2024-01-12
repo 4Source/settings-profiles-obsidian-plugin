@@ -285,7 +285,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Check each Config File
 		this.getAllConfigFiles().forEach(file => {
-			if (!copyFile(sourcePath, targetPath, file)) {
+			if (!copyFile([...sourcePath, file], [...targetPath, file])) {
 				new Notice(`Failed to copy config!`);
 				return;
 			}
@@ -297,14 +297,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
-					if (!copyFile([...sourcePath, ...value.slice(0, value.length - 1)], [...targetPath, ...value.slice(0, value.length - 1)], value.slice(value.length - 1)[0])) {
+					if (!copyFile([...sourcePath, ...value], [...targetPath, ...value])) {
 						new Notice(`Failed to copy config!`);
 						return;
 					}
 				})
 			}
 			else {
-				if (!copyFile(sourcePath, targetPath, file)) {
+				if (!copyFile([...sourcePath, file], [...targetPath, file])) {
 					new Notice(`Failed to copy config!`);
 					return;
 				}
@@ -322,7 +322,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			let files = getAllFiles([...sourcePath, path]);
 
 			files.forEach(file => {
-				if (!copyFile([...sourcePath, path], [...targetPath, path], file)) {
+				if (!copyFile([...sourcePath, path, file], [...targetPath, path, file])) {
 					new Notice(`Failed to copy config!`);
 					return;
 				}
