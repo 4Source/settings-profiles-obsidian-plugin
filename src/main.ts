@@ -114,13 +114,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Save current Profile to possible switch back if failed
 		const previousProfile = this.getCurrentProfile();
 
-		if (!previousProfile) {
-			new Notice(`Failed to switch ${profileName} Profile!`);
-			return;
-		}
-
 		// Check is current profile
-		if (previousProfile.name === profileName) {
+		if (previousProfile && previousProfile.name === profileName) {
 			new Notice('Allready current Profile!');
 			return;
 		}
