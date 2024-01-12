@@ -339,17 +339,16 @@ export default class SettingsProfilesPlugin extends Plugin {
 	}
 
 	/**
-	 * Returns all configs if they are enabeled in current profile
+	 * Returns all settings if they are enabeled in profile
 	 * @returns an array of file names
+	 * @todo return {add: string[], remove: string[]}
 	 */
-	getAllConfigFiles(): string[] { // {add: string[], remove: string[]}
-		const files = [];
+	getAllConfigFiles(): string[] {
 		const profile = this.getCurrentProfile();
-		if (profile) {
+		const files = [];
 			for (const key in profile) {
 				if (profile.hasOwnProperty(key)) {
 					const value = profile[key as keyof PerProfileSetting];
-
 					if (typeof value === 'boolean' && key !== 'enabled') {
 						if (value) {
 							const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
@@ -363,23 +362,21 @@ export default class SettingsProfilesPlugin extends Plugin {
 					}
 				}
 			}
-		}
 
 		return files;
 	}
 
 	/**
-	 * Returns all configs paths if thay are enabeled in current profile
+	 * Returns all settings paths if thay are enabeled in profile
 	 * @returns an array of paths
+	 * @todo return {add: string[], remove: string[]}
 	 */
-	getAllConfigPaths(): string[] { // {add: string[], remove: string[]}
-		let paths = [];
+	getAllConfigPaths(): string[] {
 		const profile = this.getCurrentProfile();
-		if (profile) {
+		let paths = [];
 			for (const key in profile) {
 				if (profile.hasOwnProperty(key)) {
 					const value = profile[key as keyof PerProfileSetting];
-
 					if (typeof value === 'boolean' && key !== 'enabled') {
 						if (value) {
 							const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
@@ -393,7 +390,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 					}
 				}
 			}
-		}
 
 		return paths;
 	}
