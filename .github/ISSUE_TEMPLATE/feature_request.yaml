@@ -1,0 +1,60 @@
+name: Feature request
+description: Suggest an idea for this project
+title: "[FEAT]: "
+labels: ["enhancement"]
+assignees:
+  - 4Source
+body:
+  - type: markdown
+    attributes: 
+      value: "### If your feature request is to resolve unexpected behavior, use *Bug Report* instead."
+  - type: checkboxes
+    attributes: 
+      label: Is your feature request related to a problem?
+      description: Are you struggling to do something and think it could be made easier?
+      options: 
+        - label: The feature should solve a problem.
+          required: false
+  - type: textarea
+    id: related-problem
+    attributes: 
+      label: Describe the Problem your feature should fix.
+      description: A clear and concise description of the problem. If the feature is intended to solve a problem.
+      placeholder: I'm always frustrated when ...
+    validations: 
+      required: false
+  - type: textarea
+    id: feature
+    attributes:
+      label: Describe the feature you would like to have.
+      description: A clear and concise description of the feature.
+      placeholder: Tell us what the feature will do...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+      placeholder: Tell us about your solution...
+    validations: 
+      required: false
+  - type: textarea
+    id: alternative-solution
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
+      placeholder: Tell us an alternative solution...
+    validations: 
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+      placeholder: Explain any additional context...
+    validations:
+      required: false
+  - type: markdown
+    attributes: 
+      value: "Thanks for taking the time to fill out this feature request!"
