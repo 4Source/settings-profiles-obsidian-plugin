@@ -3,8 +3,6 @@ import SettingsProfilesPlugin from './main';
 import { ProfileEditModal } from './ProfileEditModal';
 import { ProfileAddModal } from './ProfileAddModal';
 import { DEFAULT_PROFILE } from './interface';
-
-
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -32,44 +30,54 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setButtonText('Change')
 				.setWarning()
 				.onClick(async () => {
-					const input:HTMLInputElement|null = this.containerEl.querySelector('#profile-path');
-					if(input) {
+					const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
+					if (input) {
 						await this.plugin.changeProfilePath(normalizePath(input.value));
 					}
-					const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
-					if(button) {
+					const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+					if (button) {
 						button.toggleVisibility(false);
 					}
 				})
-				.buttonEl.setAttrs({'id': 'profile-change', 'style': 'visibility:hidden'}))
+				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
 				.setValue(this.plugin.settings.profilesPath)
 				.onChange(value => {
-					if(value !== this.plugin.settings.profilesPath) {
-						const input:HTMLInputElement|null = this.containerEl.querySelector('#profile-path');
-						if(input) {
-							const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
-							if(button) {
+					if (value !== this.plugin.settings.profilesPath) {
+						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
+						if (input) {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							if (button) {
 								button.toggleVisibility(true);
 							}
 						}
 					}
 					else {
-						const button:HTMLButtonElement|null = this.containerEl.querySelector('#profile-change');
-							if(button) {
-								button.toggleVisibility(false);
-							}
+						const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+						if (button) {
+							button.toggleVisibility(false);
+						}
 					}
 				})
 				.inputEl.id = 'profile-path')
 			;
 
 		new Setting(containerEl)
-				.addButton(button => button
-					.setButtonText('Sync Profile')
-					.onClick(() => {
-						this.plugin.syncSettings(this.plugin.getCurrentProfile().name);
-					}));
+			.addButton(button => button
+				.setButtonText('Save Profile')
+				.onClick(() => {
+					const profile = this.plugin.getCurrentProfile();
+					if (profile)
+						this.plugin.saveProfile(profile.name);
+				}))
+			.addButton(button => button
+				.setButtonText('Load Profile')
+				.onClick(() => {
+					const profile = this.plugin.getCurrentProfile();
+					if (profile)
+						this.plugin.loadProfile(profile.name);
+				}));
+
 
 		// Heading for Profiles
 		new Setting(containerEl)
@@ -79,7 +87,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileAddModal(this.app, this.plugin, this.plugin.getCurrentProfile(), (result) => {
+					new ProfileAddModal(this.app, this.plugin, DEFAULT_PROFILE, (result) => {
 						this.plugin.createProfile(result);
 						this.display();
 					}).open();

@@ -3,29 +3,43 @@ import { FileSystemAdapter, Notice } from "obsidian";
 import { dirname, join } from "path";
 
 /**
- * Retruns all files in this direcory. Subdirectorys are not includes.
+ * Retruns all files in this direcory. Could be used with placeholder /*\/ for all directorys that match the pattern.
  * @param path Path to check for files
  * @returns an array of file names
  */
 export function getAllFiles(path: string[]): string[] {
-	const files = readdirSync(join(...path));
-	return files.filter((name) => {
-		const currentFile = join(...path, name);
-		return !statSync(currentFile).isDirectory();
-	});
-}
+	let pathSections: string[] = [];
+	let files: string[] = [];
 
-/**
- * Retruns all first level paths in this direcory. Subdirectorys are not includes.
- * @param path Path to check for Subdirectorys
- * @returns an array of path names
- */
-export function getAllPaths(path: string[]): string[] {
-	const files = readdirSync(join(...path));
-	return files.filter((name) => {
-		const currentFile = join(...path, name);
-		return statSync(currentFile).isDirectory();
-	});
+	// Check path contains placeholder
+	if (join(...path).includes('\\*\\')) {
+		pathSections = join(...path).split('\\*\\');
+
+		if (pathSections.length > 0) {
+			let pathContent = readdirSync(pathSections[0]);
+
+			pathContent.forEach(value => {
+				const joinedPath = join(pathSections[0], value, ...pathSections.filter((value, index) => index > 0));
+				files = files.concat(getAllFiles([joinedPath]));
+			});
+		}
+	}
+	// Path doesn't exist
+	else if (!existsSync(join(...path))) {
+		return [];
+	}
+	// Path is file
+	else if (!statSync(join(...path)).isDirectory()) {
+		return path;
+	}
+	// Get files in path
+	else {
+		let pathContent = readdirSync(join(...path)).map(value => join(...path, value));
+		files = pathContent.filter((value) => {
+			return !statSync(value).isDirectory();
+		});
+	}
+	return files;
 }
 
 /**
@@ -37,37 +51,37 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
 	const sourceFile = join(...sourcePath);
 	const targetFile = join(...targetPath);
 
-	console.log(sourceFile + ' ' , existsSync(sourceFile))
-	console.log(targetFile + ' ' , existsSync(targetFile))
-
-	// Check target dir exist
-	ensurePathExist([dirname(join(...targetPath))]);
-
 	// Keep newest file
 	if (existsSync(sourceFile) && (!existsSync(targetFile) || statSync(sourceFile).mtime > statSync(targetFile).mtime)) {
+		// Check target dir exist
+		if (!ensurePathExist([dirname(targetFile)])) {
+			return;
+		}
 		copyFileSync(sourceFile, targetFile);
 	}
 	else if (existsSync(targetFile)) {
+		// Check target dir exist
+		if (!ensurePathExist([dirname(sourceFile)])) {
+			return;
+		}
 		copyFileSync(targetFile, sourceFile);
 	}
 }
 
 /**
  * Copies a file from a source path to a target path
- * @param sourcePath The source path
- * @param targetPath The target path
- * @param fileName The name of the file
- * @param fileNameTarget [fileName] The name of the file at target
+ * @param sourcePath The source file
+ * @param targetPath The target file
  * @returns Copy was successfull
  */
-export function copyFile(sourcePath: string[], targetPath: string[], fileName: string, fileNameTarget: string = fileName): boolean {
-	const sourceFile = join(...sourcePath, fileName);
-	const targetFile = join(...targetPath, fileNameTarget);
+export function copyFile(sourcePath: string[], targetPath: string[]): boolean {
+	const sourceFile = join(...sourcePath);
+	const targetFile = join(...targetPath);
 
 	if (!existsSync(sourceFile)) {
 		return false;
 	}
-	if (!ensurePathExist(targetPath)) {
+	if (!ensurePathExist(targetPath.slice(0, targetPath.length - 1))) {
 		return false;
 	}
 
