@@ -1,0 +1,28 @@
+name: Question about the plugin
+description: Ask question about how to use this plugin.
+title: "[Q&A]: "
+labels: ["Q&A"]
+body:
+  - type: textarea
+    id: question
+    attributes: 
+      label: Describe what you need help with
+      description: A clear and concise description of what you need help with.
+      placeholder: How to ...
+    validations: 
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+      placeholder: Explain any additional context...
+    validations:
+      required: false
+  - type: checkboxes
+    attributes: 
+      label: Topic don't exist allready
+      description: Have you checked whether there is already a question on this topic?
+      options: 
+        - label: I confirm that there is not already a similar question.
+          required: true

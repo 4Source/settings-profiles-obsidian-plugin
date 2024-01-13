@@ -1,0 +1,72 @@
+name: Bug report
+description: Create a bug report to help us improve
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - 4Source
+body:
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: bug-reproduce-steps
+    attributes:
+      label: How to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: "1. In this environment..., 2. With this config..., 3. Run..., 4. See error..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: Tell us what should happened.
+    validations:
+      required: false
+  - type: input
+    id: operating-system
+    attributes:
+      label: OS of your device
+      description: What operating system is your device runnging
+      placeholder: e.g. Win10
+    validations:
+      required: true
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian Version
+      description: What version of obsidian are you running?
+      placeholder: v1.5.0
+    validations:
+      required: true
+  - type: markdown 
+    attributes: 
+      value: "This could be found in Settings>General>App>Current version"
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin Version
+      description: What version of our plugin are you running?
+      placeholder: "1.5.0"
+    validations:
+      required: true
+  - type: markdown 
+    attributes: 
+      value: "This could be found in Settings>Community plugins>Installed plugins>SettingsProfiles>Version"
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+      placeholder: Explain any additional context...
+    validations:
+      required: false
+  - type: markdown
+    attributes: 
+      value: "Thanks for taking the time to fill out this bug report!"
