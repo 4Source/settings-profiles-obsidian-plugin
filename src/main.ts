@@ -460,19 +460,17 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	getAllConfigPaths(): string[] {
 		const profile = this.getCurrentProfile();
-		let paths = [];
+		const paths = [];
 		for (const key in profile) {
 			if (profile.hasOwnProperty(key)) {
 				const value = profile[key as keyof PerProfileSetting];
-				if (typeof value === 'boolean' && key !== 'enabled') {
-					if (value) {
-						const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
-						if (typeof path === 'string') {
-							paths.push(path);
-						}
-						else if (Array.isArray(path)) {
-							paths.push(...path);
-						}
+				if (typeof value === 'boolean' && key !== 'enabled' && value) {
+					const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
+					if (typeof path === 'string') {
+						paths.push(path);
+					}
+					else if (Array.isArray(path)) {
+						paths.push(...path);
 					}
 				}
 			}
