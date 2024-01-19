@@ -56,7 +56,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	communityPlugins: {
 		name: 'Community Plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
-		file: ['community-plugins.json', 'plugins/*/data.json'],
+		file: ['community-plugins.json', 'plugins/*/'],
 	},
 	corePlugins: {
 		name: 'Core Plugins',
