@@ -244,9 +244,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Save the profile settings
-	 * @param profileName [profileName='Default'] The name of the profile to load.
+	 * @param profileName The name of the profile to load.
 	 */
-	async saveProfile(profileName: string = 'Default') {
+	async saveProfile(profileName: string) {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
 			new Notice(`Failed to save ${profileName} Profile!`);
@@ -289,9 +289,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Load the profile settings
-	 * @param profileName [profileName='Default'] The name of the profile to load.
+	 * @param profileName The name of the profile to load.
 	 */
-	async loadProfile(profileName: string = 'Default') {
+	async loadProfile(profileName: string) {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
 			new Notice(`Failed to load ${profileName} Profile!`);
