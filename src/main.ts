@@ -32,7 +32,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}));
 
 		// Display Settings Profile on Startup
-		new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
+		new Notice(`Current profile: ${profile?.name}`);
 
 		// Add Command to Switch between profiles
 		this.addCommand({
@@ -153,11 +153,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 			.then(() => {
 				this.saveSettings();
 			})
-			.finally(() => {
+			.then(() => {
 				// Reload obsidian so changed settings can take effect
 				// @ts-ignore
 				this.app.commands.executeCommandById("app:reload");
-			})
+			});
 	}
 
 	/**
@@ -173,6 +173,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Add profile to profileList
 		this.settings.profilesList.push(profile);
+		await this.saveSettings();
 
 		// Enabel new Profile
 		const selectedProfile = this.settings.profilesList.find(value => value.name === profile.name);
