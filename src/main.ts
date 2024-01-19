@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting
 
 export default class SettingsProfilesPlugin extends Plugin {
 	settings: Settings;
+	settingsTab: SettingsProfilesSettingTab;
 
 	async onload() {
 		await this.loadSettings();
@@ -18,7 +19,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
+		this.settingsTab = new SettingsProfilesSettingTab(this.app, this);
+		this.addSettingTab(this.settingsTab);
 
 		const profile = this.getCurrentProfile();
 		// Register to close obsidian
@@ -186,6 +188,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		await this.saveSettings();
+		this.settingsTab.display();
 	}
 
 	async editProfile(profileName: string, profileSettings: Partial<PerProfileSetting>) {
