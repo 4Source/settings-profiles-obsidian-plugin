@@ -297,7 +297,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Check for modified files
 		this.getAllConfigFiles().forEach(file => {
 			if (file.includes("/*/") && getVaultPath() !== "") {
-				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+				const pathVariants = getAllFiles([this.settings.profilesPath, profileName, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
 					copyFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
@@ -311,7 +311,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Check for modified files in paths
 		this.getAllConfigPaths().forEach(path => {
 			if (getVaultPath() !== '') {
-				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
+				let files = getAllFiles([this.settings.profilesPath, profileName, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
 				files.forEach(file => {
 					copyFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file]);
