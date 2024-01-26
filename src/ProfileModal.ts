@@ -77,7 +77,7 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
         // Profile is current
         if (suggestion.state === ProfileState.CURRENT) {
             content.parentElement?.createEl("div", { cls: "suggestion-aux" })
-                .createEl("span", { text: "Current Profile", cls: "suggestion-hotkey" })
+                .createEl("span", { text: "Current profile", cls: "suggestion-hotkey" })
         }
     }
 

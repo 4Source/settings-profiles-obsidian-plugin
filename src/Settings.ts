@@ -55,7 +55,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								// Create new Profile
 								const current = structuredClone(this.plugin.settings.profilesList.find(value => value.name === this.plugin.settings.profile));
 								if (!current) {
-									new Notice('Failed to create Profile!');
+									new Notice('Failed to create profile!');
 									return;
 								}
 								current.name = result.name;
@@ -71,9 +71,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						this.plugin.saveSettings();
 					}).open();
 				}));
-
-		// Heading for General Settings
-		this.containerEl.createEl("h2", { text: "General" });
 
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
