@@ -30,7 +30,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}));
 
 		// Display Settings Profile on Startup
-		new Notice(`Current Profile: ${this.settings.profile}`);
+		new Notice(`Current profile: ${this.settings.profile}`);
 
 		// Add Command to Switch between profiles
 		this.addCommand({
@@ -45,7 +45,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 							// Create new Profile
 							const current = structuredClone(this.settings.profilesList.find(value => value.name === this.settings.profile));
 							if (!current) {
-								new Notice('Failed to create Profile!');
+								new Notice('Failed to create profile!');
 								return;
 							}
 							current.name = result.name;
@@ -68,7 +68,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			id: "current-profile",
 			name: "Show current profile",
 			callback: () => {
-				new Notice(`Current Profile: ${this.settings.profile}`);
+				new Notice(`Current profile: ${this.settings.profile}`);
 			}
 		});
 	}
@@ -117,7 +117,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async switchProfile(profileName: string) {
 		// Check profile Exist
 		if (!this.settings.profilesList.find(value => value.name === profileName)) {
-			new Notice(`Failed to switch ${profileName} Profile!`, 10000);
+			new Notice(`Failed to switch ${profileName} profile!`, 10000);
 			return;
 		}
 
@@ -129,13 +129,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Load profile config
 		if (this.copyConfig(configSource, configTarget)) {
-			new Notice(`Switched to Profile ${this.settings.profile}`);
+			new Notice(`Switched to profile ${this.settings.profile}`);
 			// Reload obsidian so changed settings can take effect
 			// @ts-ignore
 			this.app.commands.executeCommandById("app:reload");
 		}
 		else {
-			new Notice(`Failed to switch ${this.settings.profile} Profile!`, 10000);
+			new Notice(`Failed to switch ${this.settings.profile} profile!`, 10000);
 			this.settings.profile = this.previousSettings.profile;
 		}
 	}
@@ -216,7 +216,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		return true;
 	}
 
-	getAllCSSFiles(target: string):string[] {
+	getAllCSSFiles(target: string): string[] {
 		if (!this.settings.snippets) {
 			return [];
 		}
