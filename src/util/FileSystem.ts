@@ -16,8 +16,10 @@ export function getAllFiles(path: string[]): string[] {
 		pathSections = join(...path).split('\\*\\');
 
 		if (pathSections.length > 0) {
+			// Get existing paths for placeholders
 			let pathContent = readdirSync(pathSections[0]);
 
+			// Add all combined files
 			pathContent.forEach(value => {
 				const joinedPath = join(pathSections[0], value, ...pathSections.filter((value, index) => index > 0));
 				files = files.concat(getAllFiles([joinedPath]));
@@ -56,8 +58,10 @@ export function getAllSubPaths(path: string[]): string[] {
 		pathSections = join(...path).split('\\*\\');
 
 		if (pathSections.length > 0) {
+			// Get existing paths for placeholder
 			let pathContent = readdirSync(pathSections[0]);
 
+			// Add all combined paths
 			pathContent.forEach(value => {
 				const joinedPath = join(pathSections[0], value, ...pathSections.filter((value, index) => index > 0));
 				paths = paths.concat(getAllSubPaths([joinedPath]));
@@ -89,14 +93,14 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
 
 	// Keep newest file
 	if (existsSync(sourceFile) && (!existsSync(targetFile) || statSync(sourceFile).mtime > statSync(targetFile).mtime)) {
-		// Check target dir exist
+		// Check target path exist
 		if (!ensurePathExist([dirname(targetFile)])) {
 			return;
 		}
 		copyFileSync(sourceFile, targetFile);
 	}
 	else if (existsSync(targetFile)) {
-		// Check target dir exist
+		// Check target path exist
 		if (!ensurePathExist([dirname(sourceFile)])) {
 			return;
 		}
@@ -114,9 +118,11 @@ export function copyFile(sourcePath: string[], targetPath: string[]): boolean {
 	const sourceFile = join(...sourcePath);
 	const targetFile = join(...targetPath);
 
+	// Check source exist
 	if (!existsSync(sourceFile)) {
 		return false;
 	}
+	// Check target path exist
 	if (!ensurePathExist(targetPath.slice(0, targetPath.length - 1))) {
 		return false;
 	}
@@ -134,14 +140,17 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 	const source = join(...sourcePath);
 	const target = join(...targetPath);
 
-	if (!isValidPath([source]) || !isValidPath([target]) || !existsSync(source)) {
+	// Check source is a valid path and exist
+	if (!isValidPath([source]) || !existsSync(source)) {
 		return false;
 	}
-	if (!ensurePathExist([target])) {
+	// Check target is a valid path and ensure exist 
+	if (!isValidPath([target]) || !ensurePathExist([target])) {
 		new Notice(`Failed to copy folder!`);
-		return;
+		return false;
 	}
 
+	// Files in source
 	const files = readdirSync(source);
 
 	files.forEach(file => {
@@ -149,8 +158,10 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 		const targetFile = join(target, file);
 
 		if (statSync(sourceFile).isDirectory()) {
+			// Copy files in subpath
 			copyFolderRecursiveSync([sourceFile], [targetFile]);
 		} else {
+			// Copy file
 			copyFileSync(sourceFile, targetFile);
 		}
 	});
@@ -165,6 +176,7 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
  * @returns Returns ``true`` if the path exists, ``false`` if failed to create the path.
  */
 export function ensurePathExist(path: string[], recursive = true): boolean {
+	// If path not exist create it 
 	if (!existsSync(join(...path))) {
 		mkdirSync(join(...path), { recursive });
 	}
@@ -178,6 +190,7 @@ export function ensurePathExist(path: string[], recursive = true): boolean {
  */
 export function isValidPath(path: string[]) {
 	try {
+		// Check is not an empty string
 		if (join(...path) === "") {
 			return false;
 		}

@@ -39,6 +39,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			id: "open-profile-switcher",
 			name: "Open profile switcher",
 			callback: () => {
+				// Open new profile switcher modal to switch or create a new profile
 				new ProfileSwitcherModal(this.app, this, (result, state) => {
 					switch (state) {
 						case ProfileState.CURRENT:
@@ -70,6 +71,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Sync Profiles if enabeled.
 	 */
 	private async loadSettings() {
+		// Load settings from file if exist or create default
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 
 		// Sync Profiles
@@ -188,8 +190,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.settings.profilesList.pop();
 		}
 
+		// Save settings and reload settings tab 
 		await this.saveSettings();
-		this.settingsTab.display();
 	}
 
 	async editProfile(profileName: string, profileSettings: Partial<PerProfileSetting>) {
@@ -213,6 +215,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		});
 
+		// Save settings and reload settings tab 
 		await this.saveSettings();
 	}
 
@@ -238,8 +241,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Remove to profile settings
 		removeDirectoryRecursiveSync([this.settings.profilesPath, profileName]);
-
 		this.settings.profilesList.remove(profile);
+		
+		// Save settings and reload settings tab 
 		await this.saveSettings();
 	}
 

@@ -109,6 +109,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onClick(() => {
 						new ProfileEditModal(this.app, this.plugin, profile, (result) => {
 							this.plugin.editProfile(result.name, result);
+							this.display();
 						}).open();
 					}))
 				// .addExtraButton(button => button
