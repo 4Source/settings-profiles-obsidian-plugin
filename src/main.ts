@@ -120,7 +120,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Check is current profile
 		if (previousProfile && previousProfile.name === profileName) {
-			new Notice('Allready current Profile!');
+			new Notice('Allready current profile!');
 			return;
 		}
 
@@ -148,7 +148,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 		else {
 			// Copy settings failed.
-			new Notice(`Failed to switch ${profileName} Profile!`);
+			new Notice(`Failed to switch ${profileName} profile!`);
 		}
 
 		this.loadProfile(profileName)
@@ -169,7 +169,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async createProfile(profile: PerProfileSetting) {
 		// Check profile Exist
 		if (this.settings.profilesList.find(value => value.name === profile.name)) {
-			new Notice('Failed to create Profile! Already exist.')
+			new Notice('Failed to create profile! Already exist.')
 			return;
 		}
 
@@ -186,7 +186,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			selectedProfile.enabled = false;
 		}
 		else {
-			new Notice(`Failed to create Profile ${profile.name}!`);
+			new Notice(`Failed to create profile ${profile.name}!`);
 			this.settings.profilesList.pop();
 		}
 
@@ -254,7 +254,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async saveProfile(profileName: string) {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
-			new Notice(`Failed to save ${profileName} Profile!`);
+			new Notice(`Failed to save ${profileName} profile!`);
 			return;
 		}
 		// Check for modified files
@@ -264,14 +264,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 				pathVariants.forEach(value => {
 					if (!copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value])) {
-						new Notice(`Failed to save ${profileName} Profile!`);
+						new Notice(`Failed to save ${profileName} profile!`);
 						return;
 					}
 				})
 			}
 			else if (getVaultPath() !== "") {
 				if (!copyFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file])) {
-					new Notice(`Failed to save ${profileName} Profile!`);
+					new Notice(`Failed to save ${profileName} profile!`);
 					return;
 				}
 			}
@@ -284,7 +284,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 				files.forEach(file => {
 					if (!copyFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file])) {
-						new Notice(`Failed to save ${profileName} Profile!`);
+						new Notice(`Failed to save ${profileName} profile!`);
 						return;
 					}
 				});
@@ -299,7 +299,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	async loadProfile(profileName: string) {
 		// Check target dir exist
 		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
-			new Notice(`Failed to load ${profileName} Profile!`);
+			new Notice(`Failed to load ${profileName} profile!`);
 			return;
 		}
 		// Check for modified files

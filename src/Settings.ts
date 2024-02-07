@@ -17,11 +17,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		// Heading for General Settings
-		new Setting(containerEl)
-			.setHeading()
-			.setName('General');
-
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
 			.setName('Profile save path')
@@ -128,7 +123,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 				.addExtraButton(button => button
 					.setIcon(this.plugin.isEnabled(profile) ? 'check' : 'download')
-					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to Profile')
+					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(async () => {
 						if (!profile.enabled) {

@@ -27,7 +27,7 @@ type PerProfileSettingMap = {
 export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	name: {
 		name: 'Name',
-		description: 'Naming of this Profile.',
+		description: 'Naming of this profile.',
 	},
 	enabled: {
 		name: 'Enabled',
