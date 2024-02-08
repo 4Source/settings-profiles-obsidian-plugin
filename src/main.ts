@@ -1,7 +1,7 @@
 import { Notice, Plugin } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
-import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
+import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
@@ -38,13 +38,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 			name: "Open profile switcher",
 			callback: () => {
 				// Open new profile switcher modal to switch or create a new profile
-				new ProfileSwitcherModal(this.app, this, (result, state) => {
+				new ProfileSwitcherModal(this.app, this, async (result, state) => {
 					switch (state) {
 						case ProfileState.CURRENT:
 							return;
 						case ProfileState.NEW:
 							// Create new Profile
-							this.createProfile(result);
+							await this.createProfile(result);
 							break;
 					}
 					this.switchProfile(result.name);
@@ -128,28 +128,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.settings.activeProfile = newProfile.name;
 		}
 
-		// Load profile config
-		const profile = this.getCurrentProfile();
-		if (profile && await this.copyConfig(
-			[
-				this.settings.profilesPath,
-				profile.name],
-			getVaultPath() !== "" ? [
-				getVaultPath(),
-				this.app.vault.configDir
-			] : [])) {
-
-			new Notice(`Switched to profile ${this.getCurrentProfile()?.name}`);
-			// Reload obsidian so changed settings can take effect
-			// @ts-ignore
-			this.app.commands.executeCommandById("app:reload");
-		}
-		else {
-			// Copy settings failed.
-			new Notice(`Failed to switch ${profileName} profile!`);
-		}
-
-		this.loadProfile(profileName)
+		await this.loadProfile(profileName)
 			.then(() => {
 				this.saveSettings();
 			})
@@ -157,6 +136,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 				// Reload obsidian so changed settings can take effect
 				// @ts-ignore
 				this.app.commands.executeCommandById("app:reload");
+			})
+			.catch((e) => {
+				this.settings.activeProfile = previousProfile?.name;
+				this.saveSettings();
+				new Notice("Failed to switch profile!");
 			});
 	}
 
@@ -254,7 +238,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return;
 		}
 		// Check for modified files
-		this.getAllConfigFiles().forEach(file => {
+		this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
 			if (file.includes("/*/") && getVaultPath() !== "") {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
@@ -274,7 +258,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		});
 
 		// Check for modified files in paths
-		this.getAllConfigPaths().forEach(path => {
+		this.getAllConfigPaths(this.getProfile(profileName)).forEach(path => {
 			if (getVaultPath() !== '') {
 				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
@@ -299,7 +283,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			return;
 		}
 		// Check for modified files
-		this.getAllConfigFiles().forEach(file => {
+		this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
 			if (file.includes("/*/") && getVaultPath() !== "") {
 				const pathVariants = getAllFiles([this.settings.profilesPath, profileName, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
@@ -313,7 +297,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		});
 
 		// Check for modified files in paths
-		this.getAllConfigPaths().forEach(path => {
+		this.getAllConfigPaths(this.getProfile(profileName)).forEach(path => {
 			if (getVaultPath() !== '') {
 				let files = getAllFiles([this.settings.profilesPath, profileName, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
 
