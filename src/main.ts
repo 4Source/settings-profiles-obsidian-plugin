@@ -325,43 +325,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 	}
 
 	/**
-	 * Sync Settings for the profile. With the current vault settings.
-	 * @param profileName [profileName='Default'] The name of the profile to sync.
-	 * @deprecated will be removed on release. Replaced with saveProfile/loadProfile
-	 */
-	async syncSettings(profileName: string = 'Default') {
-		// Check target dir exist
-		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
-			new Notice(`Failed to sync ${profileName} profile!`);
-			return;
-		}
-		// Check for modified files
-		this.getAllConfigFiles().forEach(file => {
-			if (file.includes("/*/") && getVaultPath() !== "") {
-				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
-
-				pathVariants.forEach(value => {
-					keepNewestFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
-				})
-			}
-			else if (getVaultPath() !== "") {
-				keepNewestFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
-			}
-		});
-
-		// Check for modified files in paths
-		this.getAllConfigPaths().forEach(path => {
-			if (getVaultPath() !== '') {
-				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
-
-				files.forEach(file => {
-					keepNewestFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file]);
-				});
-			}
-		});
-	}
-
-	/**
 	 * Returns all settings if they are enabeled in profile
 	 * @param [profile=Current profile] The profile for which the files will be returned
 	 * @returns an array of file names
