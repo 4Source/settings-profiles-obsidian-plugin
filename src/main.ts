@@ -363,11 +363,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Returns all settings if they are enabeled in profile
+	 * @param [profile=Current profile] The profile for which the files will be returned
 	 * @returns an array of file names
 	 * @todo return {add: string[], remove: string[]}
 	 */
-	getAllConfigFiles(): string[] {
-		const profile = this.getCurrentProfile();
+	getAllConfigFiles(profile = this.getCurrentProfile()): string[] {
 		const files = [];
 		for (const key in profile) {
 			if (profile.hasOwnProperty(key)) {
@@ -391,11 +391,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 	/**
 	 * Returns all settings paths if thay are enabeled in profile
+	 * @param [profile=Current profile] The profile for which the paths will be returned
 	 * @returns an array of paths
 	 * @todo return {add: string[], remove: string[]}
 	 */
-	getAllConfigPaths(): string[] {
-		const profile = this.getCurrentProfile();
+	getAllConfigPaths(profile = this.getCurrentProfile()): string[] {
 		const paths = [];
 		for (const key in profile) {
 			if (profile.hasOwnProperty(key)) {
