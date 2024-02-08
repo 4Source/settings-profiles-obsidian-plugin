@@ -49,7 +49,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
         profiles.forEach(profile => {
             suggestions.push({
                 ...profile,
-                state: profile.enabled ? ProfileState.CURRENT : ProfileState.EXIST
+                state: this.plugin.isEnabled(profile) ? ProfileState.CURRENT : ProfileState.EXIST
             });
         });
         // If nothing Matches add createable

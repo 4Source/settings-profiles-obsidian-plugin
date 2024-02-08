@@ -126,9 +126,11 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(async () => {
-						if (!profile.enabled) {
-							this.plugin.switchProfile(profile.name);
-							this.display();
+						if (!this.plugin.isEnabled(profile)) {
+							this.plugin.switchProfile(profile.name)
+							.then(() => {
+								this.display();
+							});
 						}
 					}));
 		})

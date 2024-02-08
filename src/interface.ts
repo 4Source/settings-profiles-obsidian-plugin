@@ -3,7 +3,6 @@ import { join } from 'path';
 
 export interface PerProfileSetting {
 	name: string;
-	enabled: boolean;
 	autoSync: boolean;
 	appearance: boolean;
 	app: boolean;
@@ -28,10 +27,6 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	name: {
 		name: 'Name',
 		description: 'Naming of this profile.',
-	},
-	enabled: {
-		name: 'Enabled',
-		description: 'Says whether this profile is selected.',
 	},
 	autoSync: {
 		name: 'Auto Sync',
@@ -77,7 +72,6 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 
 export const DEFAULT_PROFILE: PerProfileSetting = {
 	name: 'Default',
-	enabled: true,
 	autoSync: true,
 	appearance: true,
 	app: true,
@@ -90,7 +84,8 @@ export const DEFAULT_PROFILE: PerProfileSetting = {
 
 export interface Settings {
 	profilesPath: string;
-	profilesList: PerProfileSetting[]
+	activeProfile?: string;
+	profilesList: PerProfileSetting[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {

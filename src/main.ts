@@ -1,9 +1,7 @@
 import { Notice, Plugin } from 'obsidian';
-import { join } from 'path';
-import { existsSync } from 'fs';
 import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
-import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, isValidPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
+import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, keepNewestFile, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_SETTINGS, PER_PROFILE_SETTINGS_MAP, Settings, PerProfileSetting } from './interface';
 
 export default class SettingsProfilesPlugin extends Plugin {
@@ -127,7 +125,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Enabel new Profile
 		const newProfile = this.settings.profilesList.find(profile => profile.name === profileName);
 		if (newProfile) {
-			newProfile.enabled = true;
+			this.settings.activeProfile = newProfile.name;
 		}
 
 		// Load profile config
@@ -182,8 +180,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 		if (selectedProfile) {
 			// Sync the profile settings
 			this.saveProfile(selectedProfile.name);
-			// Disable selected profile
-			selectedProfile.enabled = false;
 		}
 		else {
 			new Notice(`Failed to create profile ${profile.name}!`);
@@ -205,7 +201,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		Object.keys(profileSettings).forEach(key => {
 			const objKey = key as keyof PerProfileSetting;
 
-			if (objKey === 'name' || objKey === 'enabled') {
+			if (objKey === 'name') {
 				return;
 			}
 
@@ -232,7 +228,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		// Is profile to remove current profile
-		if (profile.enabled) {
+		if (this.isEnabled(profile)) {
 			const otherProfile = this.settings.profilesList.first();
 			if (otherProfile) {
 				this.switchProfile(otherProfile.name);
@@ -493,7 +489,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns The SettingsProfile object. Or undefined if not found.
 	 */
 	getCurrentProfile(): PerProfileSetting | undefined {
-		const currentProfile = this.settings.profilesList.find(profile => profile.enabled === true);
+		const currentProfile = this.settings.profilesList.find(profile => profile.name === this.settings.activeProfile);
 		if (!currentProfile) {
 			return;
 		}
@@ -505,10 +501,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns boolean.
 	 */
 	isEnabled(profile: PerProfileSetting): boolean {
-		//verify if a profil is already enabled
-		if (this.settings.profilesList.find(value => value.enabled === true) && !profile.enabled)
-			return false;
-		return profile.enabled ?? profile.name === "Default";
+		return this.settings.activeProfile === profile.name;
 	}
 }
 
