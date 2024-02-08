@@ -1,6 +1,6 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "./main";
-import { SettingsProfile } from "./Settings";
+import { DEFAULT_PROFILE, PerProfileSetting } from "./interface";
 
 export enum ProfileState {
     EXIST,
@@ -8,15 +8,15 @@ export enum ProfileState {
     NEW
 }
 
-interface SettingsProfileSuggestion extends SettingsProfile {
+interface SettingsProfileSuggestion extends PerProfileSetting {
     state: ProfileState;
 }
 
-export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
+export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion> {
     plugin: SettingsProfilesPlugin;
-    onSubmit: (result: SettingsProfile, state: ProfileState) => void;
+    onSubmit: (result: PerProfileSetting, state: ProfileState) => void;
 
-    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: SettingsProfile, state: ProfileState) => void) {
+    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: PerProfileSetting, state: ProfileState) => void) {
         super(app);
         this.plugin = plugin;
         this.onSubmit = onSubmit;
@@ -49,15 +49,16 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
         profiles.forEach(profile => {
             suggestions.push({
                 ...profile,
-                state: profile.name === this.plugin.settings.profile ? ProfileState.CURRENT : ProfileState.EXIST
+                state: this.plugin.isEnabled(profile) ? ProfileState.CURRENT : ProfileState.EXIST
             });
         });
         // If nothing Matches add createable
         if (suggestions.length <= 0) {
             suggestions.push({
+                ...DEFAULT_PROFILE,
                 name: query,
                 state: ProfileState.NEW
-            })
+            });
         }
         return suggestions
     }
@@ -85,7 +86,7 @@ export class ProfileModal extends SuggestModal<SettingsProfileSuggestion> {
     onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
         const { state, ...rest } = suggestion;
-        const profile: SettingsProfile = { ...rest };
+        const profile: PerProfileSetting = { ...rest };
         // Submit profile
         this.onSubmit(profile, state);
     }

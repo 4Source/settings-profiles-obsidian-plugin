@@ -1,8 +1,24 @@
-/*
+.profiles-container {
+    padding-top: var(--size-4-4);
+    border-top: 1px solid var(--background-modifier-border);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.profiles-container .profile-enabled {
+    font-weight: bolder;
+}
 
-If your plugin does not need CSS, delete this file.
+.profiles-container .setting-editor-extra-setting-button .is-disabled {
+    opacity: 0.5;
+}
 
-*/
+
+.profiles-container .clickable-icon.setting-editor-extra-setting-button.is-disabled:hover {
+    box-shadow: none;
+    background-color: transparent;
+}
+
+.profiles-container .clickable-icon.setting-editor-extra-setting-button.is-disabled:active {
+    box-shadow: none;
+    background-color: transparent;
+    color: var(--icon-color);
+}
