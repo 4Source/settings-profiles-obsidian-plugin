@@ -415,21 +415,34 @@ export default class SettingsProfilesPlugin extends Plugin {
 		return paths;
 	}
 
-
 	/**
-	 * Gets the currently enabeled profile.
-	 * @returns The SettingsProfile object. Or undefined if not found.
+	 * Gets the profile object
+	 * @param name The name of the profile
+	 * @returns The PerProfileSetting object. Or undefined if not found.
 	 */
-	getCurrentProfile(): PerProfileSetting | undefined {
-		const currentProfile = this.settings.profilesList.find(profile => profile.name === this.settings.activeProfile);
-		if (!currentProfile) {
+	getProfile(name: string): PerProfileSetting | undefined {
+		const profile = this.settings.profilesList.find(profile => profile.name === name);
+		if (!profile) {
 			return;
 		}
-		return currentProfile;
+		return profile;
 	}
 
 	/**
-	 * Gets the currently enabled profile.
+	 * Gets the currently enabeled profile.
+	 * @returns The PerProfileSetting object. Or undefined if not found.
+	 */
+	getCurrentProfile(): PerProfileSetting | undefined {
+		const name = this.settings.activeProfile;
+		if (!name) {
+			return;
+		}
+		return this.getProfile(name);
+	}
+
+	/**
+	 * Checks the profile is currently enabled
+	 * @param profile The profile to check 
 	 * @returns boolean.
 	 */
 	isEnabled(profile: PerProfileSetting): boolean {
