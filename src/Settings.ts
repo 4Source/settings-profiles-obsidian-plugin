@@ -128,9 +128,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onClick(async () => {
 						if (!this.plugin.isEnabled(profile)) {
 							this.plugin.switchProfile(profile.name)
-							.then(() => {
-								this.display();
-							});
+								.then(() => {
+									this.display();
+								});
 						}
 					}));
 		})

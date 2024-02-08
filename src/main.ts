@@ -222,7 +222,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		// Remove to profile settings
 		removeDirectoryRecursiveSync([this.settings.profilesPath, profileName]);
 		this.settings.profilesList.remove(profile);
-		
+
 		// Save settings and reload settings tab 
 		await this.saveSettings();
 	}
