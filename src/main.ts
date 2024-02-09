@@ -2,7 +2,8 @@ import { Notice, Plugin } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, PROFILE_SETTINGS_MAP, VaultSettings, ProfileSetting, GlobalSettings } from './interface';
+import { DEFAULT_VAULT_SETTINGS, PROFILE_SETTINGS_MAP, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './interface';
+import { loadProfileData, saveProfileData } from './util/SettingsFiles';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	vaultSettings: VaultSettings;
@@ -31,6 +32,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			// Sync profiles
 			if (profile?.autoSync) {
 				this.saveProfile(profile.name);
+				saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
 			}
 		}));
 
@@ -78,7 +80,8 @@ export default class SettingsProfilesPlugin extends Plugin {
 		this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
 
 		// Load global settings from profiles path
-		// this.globalSettings = 
+		this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
+		this.globalSettings.profilesList = loadProfileData(this.vaultSettings.profilesPath);
 
 		// Sync Profiles
 		let profile = this.getCurrentProfile();
@@ -92,13 +95,16 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Sync Profiles if enabeled.
 	 */
 	private async saveSettings() {
-		// Save settings
+		// Save vault settings
 		await this.saveData(this.vaultSettings);
 
-		// Sync Profiles
+		// Save profile data
+		saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
+
+		// Save profile settings
 		const profile = this.getCurrentProfile();
 		if (profile?.autoSync) {
-			this.saveProfile(profile.name);
+			await this.saveProfile(profile.name);
 		}
 	}
 
@@ -136,7 +142,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		// Enabel new Profile
-		const newProfile = this.vaultSettings.profilesList.find(profile => profile.name === profileName);
+		const newProfile = this.globalSettings.profilesList.find(profile => profile.name === profileName);
 		if (newProfile) {
 			this.vaultSettings.activeProfile = newProfile.name;
 		}
@@ -164,24 +170,24 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async createProfile(profile: ProfileSetting) {
 		// Check profile Exist
-		if (this.vaultSettings.profilesList.find(value => value.name === profile.name)) {
+		if (this.globalSettings.profilesList.find(value => value.name === profile.name)) {
 			new Notice('Failed to create profile! Already exist.')
 			return;
 		}
 
 		// Add profile to profileList
-		this.vaultSettings.profilesList.push(profile);
+		this.globalSettings.profilesList.push(profile);
 		await this.saveSettings();
 
 		// Enabel new Profile
-		const selectedProfile = this.vaultSettings.profilesList.find(value => value.name === profile.name);
+		const selectedProfile = this.globalSettings.profilesList.find(value => value.name === profile.name);
 		if (selectedProfile) {
 			// Sync the profile settings
 			this.saveProfile(selectedProfile.name);
 		}
 		else {
 			new Notice(`Failed to create profile ${profile.name}!`);
-			this.vaultSettings.profilesList.pop();
+			this.globalSettings.profilesList.pop();
 		}
 
 		// Save settings and reload settings tab 
@@ -189,7 +195,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	}
 
 	async editProfile(profileName: string, profileSettings: Partial<ProfileSetting>) {
-		const profile = this.vaultSettings.profilesList.find(value => value.name === profileName);
+		const profile = this.globalSettings.profilesList.find(value => value.name === profileName);
 		// Check profile Exist
 		if (!profile) {
 			new Notice(`Failed to remove ${profileName} profile!`);
@@ -219,7 +225,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async removeProfile(profileName: string) {
 		try {
-			const profile = this.vaultSettings.profilesList.find(value => value.name === profileName);
+			const profile = this.globalSettings.profilesList.find(value => value.name === profileName);
 			// Check profile Exist
 			if (!profile) {
 				throw Error('No profile received!');
@@ -227,7 +233,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 			// Is profile to remove current profile
 			if (this.isEnabled(profile)) {
-				const otherProfile = this.vaultSettings.profilesList.first();
+				const otherProfile = this.globalSettings.profilesList.first();
 				if (otherProfile) {
 					this.switchProfile(otherProfile.name);
 				}
@@ -235,7 +241,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 			// Remove to profile settings
 			removeDirectoryRecursiveSync([this.vaultSettings.profilesPath, profileName]);
-			this.vaultSettings.profilesList.remove(profile);
+			this.globalSettings.profilesList.remove(profile);
 
 			// Save settings and reload settings tab 
 			await this.saveSettings();
@@ -336,7 +342,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @returns The PerProfileSetting object. Or undefined if not found.
 	 */
 	getProfile(name: string): ProfileSetting | undefined {
-		const profile = this.vaultSettings.profilesList.find(profile => profile.name === name);
+		const profile = this.globalSettings.profilesList.find(profile => profile.name === name);
 		if (!profile) {
 			return;
 		}
