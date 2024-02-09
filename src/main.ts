@@ -239,7 +239,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 		// Check for modified files
 		this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
-			if (file.includes("/*/") && getVaultPath() !== "") {
+			if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
 				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
@@ -256,20 +256,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 				}
 			}
 		});
-
-		// Check for modified files in paths
-		this.getAllConfigPaths(this.getProfile(profileName)).forEach(path => {
-			if (getVaultPath() !== '') {
-				let files = getAllFiles([getVaultPath(), this.app.vault.configDir, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
-
-				files.forEach(file => {
-					if (!copyFile([getVaultPath(), this.app.vault.configDir, ...file], [this.settings.profilesPath, profileName, ...file])) {
-						new Notice(`Failed to save ${profileName} profile!`);
-						return;
-					}
-				});
-			}
-		});
 	}
 
 	/**
@@ -284,7 +270,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 		// Check for modified files
 		this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
-			if (file.includes("/*/") && getVaultPath() !== "") {
+			if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
 				const pathVariants = getAllFiles([this.settings.profilesPath, profileName, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
 				pathVariants.forEach(value => {
@@ -293,17 +279,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 			else if (getVaultPath() !== "") {
 				copyFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
-			}
-		});
-
-		// Check for modified files in paths
-		this.getAllConfigPaths(this.getProfile(profileName)).forEach(path => {
-			if (getVaultPath() !== '') {
-				let files = getAllFiles([this.settings.profilesPath, profileName, path]).map(value => value.split('\\').slice(-path.split('/').length - 1));
-
-				files.forEach(file => {
-					copyFile([this.settings.profilesPath, profileName, ...file], [getVaultPath(), this.app.vault.configDir, ...file]);
-				});
 			}
 		});
 	}
@@ -319,47 +294,19 @@ export default class SettingsProfilesPlugin extends Plugin {
 		for (const key in profile) {
 			if (profile.hasOwnProperty(key)) {
 				const value = profile[key as keyof PerProfileSetting];
-				if (typeof value === 'boolean' && key !== 'enabled') {
-					if (value) {
-						const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
-						if (typeof file === 'string') {
-							files.push(file);
-						}
-						else if (Array.isArray(file)) {
-							files.push(...file);
-						}
+				if (typeof value === 'boolean' && key !== 'enabled' && value) {
+					const file = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].file;
+					if (typeof file === 'string') {
+						files.push(file);
+					}
+					else if (Array.isArray(file)) {
+						files.push(...file);
 					}
 				}
 			}
 		}
 
 		return files;
-	}
-
-	/**
-	 * Returns all settings paths if thay are enabeled in profile
-	 * @param [profile=Current profile] The profile for which the paths will be returned
-	 * @returns an array of paths
-	 * @todo return {add: string[], remove: string[]}
-	 */
-	getAllConfigPaths(profile = this.getCurrentProfile()): string[] {
-		const paths = [];
-		for (const key in profile) {
-			if (profile.hasOwnProperty(key)) {
-				const value = profile[key as keyof PerProfileSetting];
-				if (typeof value === 'boolean' && key !== 'enabled' && value) {
-					const path = PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].path;
-					if (typeof path === 'string') {
-						paths.push(path);
-					}
-					else if (Array.isArray(path)) {
-						paths.push(...path);
-					}
-				}
-			}
-		}
-
-		return paths;
 	}
 
 	/**

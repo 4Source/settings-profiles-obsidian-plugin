@@ -3,7 +3,7 @@ import { FileSystemAdapter, Notice } from "obsidian";
 import { dirname, join } from "path";
 
 /**
- * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths that match the pattern.
+ * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
  * @param path Path to check for files
  * @returns an array of file names
  */
@@ -11,7 +11,7 @@ export function getAllFiles(path: string[]): string[] {
 	let pathSections: string[] = [];
 	let files: string[] = [];
 
-	// Check path contains placeholder
+	// Check path contains path placeholder
 	if (join(...path).includes('\\*\\')) {
 		pathSections = join(...path).split('\\*\\');
 
@@ -26,20 +26,22 @@ export function getAllFiles(path: string[]): string[] {
 			});
 		}
 	}
+	// Check path contains file placeholder
+	else if (join(...path).endsWith('\\*')) {
+		pathSections = join(...path).split('\\*');
+
+		let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
+		files = pathContent.filter((value) => {
+			return !statSync(value).isDirectory();
+		});
+	}
 	// Path doesn't exist
 	else if (!existsSync(join(...path))) {
 		return [];
 	}
 	// Path is file
 	else if (!statSync(join(...path)).isDirectory()) {
-		return path;
-	}
-	// Get files in path
-	else {
-		let pathContent = readdirSync(join(...path)).map(value => join(...path, value));
-		files = pathContent.filter((value) => {
-			return !statSync(value).isDirectory();
-		});
+		return [];
 	}
 	return files;
 }

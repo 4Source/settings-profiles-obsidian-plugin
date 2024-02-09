@@ -18,7 +18,6 @@ type PerProfileSettingMap = {
 		name: string;
 		description: string;
 		file?: string | string[];
-		path?: string | string[];
 	};
 };
 
@@ -35,8 +34,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	appearance: {
 		name: 'Appearance',
 		description: 'Says whether the obsidian appearance settings will sync.',
-		file: 'appearance.json',
-		path: 'snippets'
+		file: ['appearance.json', 'snippets/*', 'themes/*/*'],
 	},
 	app: {
 		name: 'App',
@@ -51,7 +49,7 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 	communityPlugins: {
 		name: 'Community Plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
-		file: ['community-plugins.json', 'plugins/*/'],
+		file: ['community-plugins.json', 'plugins/*/*'],
 	},
 	corePlugins: {
 		name: 'Core Plugins',
