@@ -58,15 +58,13 @@ export function getConfigFilesList(profile: ProfileSetting | undefined): string[
     for (const key in profile) {
         if (profile.hasOwnProperty(key)) {
             const value = profile[key as keyof ProfileSetting];
-            if (typeof value === 'boolean' && key !== 'enabled') {
-                if (value) {
-                    const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].file;
-                    if (typeof file === 'string') {
-                        files.push(file);
-                    }
-                    else if (Array.isArray(file)) {
-                        files.push(...file);
-                    }
+            if (typeof value === 'boolean' && key !== 'enabled' && value) {
+                const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].file;
+                if (typeof file === 'string') {
+                    files.push(file);
+                }
+                else if (Array.isArray(file)) {
+                    files.push(...file);
                 }
             }
         }
