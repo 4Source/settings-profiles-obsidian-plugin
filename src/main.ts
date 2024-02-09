@@ -2,8 +2,8 @@ import { Notice, Plugin } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/Settings";
 import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, PROFILE_SETTINGS_MAP, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './interface';
-import { loadProfileData, saveProfileData } from './util/SettingsFiles';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './interface';
+import { getConfigFilesList, loadProfileData, saveProfileData } from './util/SettingsFiles';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	vaultSettings: VaultSettings;
@@ -262,7 +262,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			ensurePathExist([this.vaultSettings.profilesPath, profileName]);
 
 			// Check for modified files
-			this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
+			getConfigFilesList(this.getProfile(profileName)).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
 					const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
@@ -291,7 +291,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			ensurePathExist([this.vaultSettings.profilesPath, profileName]);
 
 			// Check for modified files
-			this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
+			getConfigFilesList(this.getProfile(profileName)).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
 					const pathVariants = getAllFiles([this.vaultSettings.profilesPath, profileName, file]).map(value => value.split('\\').slice(-file.split('/').length));
 
@@ -308,32 +308,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
 			console.error(e);
 		}
-	}
-
-	/**
-	 * Returns all settings if they are enabeled in profile
-	 * @param [profile=Current profile] The profile for which the files will be returned
-	 * @returns an array of file names
-	 * @todo return {add: string[], remove: string[]}
-	 */
-	getAllConfigFiles(profile = this.getCurrentProfile()): string[] {
-		const files = [];
-		for (const key in profile) {
-			if (profile.hasOwnProperty(key)) {
-				const value = profile[key as keyof ProfileSetting];
-				if (typeof value === 'boolean' && key !== 'enabled' && value) {
-					const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].file;
-					if (typeof file === 'string') {
-						files.push(file);
-					}
-					else if (Array.isArray(file)) {
-						files.push(...file);
-					}
-				}
-			}
-		}
-
-		return files;
 	}
 
 	/**
