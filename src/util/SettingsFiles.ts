@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { ProfileSetting } from "src/interface";
+import { PROFILE_SETTINGS_MAP, ProfileSetting } from "src/interface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
 /**
@@ -45,4 +45,32 @@ export function loadProfileData(profilesPath: string) {
         profilesList.push(JSON.parse(data));
     });
     return profilesList;
+}
+
+/**
+ * Returns all settings if they are enabeled in profile
+ * @param profile The profile for which the files will be returned
+ * @returns an array of file names
+ * @todo return {add: string[], remove: string[]}
+ */
+export function getConfigFilesList(profile: ProfileSetting | undefined): string[] {
+    const files = [];
+    for (const key in profile) {
+        if (profile.hasOwnProperty(key)) {
+            const value = profile[key as keyof ProfileSetting];
+            if (typeof value === 'boolean' && key !== 'enabled') {
+                if (value) {
+                    const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].file;
+                    if (typeof file === 'string') {
+                        files.push(file);
+                    }
+                    else if (Array.isArray(file)) {
+                        files.push(...file);
+                    }
+                }
+            }
+        }
+    }
+
+    return files;
 }
