@@ -17,7 +17,7 @@ export function getAllFiles(path: string[]): string[] {
 		if (join(...path).includes('\\*\\')) {
 			pathSections = join(...path).split('\\*\\');
 
-			if (pathSections.length > 0) {
+			if (pathSections.length > 0 && existsSync(pathSections[0])) {
 				// Get existing paths for placeholders
 				let pathContent = readdirSync(pathSections[0]);
 
@@ -65,7 +65,7 @@ export function getAllSubPaths(path: string[]): string[] {
 		if (join(...path).includes('\\*\\')) {
 			pathSections = join(...path).split('\\*\\');
 
-			if (pathSections.length > 0) {
+			if (pathSections.length > 0 && existsSync(pathSections[0])) {
 				// Get existing paths for placeholder
 				let pathContent = readdirSync(pathSections[0]);
 
