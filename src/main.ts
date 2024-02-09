@@ -34,6 +34,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			// Sync profiles
 			if (profile?.autoSync) {
 				this.saveProfile(profile.name);
+				saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
 			}
 		}));
 
