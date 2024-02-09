@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from './main';
 import { ProfileEditModal } from './ProfileEditModal';
 import { ProfileAddModal } from './ProfileAddModal';
-import { DEFAULT_PROFILE } from './interface';
+import { DEFAULT_PROFILE_SETTINGS } from './interface';
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -36,9 +36,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				})
 				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
-				.setValue(this.plugin.settings.profilesPath)
+				.setValue(this.plugin.vaultSettings.profilesPath)
 				.onChange(value => {
-					if (value !== this.plugin.settings.profilesPath) {
+					if (value !== this.plugin.vaultSettings.profilesPath) {
 						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
 						if (input) {
 							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
@@ -82,7 +82,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileAddModal(this.app, this.plugin, DEFAULT_PROFILE, (result) => {
+					new ProfileAddModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, (result) => {
 						this.plugin.createProfile(result);
 						this.display();
 					}).open();
@@ -94,7 +94,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.display();
 				}));
 
-		this.plugin.settings.profilesList.forEach(profile => {
+		this.plugin.vaultSettings.profilesList.forEach(profile => {
 			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')

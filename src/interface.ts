@@ -1,7 +1,22 @@
 import { homedir } from 'os';
 import { join } from 'path';
 
-export interface PerProfileSetting {
+export interface GlobalSettings {
+
+}
+
+export interface VaultSettings {
+	profilesPath: string;
+	activeProfile?: string;
+	profilesList: ProfileSetting[];
+}
+
+export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
+	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	profilesList: []
+}
+
+export interface ProfileSetting {
 	name: string;
 	autoSync: boolean;
 	appearance: boolean;
@@ -13,8 +28,20 @@ export interface PerProfileSetting {
 	hotkeys: boolean;
 }
 
-type PerProfileSettingMap = {
-	[key in keyof PerProfileSetting]: {
+export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
+	name: 'Default',
+	autoSync: true,
+	appearance: true,
+	app: true,
+	bookmarks: true,
+	communityPlugins: true,
+	corePlugins: true,
+	graph: true,
+	hotkeys: true,
+}
+
+type ProfileSettingMap = {
+	[key in keyof ProfileSetting]: {
 		name: string;
 		description: string;
 		file?: string | string[];
@@ -22,7 +49,7 @@ type PerProfileSettingMap = {
 };
 
 
-export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
+export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
 	name: {
 		name: 'Name',
 		description: 'Naming of this profile.',
@@ -66,27 +93,4 @@ export const PER_PROFILE_SETTINGS_MAP: PerProfileSettingMap = {
 		description: 'Says whether the obsidian hotkey settings will sync.',
 		file: 'hotkeys.json'
 	}
-}
-
-export const DEFAULT_PROFILE: PerProfileSetting = {
-	name: 'Default',
-	autoSync: true,
-	appearance: true,
-	app: true,
-	bookmarks: true,
-	communityPlugins: true,
-	corePlugins: true,
-	graph: true,
-	hotkeys: true,
-}
-
-export interface Settings {
-	profilesPath: string;
-	activeProfile?: string;
-	profilesList: PerProfileSetting[];
-}
-
-export const DEFAULT_SETTINGS: Settings = {
-	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
-	profilesList: []
 }

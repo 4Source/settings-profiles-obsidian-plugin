@@ -1,6 +1,6 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "./main";
-import { DEFAULT_PROFILE, PerProfileSetting } from "./interface";
+import { DEFAULT_PROFILE_SETTINGS, ProfileSetting } from "./interface";
 
 export enum ProfileState {
     EXIST,
@@ -8,15 +8,15 @@ export enum ProfileState {
     NEW
 }
 
-interface SettingsProfileSuggestion extends PerProfileSetting {
+interface SettingsProfileSuggestion extends ProfileSetting {
     state: ProfileState;
 }
 
 export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion> {
     plugin: SettingsProfilesPlugin;
-    onSubmit: (result: PerProfileSetting, state: ProfileState) => void;
+    onSubmit: (result: ProfileSetting, state: ProfileState) => void;
 
-    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: PerProfileSetting, state: ProfileState) => void) {
+    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: ProfileSetting, state: ProfileState) => void) {
         super(app);
         this.plugin = plugin;
         this.onSubmit = onSubmit;
@@ -41,7 +41,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     // Returns all available suggestions.
     getSuggestions(query: string): SettingsProfileSuggestion[] {
         // Get all matching SettingsProfiles
-        const profiles = this.plugin.settings.profilesList.filter((profile) =>
+        const profiles = this.plugin.vaultSettings.profilesList.filter((profile) =>
             profile.name.toLowerCase().includes(query.toLowerCase())
         );
         // Expand SettingsProfile to SettingsProfileSuggestion
@@ -55,7 +55,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
         // If nothing Matches add createable
         if (suggestions.length <= 0) {
             suggestions.push({
-                ...DEFAULT_PROFILE,
+                ...DEFAULT_PROFILE_SETTINGS,
                 name: query,
                 state: ProfileState.NEW
             });
@@ -86,7 +86,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
         const { state, ...rest } = suggestion;
-        const profile: PerProfileSetting = { ...rest };
+        const profile: ProfileSetting = { ...rest };
         // Submit profile
         this.onSubmit(profile, state);
     }
