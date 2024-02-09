@@ -2,18 +2,20 @@ import { homedir } from 'os';
 import { join } from 'path';
 
 export interface GlobalSettings {
+	profilesList: ProfileSetting[];
+}
 
+export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
+	profilesList: []
 }
 
 export interface VaultSettings {
 	profilesPath: string;
 	activeProfile?: string;
-	profilesList: ProfileSetting[];
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
-	profilesList: []
 }
 
 export interface ProfileSetting {

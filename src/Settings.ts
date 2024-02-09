@@ -94,7 +94,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.display();
 				}));
 
-		this.plugin.vaultSettings.profilesList.forEach(profile => {
+		this.plugin.globalSettings.profilesList.forEach(profile => {
 			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
