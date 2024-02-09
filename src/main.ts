@@ -129,17 +129,17 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 
 		await this.loadProfile(profileName)
-			.then(() => {
-				this.saveSettings();
+			.then(async () => {
+				this.saveSettings()
+					.then(() => {
+						// Reload obsidian so changed settings can take effect
+						// @ts-ignore
+						this.app.commands.executeCommandById("app:reload");
+					});
 			})
-			.then(() => {
-				// Reload obsidian so changed settings can take effect
-				// @ts-ignore
-				this.app.commands.executeCommandById("app:reload");
-			})
-			.catch((e) => {
+			.catch(async (e) => {
 				this.settings.activeProfile = previousProfile?.name;
-				this.saveSettings();
+				await this.saveSettings();
 				new Notice("Failed to switch profile!");
 			});
 	}
