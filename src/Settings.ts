@@ -3,6 +3,7 @@ import SettingsProfilesPlugin from './main';
 import { ProfileEditModal } from './ProfileEditModal';
 import { ProfileAddModal } from './ProfileAddModal';
 import { DEFAULT_PROFILE_SETTINGS } from './interface';
+import { loadProfileData } from './util/SettingsFiles';
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -91,6 +92,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('refresh-cw')
 				.setTooltip('Reload profiles')
 				.onClick(() => {
+					// Reload data from files
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
 					this.display();
 				}));
 
