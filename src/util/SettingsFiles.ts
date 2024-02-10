@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 import { PROFILE_SETTINGS_MAP, ProfileSetting } from "src/interface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
@@ -41,8 +41,10 @@ export function loadProfileData(profilesPath: string) {
 
     // Read profile settings
     files.forEach(file => {
-        const data = readFileSync(file, "utf-8");
-        profilesList.push(JSON.parse(data));
+        if (existsSync(file) && statSync(file).isFile()) {
+            const data = readFileSync(file, "utf-8");
+            profilesList.push(JSON.parse(data));
+        }
     });
     return profilesList;
 }
