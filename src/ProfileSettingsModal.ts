@@ -1,15 +1,15 @@
 import { App, Modal, Notice, Setting } from "obsidian";
 import SettingsProfilesPlugin from "./main";
-import { PerProfileSetting, PER_PROFILE_SETTINGS_MAP } from "./interface";
+import { ProfileSetting, PROFILE_SETTINGS_MAP } from "./interface";
 
 export class ProfileSettingsModal extends Modal {
     plugin: SettingsProfilesPlugin;
-    profile: PerProfileSetting;
-    initialProfile: PerProfileSetting;
-    onSubmit: (result: PerProfileSetting) => void;
+    profile: ProfileSetting;
+    initialProfile: ProfileSetting;
+    onSubmit: (result: ProfileSetting) => void;
 
 
-    constructor(app: App, plugin: SettingsProfilesPlugin, profile: PerProfileSetting, onSubmit: (result: PerProfileSetting) => void) {
+    constructor(app: App, plugin: SettingsProfilesPlugin, profile: ProfileSetting, onSubmit: (result: ProfileSetting) => void) {
         super(app);
 
         this.plugin = plugin;
@@ -27,30 +27,30 @@ export class ProfileSettingsModal extends Modal {
         // Add All existing options
         for (const key in this.profile) {
             if (this.profile.hasOwnProperty(key)) {
-                const value = this.profile[key as keyof PerProfileSetting];
+                const value = this.profile[key as keyof ProfileSetting];
 
                 // Only toggle exclude enabled
                 if (typeof value === 'boolean' && key !== 'enabled') {
                     new Setting(contentEl)
-                        .setName(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].name)
-                        .setDesc(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].description)
+                        .setName(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].name)
+                        .setDesc(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].description)
                         .addToggle(toggle => toggle
                             .setValue(value)
                             .onChange(async (value) => {
                                 // Assign value of this Setting an save it
-                                (this.profile[key as keyof PerProfileSetting] as boolean) = value;
+                                (this.profile[key as keyof ProfileSetting] as boolean) = value;
                             }));
                 }
                 if (typeof value === 'string') {
                     new Setting(contentEl)
-                        .setName(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].name)
-                        .setDesc(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].description)
+                        .setName(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].name)
+                        .setDesc(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].description)
                         .addText(text => text
-                            .setPlaceholder(PER_PROFILE_SETTINGS_MAP[key as keyof PerProfileSetting].name)
+                            .setPlaceholder(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].name)
                             .setValue(value)
                             .onChange(value => {
                                 // Assign value of this Setting an save it
-                                (this.profile[key as keyof PerProfileSetting] as string) = value;
+                                (this.profile[key as keyof ProfileSetting] as string) = value;
                             }));
                 }
             }
@@ -62,7 +62,7 @@ export class ProfileSettingsModal extends Modal {
                 .onClick(() => {
                     if (this.profile.name === "" || this.profile.name === undefined) {
                         new Notice("Profile name cannot be empty!");
-                    } else if (this.initialProfile.name !== this.profile.name && this.plugin.settings.profilesList.find(profile => profile.name === this.profile.name)) {
+                    } else if (this.initialProfile.name !== this.profile.name && this.plugin.globalSettings.profilesList.find(profile => profile.name === this.profile.name)) {
                         new Notice("Profile with this name already exists!");
                     } else {
                         this.onSubmit(this.profile);
