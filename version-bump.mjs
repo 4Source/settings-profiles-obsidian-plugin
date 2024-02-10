@@ -8,7 +8,17 @@ const { minAppVersion } = manifest;
 manifest.version = targetVersion;
 writeFileSync("manifest.json", JSON.stringify(manifest, null, "\t"));
 
-// update versions.json with target version and minAppVersion from manifest.json
+// read versions file 
 let versions = JSON.parse(readFileSync("versions.json", "utf8"));
+let keys = Object.keys(versions);
+
+// remove existing versions with minAppVersion
+keys.forEach(key => {
+    if (minAppVersion === versions[key]) {
+        delete versions[key];
+    }
+});
+
+// update versions.json with target version and minAppVersion from manifest.json
 versions[targetVersion] = minAppVersion;
 writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
