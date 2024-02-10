@@ -61,14 +61,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
-						const profile = this.plugin.getCurrentProfile();
-						if (profile) {
-							this.plugin.saveProfile(profile.name)
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+					const profile = this.plugin.getCurrentProfile();
+					if (profile) {
+						this.plugin.saveProfile(profile.name)
 							.then(() => {
 								new Notice(`Saved ${profile.name} successfully.`);
 							});
-						}
+					}
 					this.display();
 				}))
 			.addButton(button => button
@@ -120,8 +120,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onClick(() => {
 						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
 						if (this.plugin.getProfile(profile.name)) {
+							const prevName = profile.name;
 							new ProfileSettingsModal(this.app, this.plugin, profile, (result) => {
-								this.plugin.editProfile(result.name, result);
+								this.plugin.editProfile(prevName, result);
 								this.display();
 							}).open();
 						}
