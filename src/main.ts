@@ -222,18 +222,28 @@ export default class SettingsProfilesPlugin extends Plugin {
 				throw Error('Profile does not exist!');
 			}
 
+			let renamed = false;
+
 			Object.keys(profileSettings).forEach(key => {
 				const objKey = key as keyof ProfileSetting;
 
-				if (objKey === 'name') {
-					return;
+				// Name changed
+				if (objKey === 'name' && profileSettings.name !== profileName) {
+					renamed = true;
 				}
 
+				// Values changed
 				const value = profileSettings[objKey];
 				if (typeof value === 'boolean') {
-					profile[objKey] = value;
+					(profile[objKey] as boolean) = value;
 				}
 			});
+
+			// Profile renamed
+			if (renamed && profileSettings.name) {
+				this.saveProfile(profileSettings.name);
+				this.removeProfile(profileName);
+			}
 
 			// Save settings and reload settings tab 
 			await this.saveSettings();

@@ -5,13 +5,16 @@ import { PerProfileSetting, PER_PROFILE_SETTINGS_MAP } from "./interface";
 export class ProfileSettingsModal extends Modal {
     plugin: SettingsProfilesPlugin;
     profile: PerProfileSetting;
+    initialProfile: PerProfileSetting;
     onSubmit: (result: PerProfileSetting) => void;
+
 
     constructor(app: App, plugin: SettingsProfilesPlugin, profile: PerProfileSetting, onSubmit: (result: PerProfileSetting) => void) {
         super(app);
 
         this.plugin = plugin;
         this.profile = structuredClone(profile);
+        this.initialProfile = structuredClone(profile);
         this.onSubmit = onSubmit;
     }
 
@@ -59,7 +62,7 @@ export class ProfileSettingsModal extends Modal {
                 .onClick(() => {
                     if (this.profile.name === "" || this.profile.name === undefined) {
                         new Notice("Profile name cannot be empty!");
-                    } else if (this.plugin.settings.profilesList.find(profile => profile.name === this.profile.name)) {
+                    } else if (this.initialProfile.name !== this.profile.name && this.plugin.settings.profilesList.find(profile => profile.name === this.profile.name)) {
                         new Notice("Profile with this name already exists!");
                     } else {
                         this.onSubmit(this.profile);
