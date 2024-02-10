@@ -50,7 +50,7 @@ export function loadProfileData(profilesPath: string) {
 }
 
 /**
- * Returns all settings if they are enabeled in profile
+ * Returns all setting files if they are enabeled in profile
  * @param profile The profile for which the files will be returned
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
@@ -62,6 +62,32 @@ export function getConfigFilesList(profile: ProfileSetting | undefined): string[
             const value = profile[key as keyof ProfileSetting];
             if (typeof value === 'boolean' && key !== 'enabled' && value) {
                 const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].file;
+                if (typeof file === 'string') {
+                    files.push(file);
+                }
+                else if (Array.isArray(file)) {
+                    files.push(...file);
+                }
+            }
+        }
+    }
+
+    return files;
+}
+
+/**
+ * Returns all ignore files if they are enabeled in profile
+ * @param profile The profile for which the files will be returned
+ * @returns an array of file names
+ * @todo return {add: string[], remove: string[]}
+ */
+export function getIgnoreFilesList(profile: ProfileSetting | undefined): string[] {
+    const files = [];
+    for (const key in profile) {
+        if (profile.hasOwnProperty(key)) {
+            const value = profile[key as keyof ProfileSetting];
+            if (typeof value === 'boolean' && key !== 'enabled' && value) {
+                const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].ignore;
                 if (typeof file === 'string') {
                     files.push(file);
                 }
