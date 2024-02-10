@@ -31,7 +31,7 @@ export interface ProfileSetting {
 }
 
 export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
-	name: 'Default',
+	name: '',
 	autoSync: true,
 	appearance: true,
 	app: true,
@@ -55,7 +55,7 @@ type ProfileSettingMap = {
 export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
 	name: {
 		name: 'Name',
-		description: 'Naming of this profile.',
+		description: 'Name of this profile.',
 	},
 	autoSync: {
 		name: 'Auto Sync',
