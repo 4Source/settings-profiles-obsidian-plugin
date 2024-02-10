@@ -1,9 +1,8 @@
 import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from './main';
-import { ProfileEditModal } from './ProfileEditModal';
-import { ProfileAddModal } from './ProfileAddModal';
 import { DEFAULT_PROFILE_SETTINGS } from './interface';
 import { loadProfileData } from './util/SettingsFiles';
+import { ProfileSettingsModal } from './ProfileSettingsModal';
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -97,7 +96,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileAddModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, (result) => {
+					new ProfileSettingsModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, (result) => {
 						this.plugin.createProfile(result);
 						this.display();
 					}).open();
@@ -121,7 +120,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onClick(() => {
 						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
 						if (this.plugin.getProfile(profile.name)) {
-							new ProfileEditModal(this.app, this.plugin, profile, (result) => {
+							new ProfileSettingsModal(this.app, this.plugin, profile, (result) => {
 								this.plugin.editProfile(result.name, result);
 								this.display();
 							}).open();
