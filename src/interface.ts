@@ -47,6 +47,7 @@ type ProfileSettingMap = {
 		name: string;
 		description: string;
 		file?: string | string[];
+		ignore?: string | string[];
 	};
 };
 
@@ -79,6 +80,7 @@ export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
 		name: 'Community Plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
 		file: ['community-plugins.json', 'plugins/*/*'],
+		ignore: 'plugins/settings-profiles/*'
 	},
 	corePlugins: {
 		name: 'Core Plugins',
