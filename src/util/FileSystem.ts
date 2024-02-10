@@ -32,13 +32,15 @@ export function getAllFiles(path: string[]): string[] {
 		else if (join(...path).endsWith('\\*')) {
 			pathSections = join(...path).split('\\*');
 
-			let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
-			files = files.concat(...pathContent.filter((value) => {
-				return !statSync(value).isDirectory();
-			}));
+			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+				let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
+				files = files.concat(...pathContent.filter((value) => {
+					return statSync(value).isFile();
+				}));
+			}
 		}
 		// Path is file
-		else if (!statSync(join(...path)).isDirectory()) {
+		else if (existsSync(join(...path)) && statSync(join(...path)).isFile()) {
 			files.push(...path);
 		}
 		return files;
