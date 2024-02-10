@@ -214,7 +214,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		}
 	}
 
-	async editProfile(profileName: string, profileSettings: Partial<ProfileSetting>) {
+	async editProfile(profileName: string, profileSettings: ProfileSetting) {
 		try {
 			const profile = this.getProfile(profileName);
 			// Check profile Exist
@@ -241,7 +241,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 			// Profile renamed
 			if (renamed && profileSettings.name) {
-				this.saveProfile(profileSettings.name);
+				this.createProfile(profileSettings);
 				this.removeProfile(profileName);
 			}
 
