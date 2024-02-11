@@ -12,8 +12,12 @@ export default class SettingsProfilesPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Make sure Profile path exists
-		if (!ensurePathExist([this.settings.profilesPath])) {
+		try {
+			ensurePathExist([this.settings.profilesPath]);
+		} catch (e) {
 			new Notice("Profile save path is not valid!");
+			(e as Error).message = 'Profile path is not valid! ' + (e as Error).message;
+			console.error(e);
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -99,13 +103,18 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param path The target where to save the profiles
 	 */
 	async changeProfilePath(path: string) {
-		// Copy profiles to new path
-		copyFolderRecursiveSync([this.settings.profilesPath], [path]);
-		// Remove old profiles path
-		removeDirectoryRecursiveSync([this.settings.profilesPath]);
+		try {
+			// Copy profiles to new path
+			copyFolderRecursiveSync([this.settings.profilesPath], [path]);
+			// Remove old profiles path
+			removeDirectoryRecursiveSync([this.settings.profilesPath]);
 
-		this.settings.profilesPath = path;
-		await this.saveSettings();
+			this.settings.profilesPath = path;
+			await this.saveSettings();
+		} catch (e) {
+			(e as Error).message = 'Failed to change profile path! ' + (e as Error).message;
+			console.error(e);
+		}
 	}
 
 	/**
@@ -137,10 +146,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 						this.app.commands.executeCommandById("app:reload");
 					});
 			})
-			.catch(async (e) => {
+			.catch((e) => {
 				this.settings.activeProfile = previousProfile?.name;
-				await this.saveSettings();
-				new Notice("Failed to switch profile!");
+				new Notice(`Failed to switch to ${profileName} profile!`);
+				(e as Error).message = 'Failed to switch profile! ' + (e as Error).message;
+				console.error(e);
 			});
 	}
 
@@ -204,27 +214,32 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the profile
 	 */
 	async removeProfile(profileName: string) {
-		const profile = this.settings.profilesList.find(value => value.name === profileName);
-		// Check profile Exist
-		if (!profile) {
-			new Notice(`Failed to remove ${profileName} profile!`);
-			return;
-		}
-
-		// Is profile to remove current profile
-		if (this.isEnabled(profile)) {
-			const otherProfile = this.settings.profilesList.first();
-			if (otherProfile) {
-				this.switchProfile(otherProfile.name);
+		try {
+			const profile = this.settings.profilesList.find(value => value.name === profileName);
+			// Check profile Exist
+			if (!profile) {
+				throw Error('No profile received!');
 			}
+
+			// Is profile to remove current profile
+			if (this.isEnabled(profile)) {
+				const otherProfile = this.settings.profilesList.first();
+				if (otherProfile) {
+					this.switchProfile(otherProfile.name);
+				}
+			}
+
+			// Remove to profile settings
+			removeDirectoryRecursiveSync([this.settings.profilesPath, profileName]);
+			this.settings.profilesList.remove(profile);
+
+			// Save settings and reload settings tab 
+			await this.saveSettings();
+		} catch (e) {
+			new Notice(`Failed to remove ${profileName} profile!`);
+			(e as Error).message = 'Failed to remove profile! ' + (e as Error).message;
+			console.error(e);
 		}
-
-		// Remove to profile settings
-		removeDirectoryRecursiveSync([this.settings.profilesPath, profileName]);
-		this.settings.profilesList.remove(profile);
-
-		// Save settings and reload settings tab 
-		await this.saveSettings();
 	}
 
 	/**
@@ -233,29 +248,27 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async saveProfile(profileName: string) {
 		// Check target dir exist
-		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
-			new Notice(`Failed to save ${profileName} profile!`);
-			return;
-		}
-		// Check for modified files
-		this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
-			if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
-				const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+		try {
+			ensurePathExist([this.settings.profilesPath, profileName]);
 
-				pathVariants.forEach(value => {
-					if (!copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value])) {
-						new Notice(`Failed to save ${profileName} profile!`);
-						return;
-					}
-				})
-			}
-			else if (getVaultPath() !== "") {
-				if (!copyFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file])) {
-					new Notice(`Failed to save ${profileName} profile!`);
-					return;
+			// Check for modified files
+			this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
+				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
+					const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file]).map(value => value.split('\\').slice(-file.split('/').length));
+
+					pathVariants.forEach(value => {
+						copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.settings.profilesPath, profileName, ...value])
+					})
 				}
-			}
-		});
+				else if (getVaultPath() !== "") {
+					copyFile([getVaultPath(), this.app.vault.configDir, file], [this.settings.profilesPath, profileName, file])
+				}
+			});
+		} catch (e) {
+			new Notice(`Failed to save ${profileName} profile!`);
+			(e as Error).message = 'Failed to save profile! ' + (e as Error).message;
+			console.error(e);
+		}
 	}
 
 	/**
@@ -264,23 +277,27 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async loadProfile(profileName: string) {
 		// Check target dir exist
-		if (!ensurePathExist([this.settings.profilesPath, profileName])) {
-			new Notice(`Failed to load ${profileName} profile!`);
-			return;
-		}
-		// Check for modified files
-		this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
-			if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
-				const pathVariants = getAllFiles([this.settings.profilesPath, profileName, file]).map(value => value.split('\\').slice(-file.split('/').length));
+		try {
+			ensurePathExist([this.settings.profilesPath, profileName]);
 
-				pathVariants.forEach(value => {
-					copyFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
-				})
-			}
-			else if (getVaultPath() !== "") {
-				copyFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
-			}
-		});
+			// Check for modified files
+			this.getAllConfigFiles(this.getProfile(profileName)).forEach(file => {
+				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
+					const pathVariants = getAllFiles([this.settings.profilesPath, profileName, file]).map(value => value.split('\\').slice(-file.split('/').length));
+
+					pathVariants.forEach(value => {
+						copyFile([this.settings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
+					})
+				}
+				else if (getVaultPath() !== "") {
+					copyFile([this.settings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
+				}
+			});
+		} catch (e) {
+			new Notice(`Failed to load ${profileName} profile!`);
+			(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
+			console.error(e);
+		}
 	}
 
 	/**
