@@ -319,7 +319,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			let ignoreFiles: string[][] = [];
 			getIgnoreFilesList(this.getProfile(profileName)).forEach(ignore => {
 				if ((ignore.includes("/*/") || ignore.includes("/*")) && getVaultPath() !== "") {
-					const files = getAllFiles([getVaultPath(), this.app.vault.configDir, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
+					const files = getAllFiles([this.vaultSettings.profilesPath, profileName, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
 					files.forEach(file => {
 						ignoreFiles.push(file)
 					})
@@ -332,7 +332,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			// Load files
 			getConfigFilesList(this.getProfile(profileName)).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
-					const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file])
+					const pathVariants = getAllFiles([this.vaultSettings.profilesPath, profileName, file])
 						// Trim the start of path
 						.map(value => value.split('\\').slice(-file.split('/').length))
 						// Filter ignore files
