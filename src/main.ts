@@ -277,8 +277,12 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the profile to load.
 	 */
 	async saveProfile(profileName: string) {
-		// Check target dir exist
 		try {
+			// Check profile Exist
+			if (!this.getProfile(profileName)) {
+				throw Error('Profile does not exist!');
+			}
+			// Check target dir exist
 			ensurePathExist([this.vaultSettings.profilesPath, profileName]);
 
 			// Get ignore files
@@ -331,8 +335,12 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the profile to load.
 	 */
 	async loadProfile(profileName: string) {
-		// Check target dir exist
 		try {
+			// Check profile Exist
+			if (!this.getProfile(profileName)) {
+				throw Error('Profile does not exist!');
+			}
+			// Check target dir exist
 			ensurePathExist([this.vaultSettings.profilesPath, profileName]);
 
 			// Get ignore files
