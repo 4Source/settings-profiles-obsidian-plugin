@@ -62,15 +62,19 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
 					const profile = this.plugin.getCurrentProfile();
-					if (profile)
+					if (profile) {
 						this.plugin.saveProfile(profile.name);
+					}
+					this.display();
 				}))
 			.addButton(button => button
 				.setButtonText('Load profile')
 				.onClick(() => {
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
 					const profile = this.plugin.getCurrentProfile();
-					if (profile)
+					if (profile) {
 						this.plugin.loadProfile(profile.name)
 							.then(async () => {
 								// Reload obsidian so changed settings can take effect
@@ -82,6 +86,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
 								console.error(e);
 							});
+					}
+					this.display();
 				}));
 
 
@@ -115,10 +121,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon('settings')
 					.setTooltip('Options')
 					.onClick(() => {
-						new ProfileEditModal(this.app, this.plugin, profile, (result) => {
-							this.plugin.editProfile(result.name, result);
-							this.display();
-						}).open();
+						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+						if (this.plugin.getProfile(profile.name)) {
+							new ProfileEditModal(this.app, this.plugin, profile, (result) => {
+								this.plugin.editProfile(result.name, result);
+								this.display();
+							}).open();
+						}
+						this.display();
 					}))
 				// .addExtraButton(button => button
 				// 	.setIcon('plus-circle')
@@ -139,12 +149,16 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(async () => {
-						if (!this.plugin.isEnabled(profile)) {
-							this.plugin.switchProfile(profile.name)
-								.then(() => {
-									this.display();
-								});
+						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+						if (this.plugin.getProfile(profile.name)) {
+							if (!this.plugin.isEnabled(profile)) {
+								this.plugin.switchProfile(profile.name)
+									.then(() => {
+										this.display();
+									});
+							}
 						}
+						this.display();
 					}));
 		})
 	}
