@@ -75,18 +75,23 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Sync Profiles if enabeled.
 	 */
 	private async loadSettings() {
-		// Load vault settings from file if exist or create default
-		this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
+		try {
+			// Load vault settings from file if exist or create default
+			this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
 
-		// Load global settings from profiles path
-		this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
-		this.globalSettings.profilesList = loadProfileData(this.vaultSettings.profilesPath);
+			// Load global settings from profiles path
+			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
+			this.globalSettings.profilesList = loadProfileData(this.vaultSettings.profilesPath);
 
-		// Sync Profiles
-		let profile = this.getCurrentProfile();
-		// Load settings from profile
-		if (profile?.autoSync) {
-			this.loadProfile(profile.name);
+			// Sync Profiles
+			let profile = this.getCurrentProfile();
+			// Load settings from profile
+			if (profile?.autoSync) {
+				this.loadProfile(profile.name);
+			}
+		} catch (e) {
+			(e as Error).message = 'Failed to load Settings! ' + (e as Error).message;
+			console.error(e);
 		}
 	}
 
@@ -95,16 +100,21 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Sync Profiles if enabeled.
 	 */
 	private async saveSettings() {
-		// Save vault settings
-		await this.saveData(this.vaultSettings);
+		try {
+			// Save vault settings
+			await this.saveData(this.vaultSettings);
 
-		// Save profile data
-		saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
+			// Save profile data
+			saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
 
-		// Save profile settings
-		const profile = this.getCurrentProfile();
-		if (profile?.autoSync) {
-			await this.saveProfile(profile.name);
+			// Save profile settings
+			const profile = this.getCurrentProfile();
+			if (profile?.autoSync) {
+				await this.saveProfile(profile.name);
+			}
+		} catch (e) {
+			(e as Error).message = 'Failed to save Settings! ' + (e as Error).message;
+			console.error(e);
 		}
 	}
 
@@ -132,36 +142,36 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the profile to switch to
 	 */
 	async switchProfile(profileName: string) {
-		// Save current Profile to possible switch back if failed
-		const previousProfile = this.getCurrentProfile();
+		try {
+			// Save current Profile to possible switch back if failed
+			const previousProfile = this.getCurrentProfile();
 
-		// Check is current profile
-		if (previousProfile && previousProfile.name === profileName) {
-			new Notice('Allready current profile!');
-			return;
+			// Check is current profile
+			if (previousProfile && previousProfile.name === profileName) {
+				new Notice('Allready current profile!');
+				return;
+			}
+
+			// Enabel new Profile
+			const newProfile = this.globalSettings.profilesList.find(profile => profile.name === profileName);
+			if (newProfile) {
+				this.vaultSettings.activeProfile = newProfile.name;
+			}
+			await this.loadProfile(profileName)
+				.then(async () => {
+					this.saveSettings()
+						.then(() => {
+							// Reload obsidian so changed settings can take effect
+							// @ts-ignore
+							this.app.commands.executeCommandById("app:reload");
+						});
+				})
+		} catch (e) {
+			this.vaultSettings.activeProfile = '';
+			new Notice(`Failed to switch to ${profileName} profile!`);
+			(e as Error).message = 'Failed to switch profile! ' + (e as Error).message;
+			console.error(e);
 		}
-
-		// Enabel new Profile
-		const newProfile = this.globalSettings.profilesList.find(profile => profile.name === profileName);
-		if (newProfile) {
-			this.vaultSettings.activeProfile = newProfile.name;
-		}
-
-		await this.loadProfile(profileName)
-			.then(async () => {
-				this.saveSettings()
-					.then(() => {
-						// Reload obsidian so changed settings can take effect
-						// @ts-ignore
-						this.app.commands.executeCommandById("app:reload");
-					});
-			})
-			.catch((e) => {
-				this.vaultSettings.activeProfile = previousProfile?.name;
-				new Notice(`Failed to switch to ${profileName} profile!`);
-				(e as Error).message = 'Failed to switch profile! ' + (e as Error).message;
-				console.error(e);
-			});
 	}
 
 	/**
@@ -169,54 +179,64 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * @param profileName The name of the new profile
 	 */
 	async createProfile(profile: ProfileSetting) {
-		// Check profile Exist
-		if (this.globalSettings.profilesList.find(value => value.name === profile.name)) {
-			new Notice('Failed to create profile! Already exist.')
-			return;
-		}
+		try {
+			// Check profile Exist
+			if (this.getProfile(profile.name)) {
+				throw Error('Profile does already exist!');
+			}
 
-		// Add profile to profileList
-		this.globalSettings.profilesList.push(profile);
-		await this.saveSettings();
+			// Add profile to profileList
+			this.globalSettings.profilesList.push(profile);
 
-		// Enabel new Profile
-		const selectedProfile = this.globalSettings.profilesList.find(value => value.name === profile.name);
-		if (selectedProfile) {
-			// Sync the profile settings
-			this.saveProfile(selectedProfile.name);
-		}
-		else {
-			new Notice(`Failed to create profile ${profile.name}!`);
-			this.globalSettings.profilesList.pop();
-		}
+			// Enabel new Profile
+			const selectedProfile = this.globalSettings.profilesList.find(value => value.name === profile.name);
+			if (selectedProfile) {
+				// Sync the profile settings
+				this.saveProfile(selectedProfile.name);
+			}
+			else {
+				new Notice(`Failed to create profile ${profile.name}!`);
+				this.globalSettings.profilesList.pop();
+			}
 
-		// Save settings and reload settings tab 
-		await this.saveSettings();
+			// Save settings and reload settings tab 
+			await this.saveSettings();
+		} catch (e) {
+			new Notice(`Failed to create ${profile.name} profile!`);
+			(e as Error).message = 'Failed to create profile! ' + (e as Error).message;
+			console.error(e);
+		}
 	}
 
 	async editProfile(profileName: string, profileSettings: Partial<ProfileSetting>) {
-		const profile = this.globalSettings.profilesList.find(value => value.name === profileName);
-		// Check profile Exist
-		if (!profile) {
-			new Notice(`Failed to remove ${profileName} profile!`);
-			return;
+		try {
+			const profile = this.getProfile(profileName);
+			// Check profile Exist
+			if (!profile) {
+				throw Error('Profile does not exist!');
+			}
+
+			Object.keys(profileSettings).forEach(key => {
+				const objKey = key as keyof ProfileSetting;
+
+				if (objKey === 'name') {
+					return;
+				}
+
+				const value = profileSettings[objKey];
+				if (typeof value === 'boolean') {
+					profile[objKey] = value;
+				}
+			});
+
+			// Save settings and reload settings tab 
+			await this.saveSettings();
+
+		} catch (e) {
+			new Notice(`Failed to edit ${profileName} profile!`);
+			(e as Error).message = 'Failed to edit profile! ' + (e as Error).message;
+			console.error(e);
 		}
-
-		Object.keys(profileSettings).forEach(key => {
-			const objKey = key as keyof ProfileSetting;
-
-			if (objKey === 'name') {
-				return;
-			}
-
-			const value = profileSettings[objKey];
-			if (typeof value === 'boolean') {
-				profile[objKey] = value;
-			}
-		});
-
-		// Save settings and reload settings tab 
-		await this.saveSettings();
 	}
 
 	/**
@@ -225,10 +245,10 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async removeProfile(profileName: string) {
 		try {
-			const profile = this.globalSettings.profilesList.find(value => value.name === profileName);
+			const profile = this.getProfile(profileName);
 			// Check profile Exist
 			if (!profile) {
-				throw Error('No profile received!');
+				throw Error('Profile does not exist!');
 			}
 
 			// Is profile to remove current profile
