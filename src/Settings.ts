@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, normalizePath } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from './main';
 import { ProfileEditModal } from './ProfileEditModal';
 import { ProfileAddModal } from './ProfileAddModal';
@@ -71,7 +71,17 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.onClick(() => {
 					const profile = this.plugin.getCurrentProfile();
 					if (profile)
-						this.plugin.loadProfile(profile.name);
+						this.plugin.loadProfile(profile.name)
+							.then(async () => {
+								// Reload obsidian so changed settings can take effect
+								// @ts-ignore
+								this.app.commands.executeCommandById("app:reload");
+							})
+							.catch((e) => {
+								new Notice(`Failed to load ${profile.name} profile!`);
+								(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
+								console.error(e);
+							});
 				}));
 
 
