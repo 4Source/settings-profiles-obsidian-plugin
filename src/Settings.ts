@@ -62,11 +62,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
-					const profile = this.plugin.getCurrentProfile();
-					if (profile) {
-						this.plugin.saveProfile(profile.name);
-					}
+						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+						const profile = this.plugin.getCurrentProfile();
+						if (profile) {
+							this.plugin.saveProfile(profile.name)
+							.then(() => {
+								new Notice(`Saved ${profile.name} successfully.`);
+							});
+						}
 					this.display();
 				}))
 			.addButton(button => button
@@ -80,11 +83,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								// Reload obsidian so changed settings can take effect
 								// @ts-ignore
 								this.app.commands.executeCommandById("app:reload");
-							})
-							.catch((e) => {
-								new Notice(`Failed to load ${profile.name} profile!`);
-								(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
-								console.error(e);
 							});
 					}
 					this.display();
