@@ -8,50 +8,27 @@ body:
   - type: markdown
     attributes: 
       value: "### If your feature request is to resolve unexpected behavior, use *Bug Report* instead."
-  - type: checkboxes
-    attributes: 
-      label: Is your feature request related to a problem?
-      description: Are you struggling to do something and think it could be made easier?
-      options: 
-        - label: The feature should solve a problem.
-          required: false
   - type: textarea
     id: related-problem
     attributes: 
-      label: Describe the Problem your feature should fix.
-      description: A clear and concise description of the problem. If the feature is intended to solve a problem.
+      label: Description of the unfavorable solution
+      description: A clear and concise description of what you want to be different.
       placeholder: I'm always frustrated when ...
     validations: 
-      required: false
+      required: true
   - type: textarea
     id: feature
     attributes:
-      label: Describe the feature you would like to have.
-      description: A clear and concise description of the feature.
+      label: Describe the feature you would like to have
+      description: A clear and concise description of the function and its behavior. The more precisely you describe it, the easier it is to implement your idea.
       placeholder: Tell us what the feature will do...
     validations:
       required: true
   - type: textarea
-    id: solution
-    attributes:
-      label: Describe the solution you'd like
-      description: A clear and concise description of what you want to happen.
-      placeholder: Tell us about your solution...
-    validations: 
-      required: false
-  - type: textarea
-    id: alternative-solution
-    attributes:
-      label: Describe alternatives you've considered
-      description: A clear and concise description of any alternative solutions or features you've considered.
-      placeholder: Tell us an alternative solution...
-    validations: 
-      required: false
-  - type: textarea
     id: context
     attributes:
       label: Additional context
-      description: Add any other context about the problem here.
+      description: Add any other context about the problem here. You can also add pictures or videos if it helps show the feature you like.
       placeholder: Explain any additional context...
     validations:
       required: false
