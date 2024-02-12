@@ -1,6 +1,5 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from "fs";
-import { findSourceMap } from "module";
-import { FileSystemAdapter, Notice } from "obsidian";
+import { FileSystemAdapter } from "obsidian";
 import { dirname, join } from "path";
 
 /**
