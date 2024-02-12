@@ -4,6 +4,8 @@ import { ProfileSwitcherModal, ProfileState } from './ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './interface';
 import { getConfigFilesList, getIgnoreFilesList, loadProfileData, saveProfileData } from './util/SettingsFiles';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	vaultSettings: VaultSettings;
@@ -158,13 +160,16 @@ export default class SettingsProfilesPlugin extends Plugin {
 				this.vaultSettings.activeProfile = newProfile.name;
 			}
 			await this.loadProfile(profileName)
-				.then(async () => {
+				.then(() => {
 					this.saveSettings()
 						.then(() => {
 							// Reload obsidian so changed settings can take effect
 							// @ts-ignore
 							this.app.commands.executeCommandById("app:reload");
 						});
+				})
+				.catch(e => {
+					throw e;
 				})
 		} catch (e) {
 			this.vaultSettings.activeProfile = '';
@@ -307,7 +312,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 						.map(value => value.split('\\').slice(-file.split('/').length))
 						// Filter ignore files
 						.filter((value) => {
-							return !ignoreFiles.some((ignore) => {
+							return existsSync(join(getVaultPath(), this.app.vault.configDir, ...value)) && !ignoreFiles.some((ignore) => {
 								return ignore.every((element, index) => element === value[index])
 							});
 						});
@@ -317,7 +322,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 					})
 				}
 				else if (getVaultPath() !== "") {
-					if (!ignoreFiles.some((ignore) => ignore.every((element, index) => element === file[index]))) {
+					if (existsSync(join(getVaultPath(), this.app.vault.configDir, file)) && !ignoreFiles.some((ignore) => {
+						return ignore.every((element, index) => element === file[index])
+					})) {
 						copyFile([getVaultPath(), this.app.vault.configDir, file], [this.vaultSettings.profilesPath, profileName, file])
 					}
 				}
@@ -365,7 +372,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 						.map(value => value.split('\\').slice(-file.split('/').length))
 						// Filter ignore files
 						.filter((value) => {
-							return !ignoreFiles.some((ignore) => {
+							return existsSync(join(this.vaultSettings.profilesPath, profileName, ...value)) && !ignoreFiles.some((ignore) => {
 								return ignore.every((element, index) => element === value[index])
 							});
 						});
@@ -375,7 +382,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 					})
 				}
 				else if (getVaultPath() !== "") {
-					if (!ignoreFiles.some((ignore) => ignore.every((element, index) => element === file[index]))) {
+					if (existsSync(join(this.vaultSettings.profilesPath, profileName, file)) && !ignoreFiles.some((ignore) => {
+						return ignore.every((element, index) => element === file[index]);
+					})) {
 						copyFile([this.vaultSettings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
 					}
 				}

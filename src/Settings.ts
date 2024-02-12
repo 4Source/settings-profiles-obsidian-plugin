@@ -76,7 +76,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.loadProfile(profile.name)
-							.then(async () => {
+							.then(() => {
 								// Reload obsidian so changed settings can take effect
 								// @ts-ignore
 								this.app.commands.executeCommandById("app:reload");
