@@ -15,7 +15,7 @@ body:
     id: context
     attributes:
       label: Additional context
-      description: Add any other context about the problem here.
+      description: Add any other context about the problem here. You can also add pictures or videos if it helps show your question.
       placeholder: Explain any additional context...
     validations:
       required: false
