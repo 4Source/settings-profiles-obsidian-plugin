@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
-import { PROFILE_SETTINGS_MAP, ProfileSetting } from "src/interface";
+import { PROFILE_SETTINGS_MAP, ProfileSetting } from "src/settings/SettingsInterface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
 /**
