@@ -1,6 +1,6 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "../main";
-import { DEFAULT_PROFILE_SETTINGS, ProfileSetting } from "../interface";
+import { DEFAULT_PROFILE_SETTINGS, ProfileSetting } from "../settings/SettingsInterface";
 
 export enum ProfileState {
     EXIST,

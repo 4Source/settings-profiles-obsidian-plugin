@@ -1,6 +1,6 @@
 import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_SETTINGS } from '../interface';
+import { DEFAULT_PROFILE_SETTINGS } from './SettingsInterface';
 import { loadProfileData } from '../util/SettingsFiles';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 export class SettingsProfilesSettingTab extends PluginSettingTab {
