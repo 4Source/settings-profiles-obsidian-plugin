@@ -32,11 +32,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 		const profile = this.getCurrentProfile();
 		// Register to close obsidian
 		this.registerEvent(this.app.workspace.on('quit', () => {
-			// Sync profiles
-			if (profile?.autoSync) {
-				this.saveProfile(profile.name);
-				saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
-			}
+			this.saveSettings();
 		}));
 
 		// Display Settings Profile on Startup
