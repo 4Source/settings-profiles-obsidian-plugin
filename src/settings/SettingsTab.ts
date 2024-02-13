@@ -82,8 +82,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							.then(() => {
 								// Reload obsidian so changed settings can take effect
 								new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-								// @ts-ignore
-								this.app.commands.executeCommandById("app:reload");
+									// @ts-ignore
+									this.app.commands.executeCommandById("app:reload");
 								}, () => { }, 'Reload')
 									.open();
 							});
@@ -150,14 +150,11 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon(this.plugin.isEnabled(profile) ? 'check' : 'download')
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
-					.onClick(async () => {
+					.onClick(() => {
 						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
 						if (this.plugin.getProfile(profile.name)) {
 							if (!this.plugin.isEnabled(profile)) {
-								this.plugin.switchProfile(profile.name)
-									.then(() => {
-										this.display();
-									});
+								this.plugin.switchProfile(profile.name);
 							}
 						}
 						this.display();
