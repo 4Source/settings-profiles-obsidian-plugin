@@ -6,6 +6,7 @@ import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSetting, GlobalSettings, 
 import { getConfigFilesList, getIgnoreFilesList, loadProfileData, saveProfileData } from './util/SettingsFiles';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { DialogModal } from './modals/DialogModal';
 
 export default class SettingsProfilesPlugin extends Plugin {
 	vaultSettings: VaultSettings;
@@ -165,8 +166,11 @@ export default class SettingsProfilesPlugin extends Plugin {
 					this.saveSettings()
 						.then(() => {
 							// Reload obsidian so changed settings can take effect
+							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 							// @ts-ignore
 							this.app.commands.executeCommandById("app:reload");
+							}, () => { }, 'Reload')
+								.open();
 						});
 				})
 				.catch(e => {
