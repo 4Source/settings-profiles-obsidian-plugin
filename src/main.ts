@@ -84,9 +84,9 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.globalSettings.profilesList = loadProfileData(this.vaultSettings.profilesPath);
 
 			// Sync Profiles
-			let profile = this.getCurrentProfile();
+			const profile = this.getCurrentProfile();
 			// Load settings from profile
-			if (profile?.autoSync) {
+			if (profile?.autoSync && profile.name) {
 				this.loadProfile(profile.name);
 			}
 		} catch (e) {
@@ -109,7 +109,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 			// Save profile settings
 			const profile = this.getCurrentProfile();
-			if (profile?.autoSync) {
+			if (profile?.autoSync && profile.name) {
 				await this.saveProfile(profile.name);
 			}
 		} catch (e) {
