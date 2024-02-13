@@ -1,5 +1,5 @@
 import { Notice, Plugin } from 'obsidian';
-import { SettingsProfilesSettingTab } from "src/Settings";
+import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './interface';
