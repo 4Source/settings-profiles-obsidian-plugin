@@ -2,6 +2,9 @@
 
 Allows you to create various global settings profiles. You can sync them between different vaults. To keep all your settings in sync, you'll never have to manually adjust them again for every vault you have or create in the future.
 
+## Demo
+![SettingsProfiles-VaultSwitchDemo_v4](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/71124b34-e6a6-42f7-b639-0c2128845b3b)
+
 ## Usage
 After enabling the plugin in the settings menu, you need to create a new profile. 
 
