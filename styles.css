@@ -22,3 +22,7 @@
     background-color: transparent;
     color: var(--icon-color);
 }
+
+.modal-buttons {
+    border-top: none;
+}
