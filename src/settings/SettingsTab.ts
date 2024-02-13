@@ -3,6 +3,7 @@ import SettingsProfilesPlugin from '../main';
 import { DEFAULT_PROFILE_SETTINGS } from './SettingsInterface';
 import { loadProfileData } from '../util/SettingsFiles';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
+import { DialogModal } from 'src/modals/DialogModal';
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -80,8 +81,11 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						this.plugin.loadProfile(profile.name)
 							.then(() => {
 								// Reload obsidian so changed settings can take effect
+								new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 								// @ts-ignore
 								this.app.commands.executeCommandById("app:reload");
+								}, () => { }, 'Reload')
+									.open();
 							});
 					}
 					this.display();
