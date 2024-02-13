@@ -1,6 +1,6 @@
 import { App, Modal, Notice, Setting } from "obsidian";
-import SettingsProfilesPlugin from "./main";
-import { ProfileSetting, PROFILE_SETTINGS_MAP } from "./interface";
+import SettingsProfilesPlugin from "../main";
+import { ProfileSetting, PROFILE_SETTINGS_MAP } from "../interface";
 
 export class ProfileSettingsModal extends Modal {
     plugin: SettingsProfilesPlugin;
