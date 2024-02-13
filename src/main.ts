@@ -143,35 +143,40 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 */
 	async switchProfile(profileName: string) {
 		try {
-			// Save current Profile to possible switch back if failed
-			const previousProfile = this.getCurrentProfile();
+			const currentProfile = this.getCurrentProfile();
+			const targetProfile = this.getProfile(profileName);
+
+			// Is target profile existing
+			if (!targetProfile || !targetProfile.name) {
+				throw Error('Target profile does not exist!');
+			}
 
 			// Check is current profile
-			if (previousProfile && previousProfile.name === profileName) {
+			if (currentProfile?.name === targetProfile.name) {
 				new Notice('Allready current profile!');
 				return;
 			}
 
-			// Enabel new Profile
-			const newProfile = this.globalSettings.profilesList.find(profile => profile.name === profileName);
-			if (newProfile) {
-				this.vaultSettings.activeProfile = newProfile.name;
+			// Save current profile 
+			if (currentProfile?.name) {
+				await this.saveProfile(currentProfile.name)
 			}
-			await this.loadProfile(profileName)
-				.then(() => {
-					this.saveSettings()
-						.then(() => {
-							// Reload obsidian so changed settings can take effect
-							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-							// @ts-ignore
-							this.app.commands.executeCommandById("app:reload");
-							}, () => { }, 'Reload')
-								.open();
-						});
-				})
-				.catch(e => {
-					throw e;
-				})
+			else {
+				console.info('No current profile.');
+			}
+
+			// Load new profile
+			await this.loadProfile(targetProfile.name);
+
+			// Save Settings
+			await this.saveSettings();
+
+			// Open dialog obsidain should be reloaded
+			new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+				// @ts-ignore
+				this.app.commands.executeCommandById("app:reload");
+			}, () => { }, 'Reload')
+				.open();
 		} catch (e) {
 			this.vaultSettings.activeProfile = '';
 			new Notice(`Failed to switch to ${profileName} profile!`);
@@ -400,6 +405,12 @@ export default class SettingsProfilesPlugin extends Plugin {
 					}
 				}
 			});
+
+			// Change active profile
+			const profile = this.getProfile(profileName);
+			if (profile?.name) {
+				this.vaultSettings.activeProfile = profile.name;
+			}
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
 			(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
