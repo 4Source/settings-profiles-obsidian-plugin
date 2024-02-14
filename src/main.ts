@@ -1,4 +1,4 @@
-import { Notice, Plugin } from 'obsidian';
+import { Notice } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getAllFiles, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
@@ -7,11 +7,13 @@ import { getConfigFilesList, getIgnoreFilesList, loadProfileData, saveProfileDat
 import { isAbsolute, join } from 'path';
 import { existsSync } from 'fs';
 import { DialogModal } from './modals/DialogModal';
+import PluginExtended from './core/PluginExtended';
 
-export default class SettingsProfilesPlugin extends Plugin {
+export default class SettingsProfilesPlugin extends PluginExtended {
 	vaultSettings: VaultSettings;
 	globalSettings: GlobalSettings;
 	settingsTab: SettingsProfilesSettingTab;
+	statusBarItem: HTMLElement;
 
 	async onload() {
 		await this.loadSettings();
@@ -35,8 +37,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 			this.saveSettings();
 		}));
 
-		// Display Settings Profile on Startup
-		new Notice(`Current profile: ${profile?.name}`);
+		// Attach status bar item
+		if (profile) {
+			// user-x Profile is not up-to-date
+			// user-check Profile is up-to-date/saved
+			// user-cog Profile is not saved
+			this.statusBarItem = this.addStatusBarItem('user-check', profile?.name, 'Settings profiles');
+		}
 
 		// Add Command to Switch between profiles
 		this.addCommand({
