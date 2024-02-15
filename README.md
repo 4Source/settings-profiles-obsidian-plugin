@@ -4,6 +4,7 @@ Allows you to create various global settings profiles. You can sync them between
 
 ## Demo
 ![SettingsProfiles-VaultSwitchDemo_v5](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/5c68105f-6613-4ba6-ab6b-c581b4badab7)
+The demo shows creating a new profile for an existing vault with a theme set and plugin installed. Then a new vault is created and settings profiles are installed. After installation, the previously created profile will be automatically recognized. This is selected and loads all settings including themes and plugins. The newly created vault will then have the same settings as the existing vault.
 
 
 ## Usage
