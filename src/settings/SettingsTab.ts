@@ -22,12 +22,59 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Profile save path')
 			.setDesc('The path to store the profile settings')
+			.addButton(button => button
+				.setButtonText('Change')
+				.setWarning()
+				.onClick(() => {
+					try {
+						// Get text component
+						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
+						if (!input) {
+							throw Error("Input element not found!");
+						}
+						// Change path in file
+						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
+						this.plugin.vaultSettings.activeProfile = "";
+						this.plugin.globalSettings.profilesList = [];
+
+						this.plugin.saveSettings()
+							.then(() => {
+								// Reload the profiles at new path
+								this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+								this.display();
+							});
+					} catch (e) {
+						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
 				.setValue(this.plugin.vaultSettings.profilesPath)
 				.onChange(value => {
-					this.plugin.vaultSettings.profilesPath = normalizePath(value);
-					this.plugin.saveSettings();
-				}));
+					try {
+						// Value is changed 
+						if (value !== this.plugin.vaultSettings.profilesPath) {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							if (!button) {
+								throw Error("Button element not found!");
+							}
+							button.toggleVisibility(true);
+						}
+						// Value is same as in file
+						else {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							if (!button) {
+								throw Error("Button element not found!");
+							}
+							button.toggleVisibility(false);
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.inputEl.id = 'profile-path');
 
 		new Setting(containerEl)
 			.addButton(button => button
