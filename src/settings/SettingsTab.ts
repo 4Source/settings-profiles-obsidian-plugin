@@ -22,41 +22,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Profile save path')
 			.setDesc('The path to store the profile settings')
-			.addButton(button => button
-				.setButtonText('Change')
-				.setWarning()
-				.onClick(async () => {
-					const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
-					if (input) {
-						await this.plugin.changeProfilePath(normalizePath(input.value));
-					}
-					const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
-					if (button) {
-						button.toggleVisibility(false);
-					}
-				})
-				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
 				.setValue(this.plugin.vaultSettings.profilesPath)
 				.onChange(value => {
-					if (value !== this.plugin.vaultSettings.profilesPath) {
-						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
-						if (input) {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
-							if (button) {
-								button.toggleVisibility(true);
-							}
-						}
-					}
-					else {
-						const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
-						if (button) {
-							button.toggleVisibility(false);
-						}
-					}
-				})
-				.inputEl.id = 'profile-path')
-			;
+					this.plugin.vaultSettings.profilesPath = normalizePath(value);
+					this.plugin.saveSettings();
+				}));
 
 		new Setting(containerEl)
 			.addButton(button => button
