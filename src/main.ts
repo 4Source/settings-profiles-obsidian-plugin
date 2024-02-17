@@ -74,7 +74,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Load Plugin Settings from file or default.
 	 * Sync Profiles if enabeled.
 	 */
-	private async loadSettings() {
+	async loadSettings() {
 		try {
 			// Load vault settings from file if exist or create default
 			this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
@@ -99,7 +99,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 	 * Save Plugin Settings to file.
 	 * Sync Profiles if enabeled.
 	 */
-	private async saveSettings() {
+	async saveSettings() {
 		try {
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
@@ -114,25 +114,6 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 		} catch (e) {
 			(e as Error).message = 'Failed to save Settings! ' + (e as Error).message;
-			console.error(e);
-		}
-	}
-
-	/**
-	 * Change the path to save the profiles
-	 * @param path The target where to save the profiles
-	 */
-	async changeProfilePath(path: string) {
-		try {
-			// Copy profiles to new path
-			copyFolderRecursiveSync([this.vaultSettings.profilesPath], [path]);
-			// Remove old profiles path
-			removeDirectoryRecursiveSync([this.vaultSettings.profilesPath]);
-
-			this.vaultSettings.profilesPath = path;
-			await this.saveSettings();
-		} catch (e) {
-			(e as Error).message = 'Failed to change profile path! ' + (e as Error).message;
 			console.error(e);
 		}
 	}
