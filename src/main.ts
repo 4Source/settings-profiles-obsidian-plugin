@@ -1,10 +1,10 @@
 import { Notice, Plugin } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
-import { copyFile, copyFolderRecursiveSync, ensurePathExist, getAllFiles, getVaultPath, removeDirectoryRecursiveSync } from './util/FileSystem';
+import { copyFile, ensurePathExist, getAllFiles, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
 import { getConfigFilesList, getIgnoreFilesList, loadProfileData, saveProfileData } from './util/SettingsFiles';
-import { join } from 'path';
+import { isAbsolute, join } from 'path';
 import { existsSync } from 'fs';
 import { DialogModal } from './modals/DialogModal';
 
@@ -18,7 +18,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 		// Make sure Profile path exists
 		try {
-			ensurePathExist([this.vaultSettings.profilesPath]);
+			ensurePathExist([this.getProfilesPath()]);
 		} catch (e) {
 			new Notice("Profile save path is not valid!");
 			(e as Error).message = 'Profile path is not valid! ' + (e as Error).message;
@@ -81,7 +81,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 
 			// Load global settings from profiles path
 			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
-			this.globalSettings.profilesList = loadProfileData(this.vaultSettings.profilesPath);
+			this.globalSettings.profilesList = loadProfileData(this.getProfilesPath());
 
 			// Sync Profiles
 			const profile = this.getCurrentProfile();
@@ -105,7 +105,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			await this.saveData(this.vaultSettings);
 
 			// Save profile data
-			saveProfileData(this.globalSettings.profilesList, this.vaultSettings.profilesPath);
+			saveProfileData(this.globalSettings.profilesList, this.getProfilesPath());
 
 			// Save profile settings
 			const profile = this.getCurrentProfile();
@@ -262,7 +262,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 			}
 
 			// Remove to profile settings
-			removeDirectoryRecursiveSync([this.vaultSettings.profilesPath, profileName]);
+			removeDirectoryRecursiveSync([this.getProfilesPath(), profileName]);
 			this.globalSettings.profilesList.remove(profile);
 
 			// Save settings and reload settings tab 
@@ -285,7 +285,7 @@ export default class SettingsProfilesPlugin extends Plugin {
 				throw Error('Profile does not exist!');
 			}
 			// Check target dir exist
-			ensurePathExist([this.vaultSettings.profilesPath, profileName]);
+			ensurePathExist([this.getProfilesPath(), profileName]);
 
 			// Get ignore files
 			let ignoreFiles: string[][] = [];
@@ -315,14 +315,14 @@ export default class SettingsProfilesPlugin extends Plugin {
 						});
 
 					pathVariants.forEach(value => {
-						copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.vaultSettings.profilesPath, profileName, ...value])
+						copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.getProfilesPath(), profileName, ...value])
 					})
 				}
 				else if (getVaultPath() !== "") {
 					if (existsSync(join(getVaultPath(), this.app.vault.configDir, file)) && !ignoreFiles.some((ignore) => {
 						return ignore.every((element, index) => element === file[index])
 					})) {
-						copyFile([getVaultPath(), this.app.vault.configDir, file], [this.vaultSettings.profilesPath, profileName, file])
+						copyFile([getVaultPath(), this.app.vault.configDir, file], [this.getProfilesPath(), profileName, file])
 					}
 				}
 			});
@@ -345,13 +345,13 @@ export default class SettingsProfilesPlugin extends Plugin {
 				throw Error('Profile does not exist!');
 			}
 			// Check target dir exist
-			ensurePathExist([this.vaultSettings.profilesPath, profileName]);
+			ensurePathExist([this.getProfilesPath(), profileName]);
 
 			// Get ignore files
 			let ignoreFiles: string[][] = [];
 			getIgnoreFilesList(this.getProfile(profileName)).forEach(ignore => {
 				if ((ignore.includes("/*/") || ignore.includes("/*")) && getVaultPath() !== "") {
-					const files = getAllFiles([this.vaultSettings.profilesPath, profileName, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
+					const files = getAllFiles([this.getProfilesPath(), profileName, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
 					files.forEach(file => {
 						ignoreFiles.push(file)
 					})
@@ -364,25 +364,25 @@ export default class SettingsProfilesPlugin extends Plugin {
 			// Load files
 			getConfigFilesList(this.getProfile(profileName)).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
-					const pathVariants = getAllFiles([this.vaultSettings.profilesPath, profileName, file])
+					const pathVariants = getAllFiles([this.getProfilesPath(), profileName, file])
 						// Trim the start of path
 						.map(value => value.split('\\').slice(-file.split('/').length))
 						// Filter ignore files
 						.filter((value) => {
-							return existsSync(join(this.vaultSettings.profilesPath, profileName, ...value)) && !ignoreFiles.some((ignore) => {
+							return existsSync(join(this.getProfilesPath(), profileName, ...value)) && !ignoreFiles.some((ignore) => {
 								return ignore.every((element, index) => element === value[index])
 							});
 						});
 
 					pathVariants.forEach(value => {
-						copyFile([this.vaultSettings.profilesPath, profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
+						copyFile([this.getProfilesPath(), profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
 					})
 				}
 				else if (getVaultPath() !== "") {
-					if (existsSync(join(this.vaultSettings.profilesPath, profileName, file)) && !ignoreFiles.some((ignore) => {
+					if (existsSync(join(this.getProfilesPath(), profileName, file)) && !ignoreFiles.some((ignore) => {
 						return ignore.every((element, index) => element === file[index]);
 					})) {
-						copyFile([this.vaultSettings.profilesPath, profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
+						copyFile([this.getProfilesPath(), profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
 					}
 				}
 			});
@@ -397,6 +397,22 @@ export default class SettingsProfilesPlugin extends Plugin {
 			(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
 			console.error(e);
 		}
+	}
+
+	/**
+	 * Returns an absolut path to profiles. Recommendet to use this function instead of directly access settings.
+	 */
+	getProfilesPath(): string {
+		let path = this.vaultSettings.profilesPath;
+
+		if (!isAbsolute(path)) {
+			path = join(getVaultPath(), path);
+		}
+
+		if (!isValidPath([path])) {
+			throw Error('No valid profiles path could be found!');
+		}
+		return path;
 	}
 
 	/**
