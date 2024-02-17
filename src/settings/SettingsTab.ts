@@ -4,6 +4,8 @@ import { DEFAULT_PROFILE_SETTINGS } from './SettingsInterface';
 import { loadProfileData } from '../util/SettingsFiles';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 import { DialogModal } from 'src/modals/DialogModal';
+import { isAbsolute } from 'path';
+
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -32,17 +34,25 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						if (!input) {
 							throw Error("Input element not found!");
 						}
-						// Change path in file
-						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
-						this.plugin.vaultSettings.activeProfile = "";
-						this.plugin.globalSettings.profilesList = [];
 
-						this.plugin.saveSettings()
-							.then(() => {
-								// Reload the profiles at new path
-								this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
-								this.display();
-							});
+						const backupPath = this.plugin.vaultSettings.profilesPath;
+						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
+
+						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getProfilesPath()} `, () => {
+							// Change path in file
+							this.plugin.vaultSettings.activeProfile = "";
+							this.plugin.globalSettings.profilesList = [];
+
+							this.plugin.saveSettings()
+								.then(() => {
+									// Reload the profiles at new path
+									this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+									this.display();
+								});
+						}, () => {
+							this.plugin.vaultSettings.profilesPath = backupPath;
+							this.display();
+						}).open();
 					} catch (e) {
 						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
 						console.error(e);
