@@ -1,6 +1,6 @@
 import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_SETTINGS } from './SettingsInterface';
+import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
 import { loadProfileData } from '../util/SettingsFiles';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 import { DialogModal } from 'src/modals/DialogModal';
@@ -35,21 +35,30 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							throw Error("Input element not found!");
 						}
 
+						// Textbox empty
+						if (input.value === '') {
+							input.value = DEFAULT_VAULT_SETTINGS.profilesPath;
+						}
+
+						// Backup to possible restore
 						const backupPath = this.plugin.vaultSettings.profilesPath;
+						// Set profiles path to textbox value
 						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
 
 						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getProfilesPath()} `, () => {
-							// Change path in file
+							// Clean up settings
 							this.plugin.vaultSettings.activeProfile = "";
 							this.plugin.globalSettings.profilesList = [];
 
+							// Save settins
 							this.plugin.saveSettings()
 								.then(() => {
 									// Reload the profiles at new path
-									this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+									this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 									this.display();
 								});
 						}, () => {
+							// Restore old value
 							this.plugin.vaultSettings.profilesPath = backupPath;
 							this.display();
 						}).open();
