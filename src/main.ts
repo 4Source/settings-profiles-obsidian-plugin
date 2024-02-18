@@ -39,10 +39,28 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// Attach status bar item
 		if (profile) {
-			// user-x Profile is not up-to-date
-			// user-check Profile is up-to-date/saved
-			// user-cog Profile is not saved
-			this.statusBarItem = this.addStatusBarItem('user-check', profile?.name, 'Settings profiles');
+			let icon = 'alert-circle';
+			let label = 'Settings profiles';
+
+			if (this.isProfileSaved(profile)) {
+				if (this.isProfileUpToDate(profile)) {
+					// Profile is up-to-date and saved
+					icon = 'user-check';
+					label = 'Profile up-to-date'
+				}
+				else {
+					// Profile is not up to date
+					icon = 'user-x';
+					label = 'Unloaded changes for this profile'
+				}
+			}
+			else {
+				// Profile is not saved
+				icon = 'user-cog';
+				label = 'Unsaved changes for this profile'
+			}
+
+			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label);
 		}
 
 		// Add Command to Switch between profiles
@@ -114,10 +132,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Auto Sync
 			const profile = this.getCurrentProfile();
 			if (profile?.autoSync && profile.name) {
-			// Save profile data
-			saveProfileData(this.globalSettings.profilesList, this.getProfilesPath());
+				// Save profile data
+				saveProfileData(this.globalSettings.profilesList, this.getProfilesPath());
 
-			// Save profile settings
+				// Save profile settings
 				await this.saveProfile(profile.name);
 			}
 		} catch (e) {
@@ -398,7 +416,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Change active profile
 			const profile = this.getProfile(profileName);
 			if (profile?.name) {
-				this.vaultSettings.activeProfile = {name: profile.name, modifiedAt: profile.modifiedAt};
+				this.vaultSettings.activeProfile = { name: profile.name, modifiedAt: profile.modifiedAt };
 			}
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
