@@ -444,13 +444,21 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		if (!name) {
 			return;
 		}
-		return this.getProfile(name);
+		let profile = this.getProfile(name);
+		if (!profile) {
+			return;
+		}
+
+		if (this.vaultSettings.activeProfile?.modifiedAt) {
+			profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
+		}
+		return profile;
 	}
 
 	/**
 	 * Checks the profile is currently enabled
 	 * @param profile The profile to check 
-	 * @returns boolean.
+	 * @returns Is enabled profile
 	 */
 	isEnabled(profile: ProfileSetting): boolean {
 		return this.vaultSettings.activeProfile?.name === profile.name;
