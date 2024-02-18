@@ -29,7 +29,7 @@ export class ProfileSettingsModal extends Modal {
                 const value = this.profile[key as keyof ProfileSetting];
 
                 // Only toggle exclude enabled
-                if (typeof value === 'boolean' && key !== 'enabled') {
+                if (typeof value === 'boolean') {
                     new Setting(contentEl)
                         .setName(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].name)
                         .setDesc(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].description)
@@ -38,9 +38,10 @@ export class ProfileSettingsModal extends Modal {
                             .onChange(async (value) => {
                                 // Assign value of this Setting an save it
                                 (this.profile[key as keyof ProfileSetting] as boolean) = value;
-                            }));
+                            }))
+                        .settingEl.setAttr('id', key);
                 }
-                if (typeof value === 'string') {
+                else if (typeof value === 'string') {
                     new Setting(contentEl)
                         .setName(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].name)
                         .setDesc(PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].description)
@@ -50,7 +51,8 @@ export class ProfileSettingsModal extends Modal {
                             .onChange(value => {
                                 // Assign value of this Setting an save it
                                 (this.profile[key as keyof ProfileSetting] as string) = value;
-                            }));
+                            }))
+                        .settingEl.setAttr('id', key);
                 }
             }
         }
