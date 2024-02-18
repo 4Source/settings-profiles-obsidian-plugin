@@ -28,15 +28,15 @@ export class DialogModal extends Modal {
             .addButton(button => button
                 .setButtonText(this.submit)
                 .onClick(() => {
-                    this.onSubmit();
                     this.close();
+                    this.onSubmit();
                 }))
             .addButton(button => button
                 .setButtonText(this.deny)
                 .setWarning()
                 .onClick(() => {
-                    this.onDeny();
                     this.close();
+                    this.onDeny();
                 }))
             .setClass('modal-buttons');
     }
