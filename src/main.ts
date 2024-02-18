@@ -111,12 +111,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
 
+			// Auto Sync
+			const profile = this.getCurrentProfile();
+			if (profile?.autoSync && profile.name) {
 			// Save profile data
 			saveProfileData(this.globalSettings.profilesList, this.getProfilesPath());
 
 			// Save profile settings
-			const profile = this.getCurrentProfile();
-			if (profile?.autoSync && profile.name) {
 				await this.saveProfile(profile.name);
 			}
 		} catch (e) {
