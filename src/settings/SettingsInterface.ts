@@ -24,7 +24,8 @@ export interface ProfileSetting {
 	appearance: boolean;
 	app: boolean;
 	bookmarks: boolean;
-	communityPlugins: boolean; //include core-plugins and core-plugins-migration
+	communityPlugins: boolean;
+	communityPluginsAdvanced: {}
 	corePlugins: boolean;
 	graph: boolean;
 	hotkeys: boolean;
@@ -37,6 +38,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
 	app: true,
 	bookmarks: true,
 	communityPlugins: true,
+	communityPluginsAdvanced: {},
 	corePlugins: true,
 	graph: true,
 	hotkeys: true,
@@ -44,9 +46,15 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
 
 type ProfileSettingMap = {
 	[key in keyof ProfileSetting]: {
+		// Display name of the setting
 		name: string;
+		// Description text of the setting
 		description: string;
+		// The setting this is the Advanced option.
+		advanced?: keyof ProfileSetting;
+		// Files/Paths there get synced with this option. 
 		file?: string | string[];
+		// Files/Paths there are ignored for sync
 		ignore?: string | string[];
 	};
 };
@@ -81,6 +89,11 @@ export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
 		description: 'Says whether the community plugins and there settings will sync.',
 		file: ['community-plugins.json', 'plugins/*/*'],
 		ignore: 'plugins/settings-profiles/data.json'
+	},
+	communityPluginsAdvanced: {
+		name: 'Community Plugins Advanced',
+		description: 'Advanced settings for the community plugins.',
+		advanced: 'communityPlugins'
 	},
 	corePlugins: {
 		name: 'Core Plugins',
