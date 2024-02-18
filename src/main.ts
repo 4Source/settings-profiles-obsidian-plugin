@@ -223,7 +223,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}, () => { }, 'Reload')
 				.open();
 		} catch (e) {
-			this.vaultSettings.activeProfile = {};
+			this.updateCurrentProfile(undefined);
 			new Notice(`Failed to switch to ${profileName} profile!`);
 			(e as Error).message = 'Failed to switch profile! ' + (e as Error).message;
 			console.error(e);
@@ -344,8 +344,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	async saveProfile(profileName: string) {
 		try {
+			let profile = this.getProfile(profileName);
 			// Check profile Exist
-			if (!this.getProfile(profileName)) {
+			if (!profile) {
 				throw Error('Profile does not exist!');
 			}
 			// Check target dir exist
@@ -390,6 +391,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					}
 				}
 			});
+
+			// Update profile data
+			profile.modifiedAt = new Date();
+			this.updateCurrentProfile(profile);
 		}
 		catch (e) {
 			new Notice(`Failed to save ${profileName} profile!`);
@@ -404,8 +409,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	async loadProfile(profileName: string) {
 		try {
+			const profile = this.getProfile(profileName);
 			// Check profile Exist
-			if (!this.getProfile(profileName)) {
+			if (!profile) {
 				throw Error('Profile does not exist!');
 			}
 			// Check target dir exist
@@ -452,10 +458,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			});
 
 			// Change active profile
-			const profile = this.getProfile(profileName);
-			if (profile?.name) {
-				this.vaultSettings.activeProfile = { name: profile.name, modifiedAt: profile.modifiedAt };
-			}
+			this.updateCurrentProfile(profile);
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
 			(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
@@ -510,6 +513,18 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
 		}
 		return profile;
+	}
+
+	/**
+	 * Updates the current profile to passed profile
+	 * @param profile The profile to update to 
+	 */
+	updateCurrentProfile(profile: ProfileSetting | undefined) {
+		if (!profile) {
+			this.vaultSettings.activeProfile = {};
+			return;
+		}
+		this.vaultSettings.activeProfile = { name: profile.name, modifiedAt: profile.modifiedAt };
 	}
 
 	/**
