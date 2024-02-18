@@ -29,6 +29,7 @@ export interface ProfileSetting {
 	corePlugins: boolean;
 	graph: boolean;
 	hotkeys: boolean;
+	modifiedAt: Date;
 }
 
 export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
@@ -42,6 +43,7 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
 	corePlugins: true,
 	graph: true,
 	hotkeys: true,
+	modifiedAt: new Date(),
 }
 
 type ProfileSettingMap = {
@@ -109,5 +111,9 @@ export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
 		name: 'Hotkeys',
 		description: 'Says whether the obsidian hotkey settings will sync.',
 		file: 'hotkeys.json'
+	},
+	modifiedAt: {
+		name: 'Modified at',
+		description: 'Date time of last modification.'
 	}
 }
