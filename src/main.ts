@@ -213,14 +213,15 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Load new profile
 			await this.loadProfile(targetProfile.name);
 
+			// Open dialog obsidain should be reloaded
+			new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', async () => {
 			// Save Settings
 			await this.saveSettings();
-
-			// Open dialog obsidain should be reloaded
-			new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 				// @ts-ignore
 				this.app.commands.executeCommandById("app:reload");
-			}, () => { }, 'Reload')
+			}, () => { 
+				this.settingsTab.display();
+			}, 'Reload')
 				.open();
 		} catch (e) {
 			this.updateCurrentProfile(undefined);
