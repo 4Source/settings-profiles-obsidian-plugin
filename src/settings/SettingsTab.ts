@@ -47,7 +47,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getProfilesPath()} `, () => {
 							// Clean up settings
-							this.plugin.vaultSettings.activeProfile = "";
+							this.plugin.vaultSettings.activeProfile = {};
 							this.plugin.globalSettings.profilesList = [];
 
 							// Save settins

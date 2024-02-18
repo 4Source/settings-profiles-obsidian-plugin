@@ -11,11 +11,12 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 
 export interface VaultSettings {
 	profilesPath: string;
-	activeProfile?: string;
+	activeProfile: Partial<ProfileSetting>;
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	activeProfile: {}
 }
 
 export interface ProfileSetting {

@@ -166,7 +166,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}, () => { }, 'Reload')
 				.open();
 		} catch (e) {
-			this.vaultSettings.activeProfile = '';
+			this.vaultSettings.activeProfile = {};
 			new Notice(`Failed to switch to ${profileName} profile!`);
 			(e as Error).message = 'Failed to switch profile! ' + (e as Error).message;
 			console.error(e);
@@ -397,7 +397,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Change active profile
 			const profile = this.getProfile(profileName);
 			if (profile?.name) {
-				this.vaultSettings.activeProfile = profile.name;
+				this.vaultSettings.activeProfile = {name: profile.name, modifiedAt: profile.modifiedAt};
 			}
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
@@ -440,7 +440,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns The PerProfileSetting object. Or undefined if not found.
 	 */
 	getCurrentProfile(): ProfileSetting | undefined {
-		const name = this.vaultSettings.activeProfile;
+		const name = this.vaultSettings.activeProfile?.name;
 		if (!name) {
 			return;
 		}
@@ -453,7 +453,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns boolean.
 	 */
 	isEnabled(profile: ProfileSetting): boolean {
-		return this.vaultSettings.activeProfile === profile.name;
+		return this.vaultSettings.activeProfile?.name === profile.name;
 	}
 }
 
