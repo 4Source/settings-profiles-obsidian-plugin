@@ -63,6 +63,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label);
 		}
 
+		// Update non time critical UI at Intervall 
+		this.registerInterval(window.setInterval(() => {
+			this.updateUI();
+		}, 1000));
+
 		// Add Command to Switch between profiles
 		this.addCommand({
 			id: "open-profile-switcher",
@@ -94,6 +99,39 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	onunload() { }
+
+	/**
+	 * Update non time critical UI at Intervall
+	 */
+	updateUI() {
+		const profile = this.getCurrentProfile();
+
+		// Attach status bar item
+		if (profile) {
+			let icon = 'alert-circle';
+			let label = 'Settings profiles';
+
+			if (this.isProfileSaved(profile)) {
+				if (this.isProfileUpToDate(profile)) {
+					// Profile is up-to-date and saved
+					icon = 'user-check';
+					label = 'Profile up-to-date'
+				}
+				else {
+					// Profile is not up to date
+					icon = 'user-x';
+					label = 'Unloaded changes for this profile'
+				}
+			}
+			else {
+				// Profile is not saved
+				icon = 'user-cog';
+				label = 'Unsaved changes for this profile'
+			}
+
+			this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
+		}
+	}
 
 	/**
 	 * Load Plugin Settings from file or default.
