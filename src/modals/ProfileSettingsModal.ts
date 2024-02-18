@@ -12,6 +12,8 @@ export class ProfileSettingsModal extends Modal {
     constructor(app: App, plugin: SettingsProfilesPlugin, profile: ProfileSetting, onSubmit: (result: ProfileSetting) => void) {
         super(app);
 
+        this.titleEl.setText('Profile settings');
+
         this.plugin = plugin;
         this.profile = structuredClone(profile);
         this.initialProfile = structuredClone(profile);
@@ -20,9 +22,6 @@ export class ProfileSettingsModal extends Modal {
 
     onOpen(): void {
         const { contentEl } = this;
-
-        // Heading for Edit profile
-        contentEl.createEl('h1', { text: `Profile settings` });
 
         // Add All existing options
         for (const key in this.profile) {
