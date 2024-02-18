@@ -455,5 +455,43 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	isEnabled(profile: ProfileSetting): boolean {
 		return this.vaultSettings.activeProfile?.name === profile.name;
 	}
+
+	/**
+	 * Checks the profile is up to date to the saved profile
+	 * @param profile The profile to check 
+	 * @returns Is loaded profile newer/equal than saved profile
+	 */
+	isProfileUpToDate(profile: ProfileSetting): boolean {
+		const list = loadProfileData(this.vaultSettings.profilesPath);
+		const profileData = list.find((value) => value.name === profile.name);
+
+		if (!profileData || !profileData.modifiedAt) {
+			return false;
+		}
+
+		const profileDataDate = new Date(profileData.modifiedAt);
+		const profileDate = new Date(profile.modifiedAt);
+
+		return profileDate.getTime() >= profileDataDate.getTime();
+	}
+
+	/**
+	 * Check the profile settings are saved 
+	 * @param profile The profile to check 
+	 * @returns Is saved profile newer/equal than saved profile
+	 */
+	isProfileSaved(profile: ProfileSetting): boolean {
+		const list = loadProfileData(this.vaultSettings.profilesPath);
+		const profileData = list.find((value, index, obj) => value.name === profile.name)
+
+		if (!profileData || !profileData.modifiedAt) {
+			return false;
+		}
+
+		const profileDataDate = new Date(profileData.modifiedAt);
+		const profileDate = new Date(profile.modifiedAt);
+
+		return profileDate.getTime() <= profileDataDate.getTime();
+	}
 }
 
