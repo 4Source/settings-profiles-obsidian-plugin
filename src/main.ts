@@ -32,16 +32,16 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.addSettingTab(this.settingsTab);
 
 		// Register to close obsidian
-		this.registerEvent(this.app.workspace.on('quit', () => {
-			const profile = this.getCurrentProfile();
-			if (profile?.autoSync && profile.name) {
-				this.saveProfileSettings(profile)
-					.then((profile) => {
-						this.updateCurrentProfile(profile);
-					});
-			}
-			this.saveSettings();
-		}));
+		// this.registerEvent(this.app.workspace.on('quit', () => {
+		// 	const profile = this.getCurrentProfile();
+		// 	if (profile?.autoSync && profile.name) {
+		// 		this.saveProfileSettings(profile)
+		// 			.then((profile) => {
+		// 				this.updateCurrentProfile(profile);
+		// 			});
+		// 	}
+		// 	this.saveSettings();
+		// }));
 
 		// Update profiles at Intervall 
 		this.registerInterval(window.setInterval(() => {
@@ -129,8 +129,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 							else {
 								// Profile is not up to date
 								this.loadProfileSettings(profile)
-						.then((profile) => {
-							this.updateCurrentProfile(profile);
+									.then((profile) => {
+										this.updateCurrentProfile(profile);
 										// Reload obsidian so changed settings can take effect
 										new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 											// Save Settings
@@ -140,10 +140,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 											});
 										}, () => { }, 'Reload')
 											.open();
-						});
-				}
-			}
-			else {
+									});
+							}
+						}
+						else {
 							// Profile is not saved
 							this.saveProfileSettings(profile)
 								.then((profile) => {
@@ -162,7 +162,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		}
 		else {
-			if(this.statusBarItem) {
+			if (this.statusBarItem) {
 				this.removeStatusBarItem(this.statusBarItem);
 			}
 		}
@@ -261,9 +261,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 
 			// Save current profile 
-			if (currentProfile?.autoSync) {
-				await this.saveProfileSettings(currentProfile);
-			}
+			// if (currentProfile?.autoSync) {
+			// 	await this.saveProfileSettings(currentProfile);
+			// }
 
 			// Load new profile
 			await this.loadProfileSettings(targetProfile)
