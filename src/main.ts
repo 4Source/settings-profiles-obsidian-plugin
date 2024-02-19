@@ -3,7 +3,7 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getAllFiles, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
-import { getConfigFilesList, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { filterUnchangedFiles, getConfigFilesList, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join } from 'path';
 import { existsSync } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -370,14 +370,18 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		try {
 			let profile = this.getProfile(profileName);
 
+			const sourcePath = [getVaultPath(), this.app.vault.configDir];
+			const targetPath = [this.getProfilesPath(), profileName];
+			let changed = false;
+
 			// Check target dir exist
-			ensurePathExist([this.getProfilesPath(), profileName]);
+			ensurePathExist([...targetPath]);
 
 			// Get ignore files
 			let ignoreFiles: string[][] = [];
 			getIgnoreFilesList(profile).forEach(ignore => {
 				if ((ignore.includes("/*/") || ignore.includes("/*")) && getVaultPath() !== "") {
-					const files = getAllFiles([getVaultPath(), this.app.vault.configDir, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
+					const files = getAllFiles([...sourcePath, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
 					files.forEach(file => {
 						ignoreFiles.push(file)
 					})
@@ -388,33 +392,39 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			});
 
 			// Update files
-			getConfigFilesList(profile).forEach(file => {
+			filterUnchangedFiles(getConfigFilesList(profile), sourcePath, targetPath).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
-					const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file])
+					const pathVariants = getAllFiles([...sourcePath, file])
 						// Trim the start of path
 						.map(value => value.split('\\').slice(-file.split('/').length))
 						// Filter ignore files
 						.filter((value) => {
-							return existsSync(join(getVaultPath(), this.app.vault.configDir, ...value)) && !ignoreFiles.some((ignore) => {
+							return existsSync(join(...sourcePath, ...value)) && !ignoreFiles.some((ignore) => {
 								return ignore.every((element, index) => element === value[index])
 							});
 						});
 
 					pathVariants.forEach(value => {
-						copyFile([getVaultPath(), this.app.vault.configDir, ...value], [this.getProfilesPath(), profileName, ...value])
+						console.log('save', value);
+						changed = true;
+						copyFile([...sourcePath, ...value], [...targetPath, ...value])
 					})
 				}
 				else if (getVaultPath() !== "") {
-					if (existsSync(join(getVaultPath(), this.app.vault.configDir, file)) && !ignoreFiles.some((ignore) => {
+					if (existsSync(join(...sourcePath, file)) && !ignoreFiles.some((ignore) => {
 						return ignore.every((element, index) => element === file[index])
 					})) {
-						copyFile([getVaultPath(), this.app.vault.configDir, file], [this.getProfilesPath(), profileName, file])
+						console.log('save', file);
+						changed = true;
+						copyFile([...sourcePath, file], [...targetPath, file])
 					}
 				}
 			});
 
 			// Update profile data 	
-			profile.modifiedAt = new Date();
+			if (changed) {
+				profile.modifiedAt = new Date();
+			}
 			if (this.isEnabled(profile)) {
 				this.updateCurrentProfile(profile);
 			}
@@ -434,14 +444,19 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		try {
 			const profile = this.getProfile(profileName);
 
+			const sourcePath = [this.getProfilesPath(), profileName];
+			const targetPath = [getVaultPath(), this.app.vault.configDir];
+
 			// Check target dir exist
-			ensurePathExist([this.getProfilesPath(), profileName]);
+			if (!existsSync(join(...sourcePath))) {
+				throw Error('Source path do not exist!');
+			}
 
 			// Get ignore files
 			let ignoreFiles: string[][] = [];
 			getIgnoreFilesList(profile).forEach(ignore => {
 				if ((ignore.includes("/*/") || ignore.includes("/*")) && getVaultPath() !== "") {
-					const files = getAllFiles([this.getProfilesPath(), profileName, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
+					const files = getAllFiles([...sourcePath, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
 					files.forEach(file => {
 						ignoreFiles.push(file)
 					})
@@ -452,27 +467,29 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			});
 
 			// Load files
-			getConfigFilesList(profile).forEach(file => {
+			filterUnchangedFiles(getConfigFilesList(profile), sourcePath, targetPath).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
-					const pathVariants = getAllFiles([this.getProfilesPath(), profileName, file])
+					const pathVariants = getAllFiles([...sourcePath, file])
 						// Trim the start of path
 						.map(value => value.split('\\').slice(-file.split('/').length))
 						// Filter ignore files
 						.filter((value) => {
-							return existsSync(join(this.getProfilesPath(), profileName, ...value)) && !ignoreFiles.some((ignore) => {
+							return existsSync(join(...sourcePath, ...value)) && !ignoreFiles.some((ignore) => {
 								return ignore.every((element, index) => element === value[index])
 							});
 						});
 
 					pathVariants.forEach(value => {
-						copyFile([this.getProfilesPath(), profileName, ...value], [getVaultPath(), this.app.vault.configDir, ...value]);
+						console.log('load', value);
+						copyFile([...sourcePath, ...value], [...targetPath, ...value]);
 					})
 				}
 				else if (getVaultPath() !== "") {
-					if (existsSync(join(this.getProfilesPath(), profileName, file)) && !ignoreFiles.some((ignore) => {
+					if (existsSync(join(...sourcePath, file)) && !ignoreFiles.some((ignore) => {
 						return ignore.every((element, index) => element === file[index]);
 					})) {
-						copyFile([this.getProfilesPath(), profileName, file], [getVaultPath(), this.app.vault.configDir, file]);
+						console.log('load', file);
+						copyFile([...sourcePath, file], [...targetPath, file]);
 					}
 				}
 			});
