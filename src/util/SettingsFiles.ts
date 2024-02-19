@@ -196,10 +196,22 @@ export function getIgnoreFilesList(profile: ProfileOptions): string[] {
 }
 
 /**
+ * Filter the file list to only include not ignore files
+ * @param filesList Files list to compare
+ * @param profile The profile for which the ignore files 
+ * @returns The filtered files list
+ */
+export function filterIgnoreFilesList(filesList: string[], profile: ProfileOptions): string[] {
+    const ignoreFiles = getIgnoreFilesList(profile);
+    return filesList.filter((file) => !ignoreFiles.contains((file)));
+}
+
+/**
  * Filter the file list to only include changed files
  * @param filesList Files list to compare
  * @param sourcePath The path to the source file 
  * @param targetPath The path to the target file
+ * @returns The filtered files list
  */
 export function filterUnchangedFiles(filesList: string[], sourcePath: string[], targetPath: string[]): string[] {
     return filesList.filter((file) => {
