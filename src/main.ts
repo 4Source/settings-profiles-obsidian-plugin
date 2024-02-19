@@ -3,7 +3,7 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getAllFiles, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
-import { getConfigFilesList, getIgnoreFilesList, loadProfilesOptions, saveProfilesOptions } from './util/SettingsFiles';
+import { getConfigFilesList, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfilesOptions } from './util/SettingsFiles';
 import { isAbsolute, join } from 'path';
 import { existsSync } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -178,13 +178,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		// Load profile settings
 		await this.loadProfile(profile.name);
 		// Load profile data
-		const list = loadProfilesOptions(this.getProfilesPath());
-		this.globalSettings.profilesList.every((value, index, array) => {
+		this.globalSettings.profilesList.every((value) => {
 			if (value.name === profile.name) {
-				const profileData = list.find((value) => value.name === profile.name);
-				if (profileData) {
-					array[index] = profileData;
-				}
+				value = loadProfileOptions(profile, this.getProfilesPath()) || value;
 			}
 		});
 		return this.getProfile(profile.name);

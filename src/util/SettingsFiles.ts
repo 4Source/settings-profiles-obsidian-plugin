@@ -4,6 +4,34 @@ import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterf
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
 /**
+ * Saves the profile options data to the path.
+ * @param profile The profile to save
+ * @param profilesPath The path where the profile should be saved 
+ */
+export function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
+    try {
+        // Ensure is valid profile
+        if (!profile) {
+            throw Error("Can't save undefined profile!");
+        }
+        // Ensure is valid path
+        if (!isValidPath([profilesPath, profile.name])) {
+            throw Error("Invalid path received!")
+        }
+        // Ensure path exist
+        ensurePathExist([profilesPath, profile.name]);
+
+        // Write profile settings to path
+        const file = join(profilesPath, profile.name, "profile.json");
+        const profileSettings = JSON.stringify(profile, null, 2);
+        writeFileSync(file, profileSettings, 'utf-8');
+    } catch (e) {
+        (e as Error).message = 'Failed to save profile data! ' + (e as Error).message;
+        throw e;
+    }
+}
+
+/**
  * Saves the profiles options data to the path.
  * @param profilesList The profiles to save
  * @param profilesPath The path where the profiles should be saved 
@@ -28,7 +56,35 @@ export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath
             writeFileSync(file, profileSettings, 'utf-8');
         });
     } catch (e) {
-        (e as Error).message = 'Failed to save profile data! ' + (e as Error).message;
+        (e as Error).message = 'Failed to save profiles data! ' + (e as Error).message;
+        throw e;
+    }
+}
+
+/**
+ * Loads the profile options data form the path
+ * @param profile The profile to load name is requierd
+ * @param profilesPath The path where the profiles are saved
+ * @param
+ */
+export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPath: string): ProfileOptions | undefined {
+    try {
+        if (!profile.name) {
+            throw Error('Name is requierd!');
+        }
+        // Search for all profiles existing
+        const file = join(profilesPath, profile.name)
+        let profileData: ProfileOptions | undefined = undefined;
+
+        // Read profile settings
+        if (existsSync(file) && statSync(file).isFile()) {
+            const data = readFileSync(file, "utf-8");
+            profileData = JSON.parse(data);
+        }
+
+        return profileData;
+    } catch (e) {
+        (e as Error).message = 'Failed to load profile data! ' + (e as Error).message;
         throw e;
     }
 }
@@ -37,7 +93,7 @@ export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath
  * Loads the profiles options data form the path
  * @param profilesPath The path where the profiles are saved
  */
-export function loadProfilesOptions(profilesPath: string) {
+export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
     try {
         // Search for all profiles existing
         const files = getAllFiles([profilesPath, "/*/profile.json"]);
@@ -52,7 +108,7 @@ export function loadProfilesOptions(profilesPath: string) {
         });
         return profilesList;
     } catch (e) {
-        (e as Error).message = 'Failed to load profile data! ' + (e as Error).message;
+        (e as Error).message = 'Failed to load profiles data! ' + (e as Error).message;
         throw e;
     }
 }
