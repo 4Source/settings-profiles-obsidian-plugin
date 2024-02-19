@@ -142,6 +142,32 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
 }
 
 /**
+ * Returns all files without placeholder
+ * @param filesList filesList Files list with placeholders
+ * @param path Path to fill placeholders
+ * @returns The files list without placeholder
+ */
+export function getFilesWithoutPlaceholder(filesList: string[], path: string[]): string[] {
+    const files: string[] = [];
+    filesList.forEach(file => {
+        if ((file.includes("\\*\\") || file.includes("\\*"))) {
+            const pathVariants = getAllFiles([...path, file])
+                // Trim the start of path
+                .map(value => value.split('\\').slice(-file.split('\\').length))
+
+            pathVariants.forEach(value => {
+                files.push(join(...value))
+            })
+        }
+        else {
+            files.push(file);
+        }
+    });
+
+    return files;
+}
+
+/**
  * Returns all ignore files if they are enabeled in profile
  * @param profile The profile for which the files will be returned
  * @returns an array of file names
