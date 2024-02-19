@@ -1,4 +1,3 @@
-import { getEventListeners } from "events";
 import { Plugin, setIcon } from "obsidian";
 
 export default class PluginExtended extends Plugin {
