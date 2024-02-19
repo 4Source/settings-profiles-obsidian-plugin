@@ -43,9 +43,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.saveSettings();
 		}));
 
-		// Update non time critical UI at Intervall 
+		// Update profiles at Intervall 
 		this.registerInterval(window.setInterval(() => {
-			this.updateUI();
+			this.update();
 		}, 1000));
 
 		// Add Command to Switch between profiles
@@ -81,14 +81,19 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	onunload() { }
 
 	/**
-	 * Update non time critical UI at Intervall
+	 * Update status bar
 	 */
-	updateUI() {
+	update() {
 		this.globalSettings.profilesList = loadProfilesOptions(this.vaultSettings.profilesPath);
-		const profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
+		let profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 
 		// Attach status bar item
 		if (profile) {
+			// Use modified at from vault settings
+			if (this.vaultSettings.activeProfile?.modifiedAt) {
+				profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
+			}
+
 			let icon = 'alert-circle';
 			let label = 'Settings profiles';
 
@@ -96,32 +101,64 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				if (this.isProfileUpToDate(profile)) {
 					// Profile is up-to-date and saved
 					icon = 'user-check';
-					label = 'Profile up-to-date'
+					label = 'Profile up-to-date';
 				}
 				else {
 					// Profile is not up to date
 					icon = 'user-x';
-					label = 'Unloaded changes for this profile'
+					label = 'Unloaded changes for this profile';
 				}
 			}
 			else {
 				// Profile is not saved
 				icon = 'user-cog';
-				label = 'Unsaved changes for this profile'
-
-				if (profile.autoSync) {
-					this.saveProfileSettings(profile)
-						.then((profile) => {
-							this.updateCurrentProfile(profile);
-							this.saveSettings();
-						});
-				}
+				label = 'Unsaved changes for this profile';
 			}
-			if(this.statusBarItem) {
+			if (this.statusBarItem) {
 				this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
 			}
 			else {
-				this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label);
+				this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label, () => {
+					try {
+						const profile = this.getCurrentProfile();
+						if (this.isProfileSaved(profile)) {
+							if (this.isProfileUpToDate(profile)) {
+								// Profile is up-to-date and saved
+								return;
+							}
+							else {
+								// Profile is not up to date
+								this.loadProfileSettings(profile)
+						.then((profile) => {
+							this.updateCurrentProfile(profile);
+										// Reload obsidian so changed settings can take effect
+										new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+											// Save Settings
+											this.saveSettings().then(() => {
+												// @ts-ignore
+												this.app.commands.executeCommandById("app:reload");
+											});
+										}, () => { }, 'Reload')
+											.open();
+						});
+				}
+			}
+			else {
+							// Profile is not saved
+							this.saveProfileSettings(profile)
+								.then((profile) => {
+									this.updateCurrentProfile(profile);
+									this.saveSettings()
+										.then(() => {
+											new Notice('Saved profile successfully.');
+										});
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to handle status bar callback! ' + (e as Error).message;
+						console.error(e);
+					}
+				});
 			}
 		}
 		else {
@@ -192,6 +229,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			await this.saveProfile(profile.name);
 			// Save profile data
 			saveProfileOptions(profile, this.getProfilesPath());
+
+			this.globalSettings.profilesList = loadProfilesOptions(this.vaultSettings.profilesPath);
 
 			return this.getProfile(profile.name);
 		} catch (e) {
