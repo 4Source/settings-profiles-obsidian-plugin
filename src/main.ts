@@ -179,9 +179,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Load profile settings
 			await this.loadProfile(profile.name);
 			// Load profile data
-			this.globalSettings.profilesList.every((value) => {
+			this.globalSettings.profilesList.forEach((value, index, array) => {
 				if (value.name === profile.name) {
-					value = loadProfileOptions(profile, this.getProfilesPath()) || value;
+					array[index] = loadProfileOptions(profile, this.getProfilesPath()) || value;
 				}
 			});
 			return this.getProfile(profile.name);

@@ -73,7 +73,7 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
             throw Error('Name is requierd!');
         }
         // Search for all profiles existing
-        const file = join(profilesPath, profile.name)
+        const file = join(profilesPath, profile.name, 'profile.json');
         let profileData: ProfileOptions | undefined = undefined;
 
         // Read profile settings

@@ -54,7 +54,7 @@ type ProfileOptionsMap = {
 		// Description text of the setting
 		description: string;
 		// The setting this is the Advanced option.
-		advanced?: keyof ProfileSetting;
+		advanced?: keyof ProfileOptions;
 		// Files/Paths there get synced with this option. 
 		file?: string | string[];
 		// Files/Paths there are ignored for sync
