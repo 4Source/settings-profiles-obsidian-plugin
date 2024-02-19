@@ -125,11 +125,11 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
         if (profile.hasOwnProperty(key)) {
             const value = profile[key as keyof ProfileOptions];
             if (typeof value === 'boolean' && key !== 'enabled' && value) {
-                const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].file;
-                if (typeof file === 'string') {
+                const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.file;
+                if (file && typeof file === 'string') {
                     files.push(file);
                 }
-                else if (Array.isArray(file)) {
+                else if (file && Array.isArray(file)) {
                     files.push(...file);
                 }
             }
@@ -150,12 +150,12 @@ export function getIgnoreFilesList(profile: ProfileOptions): string[] {
     for (const key in profile) {
         if (profile.hasOwnProperty(key)) {
             const value = profile[key as keyof ProfileOptions];
-            if (typeof value === 'boolean' && key !== 'enabled' && value) {
-                const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].ignore;
-                if (typeof file === 'string') {
+            if (value && typeof value === 'boolean') {
+                const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.ignore;
+                if (file && typeof file === 'string') {
                     files.push(file);
                 }
-                else if (Array.isArray(file)) {
+                else if (file && Array.isArray(file)) {
                     files.push(...file);
                 }
             }
