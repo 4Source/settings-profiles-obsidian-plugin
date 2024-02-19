@@ -150,7 +150,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 											});
 										}, () => {
 											this.saveSettings();
-											new Notice('Need to reload obsidian!', 2000);
+											new Notice('Need to reload obsidian!', 5000);
 										}, 'Reload')
 											.open();
 									});
@@ -296,7 +296,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					.then(() => {
 						this.settingsTab.display();
 					});
-				new Notice('Need to reload obsidian!', 2000);
+				new Notice('Need to reload obsidian!', 5000);
 			}, 'Reload')
 				.open();
 		} catch (e) {

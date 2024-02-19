@@ -136,6 +136,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 										.then(() => {
 											this.display();
 										});
+									new Notice('Need to reload obsidian!', 5000);
 								}, 'Reload')
 									.open();
 							});
