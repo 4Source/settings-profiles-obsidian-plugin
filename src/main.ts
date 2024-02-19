@@ -5,7 +5,7 @@ import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRe
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
 import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join } from 'path';
-import { existsSync } from 'fs';
+import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
 
@@ -14,6 +14,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	globalSettings: GlobalSettings;
 	settingsTab: SettingsProfilesSettingTab;
 	statusBarItem: HTMLElement;
+	settingsListener: FSWatcher;
+	settingsChanged: boolean;
 
 	async onload() {
 		await this.loadSettings();
@@ -31,17 +33,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.settingsTab = new SettingsProfilesSettingTab(this.app, this);
 		this.addSettingTab(this.settingsTab);
 
-		// Register to close obsidian
-		// this.registerEvent(this.app.workspace.on('quit', () => {
-		// 	const profile = this.getCurrentProfile();
-		// 	if (profile?.autoSync && profile.name) {
-		// 		this.saveProfileSettings(profile)
-		// 			.then((profile) => {
-		// 				this.updateCurrentProfile(profile);
-		// 			});
-		// 	}
-		// 	this.saveSettings();
-		// }));
+		// Add Settings change listener
+		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), (eventType, filename) => {
+			this.settingsChanged = true;
+		});
 
 		// Update profiles at Intervall 
 		this.registerInterval(window.setInterval(() => {
@@ -78,7 +73,31 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		});
 	}
 
-	onunload() { }
+	onunload() {
+		if (this.settingsListener) {
+			this.settingsListener.close();
+		}
+		this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+		let profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
+
+		// Attach status bar item
+		if (profile) {
+			// Use modified at from vault settings
+			if (this.vaultSettings.activeProfile?.modifiedAt) {
+				profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
+			}
+			if (profile.autoSync && this.settingsChanged) {
+				this.saveProfileSettings(profile)
+					.then((profile) => {
+						this.updateCurrentProfile(profile);
+						this.saveSettings()
+							.then(() => {
+								this.settingsChanged = false;
+							});
+					});
+			}
+		}
+	}
 
 	/**
 	 * Update status bar
@@ -92,6 +111,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Use modified at from vault settings
 			if (this.vaultSettings.activeProfile?.modifiedAt) {
 				profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
+			}
+
+			if (profile.autoSync && this.settingsChanged) {
+				this.saveProfileSettings(profile)
+					.then((profile) => {
+						this.updateCurrentProfile(profile);
+						this.saveSettings()
+							.then(() => {
+								this.settingsChanged = false;
+							});
+					});
 			}
 
 			let icon = 'alert-circle';

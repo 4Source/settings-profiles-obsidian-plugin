@@ -21,7 +21,7 @@ export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 
 export interface ProfileOptions {
 	name: string;
-	// autoSync: boolean;
+	autoSync: boolean;
 	appearance: boolean;
 	app: boolean;
 	bookmarks: boolean;
@@ -35,7 +35,7 @@ export interface ProfileOptions {
 
 export const DEFAULT_PROFILE_OPTIONS: ProfileOptions = {
 	name: '',
-	// autoSync: true,
+	autoSync: true,
 	appearance: true,
 	app: true,
 	bookmarks: true,
@@ -68,10 +68,10 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 		name: 'Name',
 		description: 'Name of this profile.',
 	},
-	// autoSync: {
-	// 	name: 'Auto Sync',
-	// 	description: 'Auto Sync this profile on startup.',
-	// },
+	autoSync: {
+		name: 'Auto Sync',
+		description: 'Auto Sync this profile on startup.',
+	},
 	appearance: {
 		name: 'Appearance',
 		description: 'Says whether the obsidian appearance settings will sync.',
