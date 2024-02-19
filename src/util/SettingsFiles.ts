@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
-import { join } from "path";
+import { join, normalize } from "path";
 import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
@@ -127,14 +127,16 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
             if (typeof value === 'boolean' && key !== 'enabled' && value) {
                 const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.file;
                 if (file && typeof file === 'string') {
-                    files.push(file);
+                    files.push(normalize(file));
                 }
                 else if (file && Array.isArray(file)) {
-                    files.push(...file);
+                    file.forEach(f => {
+                        files.push(normalize(f));
+                    })
                 }
             }
-        }
-    }
+                }
+            }
 
     return files;
 }
@@ -153,10 +155,12 @@ export function getIgnoreFilesList(profile: ProfileOptions): string[] {
             if (value && typeof value === 'boolean') {
                 const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.ignore;
                 if (file && typeof file === 'string') {
-                    files.push(file);
+                    files.push(normalize(file));
                 }
                 else if (file && Array.isArray(file)) {
-                    files.push(...file);
+                    file.forEach(f => {
+                        files.push(normalize(f));
+                    })
                 }
             }
         }
