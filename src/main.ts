@@ -124,7 +124,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 						if (this.isProfileSaved(profile)) {
 							if (this.isProfileUpToDate(profile)) {
 								// Profile is up-to-date and saved
-								return;
+								new ProfileSwitcherModal(this.app, this, async (result, state) => {
+									switch (state) {
+										case ProfileState.CURRENT:
+											return;
+										case ProfileState.NEW:
+											// Create new Profile
+											await this.createProfile(result);
+											break;
+									}
+									this.switchProfile(result.name);
+								}).open();
 							}
 							else {
 								// Profile is not up to date
@@ -279,7 +289,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.app.commands.executeCommandById("app:reload");
 				});
 			}, () => {
-				this.settingsTab.display();
+						this.settingsTab.display();
 			}, 'Reload')
 				.open();
 		} catch (e) {
