@@ -99,7 +99,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.saveProfileSettings(profile)
@@ -170,12 +170,10 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip('Options')
 					.onClick(() => {
 						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
-						if (this.plugin.getProfile(profile.name)) {
-							const prevName = profile.name;
-							new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
-								await this.plugin.editProfile(prevName, result);
-							}).open();
-						}
+						const prevName = profile.name;
+						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
+							await this.plugin.editProfile(prevName, result);
+						}).open();
 						this.display();
 					}))
 				// .addExtraButton(button => button
@@ -198,11 +196,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(() => {
 						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
-						if (this.plugin.getProfile(profile.name)) {
-							if (!this.plugin.isEnabled(profile)) {
-								this.plugin.switchProfile(profile.name);
-							}
-						}
+						this.plugin.switchProfile(profile.name);
 						this.display();
 					}));
 		})

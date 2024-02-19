@@ -3,7 +3,7 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getAllFiles, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
-import { getConfigFilesList, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfilesOptions } from './util/SettingsFiles';
+import { getConfigFilesList, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join } from 'path';
 import { existsSync } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -152,7 +152,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
 			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
 		} catch (e) {
-			(e as Error).message = 'Failed to load Settings! ' + (e as Error).message;
+			(e as Error).message = 'Failed to load settings! ' + (e as Error).message;
 			console.error(e);
 		}
 	}
@@ -165,7 +165,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
 		} catch (e) {
-			(e as Error).message = 'Failed to save Settings! ' + (e as Error).message;
+			(e as Error).message = 'Failed to save settings! ' + (e as Error).message;
 			console.error(e);
 		}
 	}
@@ -175,15 +175,20 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile 
 	 */
 	async loadProfileSettings(profile: ProfileOptions) {
-		// Load profile settings
-		await this.loadProfile(profile.name);
-		// Load profile data
-		this.globalSettings.profilesList.every((value) => {
-			if (value.name === profile.name) {
-				value = loadProfileOptions(profile, this.getProfilesPath()) || value;
-			}
-		});
-		return this.getProfile(profile.name);
+		try {
+			// Load profile settings
+			await this.loadProfile(profile.name);
+			// Load profile data
+			this.globalSettings.profilesList.every((value) => {
+				if (value.name === profile.name) {
+					value = loadProfileOptions(profile, this.getProfilesPath()) || value;
+				}
+			});
+			return this.getProfile(profile.name);
+		} catch (e) {
+			(e as Error).message = 'Failed to load profile settings! ' + (e as Error).message;
+			console.error(e);
+		}
 	}
 
 	/**
@@ -191,12 +196,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile 
 	 */
 	async saveProfileSettings(profile: ProfileOptions) {
-		// Save profile settings
-		await this.saveProfile(profile.name);
-		// Save profile data
-		saveProfilesOptions(this.globalSettings.profilesList, this.getProfilesPath());
+		try {
+			// Save profile settings
+			await this.saveProfile(profile.name);
+			// Save profile data
+			saveProfileOptions(profile, this.getProfilesPath());
 
-		return this.getProfile(profile.name);
+			return this.getProfile(profile.name);
+		} catch (e) {
+			(e as Error).message = 'Failed to save profile settings! ' + (e as Error).message;
+			console.error(e);
+		}
 	}
 
 	/**
@@ -259,7 +269,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async createProfile(profile: ProfileOptions) {
 		try {
 			// Check profile Exist
-			if (this.getProfile(profile.name)) {
+			if (this.globalSettings.profilesList.find(p => profile.name === p.name)) {
 				throw Error('Profile does already exist!');
 			}
 
@@ -294,10 +304,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async editProfile(profileName: string, profileSettings: ProfileOptions) {
 		try {
 			const profile = this.getProfile(profileName);
-			// Check profile Exist
-			if (!profile) {
-				throw Error('Profile does not exist!');
-			}
 
 			let renamed = false;
 
@@ -339,10 +345,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async removeProfile(profileName: string) {
 		try {
 			const profile = this.getProfile(profileName);
-			// Check profile Exist
-			if (!profile) {
-				throw Error('Profile does not exist!');
-			}
 
 			// Is profile to remove current profile
 			if (this.isEnabled(profile)) {
@@ -367,16 +369,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	private async saveProfile(profileName: string) {
 		try {
 			let profile = this.getProfile(profileName);
-			// Check profile Exist
-			if (!profile) {
-				throw Error('Profile does not exist!');
-			}
+
 			// Check target dir exist
 			ensurePathExist([this.getProfilesPath(), profileName]);
 
 			// Get ignore files
 			let ignoreFiles: string[][] = [];
-			getIgnoreFilesList(this.getProfile(profileName)).forEach(ignore => {
+			getIgnoreFilesList(profile).forEach(ignore => {
 				if ((ignore.includes("/*/") || ignore.includes("/*")) && getVaultPath() !== "") {
 					const files = getAllFiles([getVaultPath(), this.app.vault.configDir, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
 					files.forEach(file => {
@@ -389,7 +388,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			});
 
 			// Update files
-			getConfigFilesList(this.getProfile(profileName)).forEach(file => {
+			getConfigFilesList(profile).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
 					const pathVariants = getAllFiles([getVaultPath(), this.app.vault.configDir, file])
 						// Trim the start of path
@@ -434,16 +433,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	private async loadProfile(profileName: string) {
 		try {
 			const profile = this.getProfile(profileName);
-			// Check profile Exist
-			if (!profile) {
-				throw Error('Profile does not exist!');
-			}
+
 			// Check target dir exist
 			ensurePathExist([this.getProfilesPath(), profileName]);
 
 			// Get ignore files
 			let ignoreFiles: string[][] = [];
-			getIgnoreFilesList(this.getProfile(profileName)).forEach(ignore => {
+			getIgnoreFilesList(profile).forEach(ignore => {
 				if ((ignore.includes("/*/") || ignore.includes("/*")) && getVaultPath() !== "") {
 					const files = getAllFiles([this.getProfilesPath(), profileName, ignore]).map(value => value.split('\\').slice(-ignore.split('/').length))
 					files.forEach(file => {
@@ -456,7 +452,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			});
 
 			// Load files
-			getConfigFilesList(this.getProfile(profileName)).forEach(file => {
+			getConfigFilesList(profile).forEach(file => {
 				if ((file.includes("/*/") || file.includes("/*")) && getVaultPath() !== "") {
 					const pathVariants = getAllFiles([this.getProfilesPath(), profileName, file])
 						// Trim the start of path
@@ -511,10 +507,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param name The name of the profile
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getProfile(name: string): ProfileOptions | undefined {
+	getProfile(name: string): ProfileOptions {
 		const profile = this.globalSettings.profilesList.find(profile => profile.name === name);
 		if (!profile) {
-			return;
+			throw Error('Profile does not exist!');
 		}
 		return profile;
 	}
@@ -523,15 +519,12 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Gets the currently enabeled profile.
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getCurrentProfile(): ProfileOptions | undefined {
+	getCurrentProfile(): ProfileOptions {
 		const name = this.vaultSettings.activeProfile?.name;
 		if (!name) {
-			return;
+			throw Error('No current profile');
 		}
 		let profile = this.getProfile(name);
-		if (!profile) {
-			return;
-		}
 
 		// Use modified at from vault settings
 		if (this.vaultSettings.activeProfile?.modifiedAt) {
