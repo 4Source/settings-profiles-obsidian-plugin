@@ -118,8 +118,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				}
 			}
 			if(this.statusBarItem) {
-			this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
-		}
+				this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
+			}
 			else {
 				this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label);
 			}
@@ -206,7 +206,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	async switchProfile(profileName: string) {
 		try {
-			const currentProfile = this.getCurrentProfile();
+			this.globalSettings.profilesList = loadProfilesOptions(this.vaultSettings.profilesPath);
+			const currentProfile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 			const targetProfile = this.getProfile(profileName);
 
 			// Is target profile existing
@@ -220,11 +221,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				return;
 			}
 
-			if (!currentProfile) {
-				console.info('No current profile.');
-			}
 			// Save current profile 
-			else if (currentProfile.autoSync) {
+			if (currentProfile?.autoSync) {
 				await this.saveProfileSettings(currentProfile);
 			}
 
