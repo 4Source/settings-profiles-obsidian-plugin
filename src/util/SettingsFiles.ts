@@ -119,7 +119,7 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
  */
-export function getConfigFilesList(profile: ProfileOptions | undefined): string[] {
+export function getConfigFilesList(profile: ProfileOptions): string[] {
     const files = [];
     for (const key in profile) {
         if (profile.hasOwnProperty(key)) {
@@ -145,7 +145,7 @@ export function getConfigFilesList(profile: ProfileOptions | undefined): string[
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
  */
-export function getIgnoreFilesList(profile: ProfileOptions | undefined): string[] {
+export function getIgnoreFilesList(profile: ProfileOptions): string[] {
     const files = [];
     for (const key in profile) {
         if (profile.hasOwnProperty(key)) {
@@ -163,4 +163,35 @@ export function getIgnoreFilesList(profile: ProfileOptions | undefined): string[
     }
 
     return files;
+}
+
+/**
+ * Filter the file list to only include changed files
+ * @param filesList Files list to compare
+ * @param sourcePath The path to the source file 
+ * @param targetPath The path to the target file
+ */
+export function filterUnchangedFiles(filesList: string[], sourcePath: string[], targetPath: string[]): string[] {
+    return filesList.filter((file) => {
+        const sourceFile = join(...sourcePath, file);
+        const targetFile = join(...targetPath, file);
+
+        // Check source exist and is file
+        if (!existsSync(sourceFile) || !statSync(sourceFile).isFile()) {
+            return false;
+        }
+        // Check target don't exist  
+        if (!existsSync(targetFile)) {
+            return true;
+        }
+        // Check target is file
+        if (!statSync(targetFile).isFile()) {
+            return false;
+        }
+
+        const sourceData = readFileSync(sourceFile, "utf-8");
+        const targetData = readFileSync(targetFile, "utf-8");
+
+        return sourceData !== targetData;
+    })
 }
