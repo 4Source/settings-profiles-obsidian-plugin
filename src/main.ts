@@ -304,9 +304,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 
 			// Save current profile 
-			// if (currentProfile?.autoSync) {
-			// 	await this.saveProfileSettings(currentProfile);
-			// }
+			if (currentProfile?.autoSync) {
+				await this.saveProfileSettings(currentProfile);
+			}
 
 			// Load new profile
 			await this.loadProfileSettings(targetProfile)
@@ -404,7 +404,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				await this.removeProfile(profileName);
 			}
 			else {
-				// saveProfileData()
+				this.saveProfileSettings(profile)
+					.then((profile) => {
+						this.updateCurrentProfile(profile);
+						this.saveSettings()
+							.then(() => {
+								this.settingsTab.display();
+							});
+					});
 			}
 		} catch (e) {
 			new Notice(`Failed to edit ${profileName} profile!`);
