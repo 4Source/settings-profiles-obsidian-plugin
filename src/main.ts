@@ -2,8 +2,8 @@ import { Notice } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getAllFiles, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSetting, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
-import { getConfigFilesList, getIgnoreFilesList, loadProfileData, saveProfileData } from './util/SettingsFiles';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
+import { getConfigFilesList, getIgnoreFilesList, loadProfilesOptions, saveProfilesOptions } from './util/SettingsFiles';
 import { isAbsolute, join } from 'path';
 import { existsSync } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -150,7 +150,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Load global settings from profiles path
 			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
-			this.globalSettings.profilesList = loadProfileData(this.getProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
 		} catch (e) {
 			(e as Error).message = 'Failed to load Settings! ' + (e as Error).message;
 			console.error(e);
@@ -174,11 +174,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Load settings and data for the given profile
 	 * @param profile The profile 
 	 */
-	async loadProfileSettings(profile: ProfileSetting) {
+	async loadProfileSettings(profile: ProfileOptions) {
 		// Load profile settings
 		await this.loadProfile(profile.name);
 		// Load profile data
-		const list = loadProfileData(this.getProfilesPath());
+		const list = loadProfilesOptions(this.getProfilesPath());
 		this.globalSettings.profilesList.every((value, index, array) => {
 			if (value.name === profile.name) {
 				const profileData = list.find((value) => value.name === profile.name);
@@ -194,11 +194,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Save settings and data for the given profile
 	 * @param profile The profile 
 	 */
-	async saveProfileSettings(profile: ProfileSetting) {
+	async saveProfileSettings(profile: ProfileOptions) {
 		// Save profile settings
 		await this.saveProfile(profile.name);
 		// Save profile data
-		saveProfileData(this.globalSettings.profilesList, this.getProfilesPath());
+		saveProfilesOptions(this.globalSettings.profilesList, this.getProfilesPath());
 
 		return this.getProfile(profile.name);
 	}
@@ -260,7 +260,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Create a new profile with the current settings 
 	 * @param profile The profile options the profile should be created with
 	 */
-	async createProfile(profile: ProfileSetting) {
+	async createProfile(profile: ProfileOptions) {
 		try {
 			// Check profile Exist
 			if (this.getProfile(profile.name)) {
@@ -276,7 +276,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				// Sync the profile settings
 				this.saveProfileSettings(selectedProfile)
 					.then(() => {
-						this.globalSettings.profilesList = loadProfileData(this.getProfilesPath());
+						this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
 					});
 			}
 			else {
@@ -295,7 +295,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profileName The profile name to edit
 	 * @param profileSettings The new profile options
 	 */
-	async editProfile(profileName: string, profileSettings: ProfileSetting) {
+	async editProfile(profileName: string, profileSettings: ProfileOptions) {
 		try {
 			const profile = this.getProfile(profileName);
 			// Check profile Exist
@@ -306,7 +306,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			let renamed = false;
 
 			Object.keys(profileSettings).forEach(key => {
-				const objKey = key as keyof ProfileSetting;
+				const objKey = key as keyof ProfileOptions;
 
 				// Name changed
 				if (objKey === 'name' && profileSettings.name !== profileName) {
@@ -355,7 +355,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Remove to profile settings
 			removeDirectoryRecursiveSync([this.getProfilesPath(), profileName]);
-			this.globalSettings.profilesList = loadProfileData(this.getProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
 		} catch (e) {
 			new Notice(`Failed to remove ${profileName} profile!`);
 			(e as Error).message = 'Failed to remove profile! ' + (e as Error).message;
@@ -515,7 +515,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param name The name of the profile
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getProfile(name: string): ProfileSetting | undefined {
+	getProfile(name: string): ProfileOptions | undefined {
 		const profile = this.globalSettings.profilesList.find(profile => profile.name === name);
 		if (!profile) {
 			return;
@@ -527,7 +527,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Gets the currently enabeled profile.
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getCurrentProfile(): ProfileSetting | undefined {
+	getCurrentProfile(): ProfileOptions | undefined {
 		const name = this.vaultSettings.activeProfile?.name;
 		if (!name) {
 			return;
@@ -548,7 +548,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Updates the current profile to passed profile
 	 * @param profile The profile to update to 
 	 */
-	updateCurrentProfile(profile: ProfileSetting | undefined) {
+	updateCurrentProfile(profile: ProfileOptions | undefined) {
 		if (!profile) {
 			this.vaultSettings.activeProfile = {};
 			return;
@@ -561,7 +561,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check 
 	 * @returns Is enabled profile
 	 */
-	isEnabled(profile: ProfileSetting): boolean {
+	isEnabled(profile: ProfileOptions): boolean {
 		return this.vaultSettings.activeProfile?.name === profile.name;
 	}
 
@@ -570,8 +570,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check 
 	 * @returns Is loaded profile newer/equal than saved profile
 	 */
-	isProfileUpToDate(profile: ProfileSetting): boolean {
-		const list = loadProfileData(this.getProfilesPath());
+	isProfileUpToDate(profile: ProfileOptions): boolean {
+		const list = loadProfilesOptions(this.getProfilesPath());
 		const profileData = list.find((value) => value.name === profile.name);
 
 		if (!profileData || !profileData.modifiedAt) {
@@ -589,8 +589,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check 
 	 * @returns Is saved profile newer/equal than saved profile
 	 */
-	isProfileSaved(profile: ProfileSetting): boolean {
-		const list = loadProfileData(this.getProfilesPath());
+	isProfileSaved(profile: ProfileOptions): boolean {
+		const list = loadProfilesOptions(this.getProfilesPath());
 		const profileData = list.find((value, index, obj) => value.name === profile.name)
 
 		if (!profileData || !profileData.modifiedAt) {

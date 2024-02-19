@@ -2,7 +2,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 
 export interface GlobalSettings {
-	profilesList: ProfileSetting[];
+	profilesList: ProfileOptions[];
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
@@ -11,7 +11,7 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 
 export interface VaultSettings {
 	profilesPath: string;
-	activeProfile: Partial<ProfileSetting>;
+	activeProfile: Partial<ProfileOptions>;
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
@@ -19,7 +19,7 @@ export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	activeProfile: {}
 }
 
-export interface ProfileSetting {
+export interface ProfileOptions {
 	name: string;
 	autoSync: boolean;
 	appearance: boolean;
@@ -33,7 +33,7 @@ export interface ProfileSetting {
 	modifiedAt: Date;
 }
 
-export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
+export const DEFAULT_PROFILE_OPTIONS: ProfileOptions = {
 	name: '',
 	autoSync: true,
 	appearance: true,
@@ -47,8 +47,8 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
 	modifiedAt: new Date(),
 }
 
-type ProfileSettingMap = {
-	[key in keyof ProfileSetting]: {
+type ProfileOptionsMap = {
+	[key in keyof ProfileOptions]: {
 		// Display name of the setting
 		name: string;
 		// Description text of the setting
@@ -63,7 +63,7 @@ type ProfileSettingMap = {
 };
 
 
-export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
+export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 	name: {
 		name: 'Name',
 		description: 'Name of this profile.',

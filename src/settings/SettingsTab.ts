@@ -1,8 +1,8 @@
 import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
-import { loadProfileData } from '../util/SettingsFiles';
-import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
+import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
+import { loadProfilesOptions } from '../util/SettingsFiles';
+import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { isAbsolute } from 'path';
 
@@ -54,7 +54,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							this.plugin.saveSettings()
 								.then(() => {
 									// Reload the profiles at new path
-									this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+									this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 									this.display();
 								});
 						}, () => {
@@ -116,7 +116,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Load profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.loadProfileSettings(profile)
@@ -147,7 +147,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileSettingsModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, async (result) => {
+					new ProfileOptionsModal(this.app, this.plugin, DEFAULT_PROFILE_OPTIONS, async (result) => {
 						await this.plugin.createProfile(result);
 						this.display();
 					}).open();
@@ -157,7 +157,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setTooltip('Reload profiles')
 				.onClick(() => {
 					// Reload data from files
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 					this.display();
 				}));
 
@@ -169,10 +169,10 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon('settings')
 					.setTooltip('Options')
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 						if (this.plugin.getProfile(profile.name)) {
 							const prevName = profile.name;
-							new ProfileSettingsModal(this.app, this.plugin, profile, async (result) => {
+							new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
 								await this.plugin.editProfile(prevName, result);
 							}).open();
 						}
@@ -197,7 +197,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 						if (this.plugin.getProfile(profile.name)) {
 							if (!this.plugin.isEnabled(profile)) {
 								this.plugin.switchProfile(profile.name);

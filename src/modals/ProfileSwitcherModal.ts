@@ -1,6 +1,6 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "../main";
-import { DEFAULT_PROFILE_SETTINGS, ProfileSetting } from "../settings/SettingsInterface";
+import { DEFAULT_PROFILE_OPTIONS, ProfileOptions } from "../settings/SettingsInterface";
 
 export enum ProfileState {
     EXIST,
@@ -8,15 +8,15 @@ export enum ProfileState {
     NEW
 }
 
-interface SettingsProfileSuggestion extends ProfileSetting {
+interface SettingsProfileSuggestion extends ProfileOptions {
     state: ProfileState;
 }
 
 export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion> {
     plugin: SettingsProfilesPlugin;
-    onSubmit: (result: ProfileSetting, state: ProfileState) => void;
+    onSubmit: (result: ProfileOptions, state: ProfileState) => void;
 
-    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: ProfileSetting, state: ProfileState) => void) {
+    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: ProfileOptions, state: ProfileState) => void) {
         super(app);
         this.plugin = plugin;
         this.onSubmit = onSubmit;
@@ -55,7 +55,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
         // If nothing Matches add createable
         if (suggestions.length <= 0) {
             suggestions.push({
-                ...DEFAULT_PROFILE_SETTINGS,
+                ...DEFAULT_PROFILE_OPTIONS,
                 name: query,
                 state: ProfileState.NEW
             });
@@ -86,7 +86,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
         const { state, ...rest } = suggestion;
-        const profile: ProfileSetting = { ...rest };
+        const profile: ProfileOptions = { ...rest };
         // Submit profile
         this.onSubmit(profile, state);
     }

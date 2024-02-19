@@ -1,14 +1,14 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
-import { PROFILE_SETTINGS_MAP, ProfileSetting } from "src/settings/SettingsInterface";
+import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
 /**
- * Saves the profile data to the path.
+ * Saves the profiles options data to the path.
  * @param profilesList The profiles to save
  * @param profilesPath The path where the profiles should be saved 
  */
-export function saveProfileData(profilesList: ProfileSetting[], profilesPath: string) {
+export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
     try {
         profilesList.forEach(profile => {
             // Ensure is valid profile
@@ -34,14 +34,14 @@ export function saveProfileData(profilesList: ProfileSetting[], profilesPath: st
 }
 
 /**
- * Loads the profiles data form the path
+ * Loads the profiles options data form the path
  * @param profilesPath The path where the profiles are saved
  */
-export function loadProfileData(profilesPath: string) {
+export function loadProfilesOptions(profilesPath: string) {
     try {
         // Search for all profiles existing
         const files = getAllFiles([profilesPath, "/*/profile.json"]);
-        let profilesList: ProfileSetting[] = [];
+        let profilesList: ProfileOptions[] = [];
 
         // Read profile settings
         files.forEach(file => {
@@ -63,13 +63,13 @@ export function loadProfileData(profilesPath: string) {
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
  */
-export function getConfigFilesList(profile: ProfileSetting | undefined): string[] {
+export function getConfigFilesList(profile: ProfileOptions | undefined): string[] {
     const files = [];
     for (const key in profile) {
         if (profile.hasOwnProperty(key)) {
-            const value = profile[key as keyof ProfileSetting];
+            const value = profile[key as keyof ProfileOptions];
             if (typeof value === 'boolean' && key !== 'enabled' && value) {
-                const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].file;
+                const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].file;
                 if (typeof file === 'string') {
                     files.push(file);
                 }
@@ -89,13 +89,13 @@ export function getConfigFilesList(profile: ProfileSetting | undefined): string[
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
  */
-export function getIgnoreFilesList(profile: ProfileSetting | undefined): string[] {
+export function getIgnoreFilesList(profile: ProfileOptions | undefined): string[] {
     const files = [];
     for (const key in profile) {
         if (profile.hasOwnProperty(key)) {
-            const value = profile[key as keyof ProfileSetting];
+            const value = profile[key as keyof ProfileOptions];
             if (typeof value === 'boolean' && key !== 'enabled' && value) {
-                const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSetting].ignore;
+                const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].ignore;
                 if (typeof file === 'string') {
                     files.push(file);
                 }
