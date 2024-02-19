@@ -135,8 +135,8 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
                     })
                 }
             }
-                }
-            }
+        }
+    }
 
     return files;
 }

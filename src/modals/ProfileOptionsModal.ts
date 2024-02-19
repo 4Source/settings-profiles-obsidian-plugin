@@ -29,7 +29,7 @@ export class ProfileOptionsModal extends Modal {
             if (this.profile.hasOwnProperty(key)) {
                 const value = this.profile[key as keyof ProfileOptions];
 
-                if(key === 'modifiedAt') {
+                if (key === 'modifiedAt') {
                     break;
                 }
                 // Only toggle exclude enabled
