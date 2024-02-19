@@ -148,7 +148,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 												// @ts-ignore
 												this.app.commands.executeCommandById("app:reload");
 											});
-										}, () => { }, 'Reload')
+										}, () => {
+											this.saveSettings();
+											new Notice('Need to reload obsidian!', 2000);
+										}, 'Reload')
 											.open();
 									});
 							}
@@ -289,7 +292,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.app.commands.executeCommandById("app:reload");
 				});
 			}, () => {
+				this.saveSettings()
+					.then(() => {
 						this.settingsTab.display();
+					});
+				new Notice('Need to reload obsidian!', 2000);
 			}, 'Reload')
 				.open();
 		} catch (e) {

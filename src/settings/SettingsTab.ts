@@ -132,7 +132,10 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 										this.app.commands.executeCommandById("app:reload");
 									});
 								}, () => {
-									this.display();
+									this.plugin.saveSettings()
+										.then(() => {
+											this.display();
+										});
 								}, 'Reload')
 									.open();
 							});
