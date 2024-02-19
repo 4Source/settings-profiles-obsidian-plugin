@@ -339,7 +339,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Is profile to remove current profile
 			if (this.isEnabled(profile)) {
-				throw Error('Can not remove current profile!')
+				this.updateCurrentProfile(undefined);
 			}
 
 			// Remove to profile settings
