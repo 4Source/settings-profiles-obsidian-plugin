@@ -102,12 +102,16 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
-						this.plugin.saveProfile(profile.name)
-							.then(() => {
-								new Notice(`Saved ${profile.name} successfully.`);
+						this.plugin.saveProfileSettings(profile)
+							.then((profile) => {
+								this.plugin.updateCurrentProfile(profile);
+								this.plugin.saveSettings()
+									.then(() => {
+										new Notice('Saved profile successfully.');
+										this.display();
+									});
 							});
 					}
-					this.display();
 				}))
 			.addButton(button => button
 				.setButtonText('Load profile')
@@ -115,13 +119,19 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
-						this.plugin.loadProfile(profile.name)
-							.then(() => {
+						this.plugin.loadProfileSettings(profile)
+							.then((profile) => {
+								this.plugin.updateCurrentProfile(profile);
 								// Reload obsidian so changed settings can take effect
 								new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-									// @ts-ignore
-									this.app.commands.executeCommandById("app:reload");
-								}, () => { }, 'Reload')
+									// Save Settings
+									this.plugin.saveSettings().then(() => {
+										// @ts-ignore
+										this.app.commands.executeCommandById("app:reload");
+									});
+								}, () => {
+									this.plugin.settingsTab.display();
+								}, 'Reload')
 									.open();
 							});
 					}
@@ -137,8 +147,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileSettingsModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, (result) => {
-						this.plugin.createProfile(result);
+					new ProfileSettingsModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, async (result) => {
+						await this.plugin.createProfile(result);
 						this.display();
 					}).open();
 				}))
@@ -162,9 +172,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 						if (this.plugin.getProfile(profile.name)) {
 							const prevName = profile.name;
-							new ProfileSettingsModal(this.app, this.plugin, profile, (result) => {
-								this.plugin.editProfile(prevName, result);
-								this.display();
+							new ProfileSettingsModal(this.app, this.plugin, profile, async (result) => {
+								await this.plugin.editProfile(prevName, result);
 							}).open();
 						}
 						this.display();
@@ -178,8 +187,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.addExtraButton(button => button
 					.setIcon('trash-2')
 					.setTooltip('Remove')
-					.onClick(() => {
-						this.plugin.removeProfile(profile.name);
+					.onClick(async () => {
+						await this.plugin.removeProfile(profile.name);
 						this.display();
 					}))
 
