@@ -50,4 +50,8 @@ export default class PluginExtended extends Plugin {
             item.ariaLabel = ariaLabel;
         }
     }
+
+    removeStatusBarItem(item: HTMLElement): void {
+        item.remove();
+    }
 }

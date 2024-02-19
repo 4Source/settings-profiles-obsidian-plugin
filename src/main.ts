@@ -43,33 +43,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.saveSettings();
 		}));
 
-		// Attach status bar item
-		const profile = this.getCurrentProfile();
-		if (profile) {
-			let icon = 'alert-circle';
-			let label = 'Settings profiles';
-
-			if (this.isProfileSaved(profile)) {
-				if (this.isProfileUpToDate(profile)) {
-					// Profile is up-to-date and saved
-					icon = 'user-check';
-					label = 'Profile up-to-date'
-				}
-				else {
-					// Profile is not up to date
-					icon = 'user-x';
-					label = 'Unloaded changes for this profile'
-				}
-			}
-			else {
-				// Profile is not saved
-				icon = 'user-cog';
-				label = 'Unsaved changes for this profile'
-			}
-
-			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label);
-		}
-
 		// Update non time critical UI at Intervall 
 		this.registerInterval(window.setInterval(() => {
 			this.updateUI();
@@ -111,7 +84,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Update non time critical UI at Intervall
 	 */
 	updateUI() {
-		const profile = this.getCurrentProfile();
+		this.globalSettings.profilesList = loadProfilesOptions(this.vaultSettings.profilesPath);
+		const profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 
 		// Attach status bar item
 		if (profile) {
@@ -134,9 +108,26 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				// Profile is not saved
 				icon = 'user-cog';
 				label = 'Unsaved changes for this profile'
-			}
 
+				if (profile.autoSync) {
+					this.saveProfileSettings(profile)
+						.then((profile) => {
+							this.updateCurrentProfile(profile);
+							this.saveSettings();
+						});
+				}
+			}
+			if(this.statusBarItem) {
 			this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
+		}
+			else {
+				this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label);
+			}
+		}
+		else {
+			if(this.statusBarItem) {
+				this.removeStatusBarItem(this.statusBarItem);
+			}
 		}
 	}
 
