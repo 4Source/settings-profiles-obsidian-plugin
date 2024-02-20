@@ -1,4 +1,4 @@
-import { App, Notice } from 'obsidian';
+import { Notice } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
@@ -36,7 +36,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		// Add Settings change listener
 		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, (eventType, filename) => {
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
-			const profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
+			const profile = this.getCurrentProfile();
 			if (profile) {
 				this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
 			}
@@ -88,26 +88,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	update() {
 		this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
-		let profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
+		let profile = this.getCurrentProfile();
 
 		let icon = 'users';
 		let label = 'Switch profile';
 
 		// Attach status bar item
 		if (profile) {
-			// Use modified at from vault settings
-			if (this.vaultSettings.activeProfile?.modifiedAt) {
-				profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
-			}
-
 			if (this.settingsChanged && this.areSettingsChanged()) {
 				// Save settings to profile
 				if (profile.autoSync) {
-					this.saveProfileSettings(profile)
-						.then((profile) => {
-							this.updateCurrentProfile(profile);
-							this.saveSettings();
-						});
+					this.saveProfileSettings(profile);
 				}
 				// Update modifiedAt to now
 				else {
@@ -144,8 +135,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label, () => {
 				try {
 					const profile = this.getCurrentProfile();
-					if (this.isProfileSaved(profile)) {
-						if (this.isProfileUpToDate(profile)) {
+					if (!profile || this.isProfileSaved(profile)) {
+						if (!profile || this.isProfileUpToDate(profile)) {
 							// Profile is up-to-date and saved
 							new ProfileSwitcherModal(this.app, this, async (result, state) => {
 								switch (state) {
@@ -182,12 +173,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					else {
 						// Profile is not saved
 						this.saveProfileSettings(profile)
-							.then((profile) => {
-								this.updateCurrentProfile(profile);
-								this.saveSettings()
-									.then(() => {
-										new Notice('Saved profile successfully.');
-									});
+							.then(() => {
+								new Notice('Saved profile successfully.');
 							});
 					}
 				} catch (e) {
@@ -235,6 +222,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	areSettingsChanged(): boolean {
 		try {
 			const profile = this.getCurrentProfile();
+
+			if (!profile) {
+				return true;
+			}
 
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
 			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
@@ -306,7 +297,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async switchProfile(profileName: string) {
 		try {
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
-			const currentProfile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
+			const currentProfile = this.getCurrentProfile();
 			const targetProfile = this.getProfile(profileName);
 
 			// Is target profile existing
@@ -372,10 +363,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			const selectedProfile = this.globalSettings.profilesList.find(value => value.name === profile.name);
 			if (selectedProfile) {
 				// Sync the profile settings
-				this.saveProfileSettings(selectedProfile)
-					.then(() => {
-						this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
-					});
+				this.saveProfileSettings(selectedProfile);
 			}
 			else {
 				this.removeProfile(profile.name);
@@ -422,12 +410,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 			else {
 				this.saveProfileSettings(profile)
-					.then((profile) => {
-						this.updateCurrentProfile(profile);
-						this.saveSettings()
-							.then(() => {
-								this.settingsTab.display();
-							});
+					.then(() => {
+						this.settingsTab.display();
 					});
 			}
 		} catch (e) {
@@ -574,12 +558,15 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Gets the currently enabeled profile.
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getCurrentProfile(): ProfileOptions {
+	getCurrentProfile(): ProfileOptions | undefined {
 		const name = this.vaultSettings.activeProfile?.name;
 		if (!name) {
-			throw Error('No current profile');
+			return;
 		}
-		let profile = this.getProfile(name);
+		const profile = this.globalSettings.profilesList.find(profile => profile.name === name);
+		if (!profile) {
+			return;
+		}
 
 		// Use modified at from vault settings
 		if (this.vaultSettings.activeProfile?.modifiedAt) {

@@ -105,13 +105,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.saveProfileSettings(profile)
-							.then((profile) => {
-								this.plugin.updateCurrentProfile(profile);
-								this.plugin.saveSettings()
-									.then(() => {
-										new Notice('Saved profile successfully.');
-										this.display();
-									});
+							.then(() => {
+								new Notice('Saved profile successfully.');
+								this.display();
 							});
 					}
 				}))
