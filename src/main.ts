@@ -90,6 +90,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 		let profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 
+		let icon = 'users';
+		let label = 'Switch profile';
+
 		// Attach status bar item
 		if (profile) {
 			// Use modified at from vault settings
@@ -115,9 +118,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 			this.settingsChanged = false;
 
-			let icon = 'alert-circle';
-			let label = 'Settings profiles';
-
 			if (this.isProfileSaved(profile)) {
 				if (this.isProfileUpToDate(profile)) {
 					// Profile is up-to-date and saved
@@ -135,70 +135,66 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				icon = 'user-cog';
 				label = 'Unsaved changes for this profile';
 			}
-			if (this.statusBarItem) {
-				this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
-			}
-			else {
-				this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label, () => {
-					try {
-						const profile = this.getCurrentProfile();
-						if (this.isProfileSaved(profile)) {
-							if (this.isProfileUpToDate(profile)) {
-								// Profile is up-to-date and saved
-								new ProfileSwitcherModal(this.app, this, async (result, state) => {
-									switch (state) {
-										case ProfileState.CURRENT:
-											return;
-										case ProfileState.NEW:
-											// Create new Profile
-											await this.createProfile(result);
-											break;
-									}
-									this.switchProfile(result.name);
-								}).open();
-							}
-							else {
-								// Profile is not up to date
-								this.loadProfileSettings(profile)
-									.then((profile) => {
-										this.updateCurrentProfile(profile);
-										// Reload obsidian so changed settings can take effect
-										new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-											// Save Settings
-											this.saveSettings().then(() => {
-												// @ts-ignore
-												this.app.commands.executeCommandById("app:reload");
-											});
-										}, () => {
-											this.saveSettings();
-											new Notice('Need to reload obsidian!', 5000);
-										}, 'Reload')
-											.open();
-									});
-							}
-						}
-						else {
-							// Profile is not saved
-							this.saveProfileSettings(profile)
-								.then((profile) => {
-									this.updateCurrentProfile(profile);
-									this.saveSettings()
-										.then(() => {
-											new Notice('Saved profile successfully.');
-										});
-								});
-						}
-					} catch (e) {
-						(e as Error).message = 'Failed to handle status bar callback! ' + (e as Error).message;
-						console.error(e);
-					}
-				});
-			}
+		}
+		// Update status bar
+		if (this.statusBarItem) {
+			this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
 		}
 		else {
-			if (this.statusBarItem) {
-				this.removeStatusBarItem(this.statusBarItem);
-			}
+			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label, () => {
+				try {
+					const profile = this.getCurrentProfile();
+					if (this.isProfileSaved(profile)) {
+						if (this.isProfileUpToDate(profile)) {
+							// Profile is up-to-date and saved
+							new ProfileSwitcherModal(this.app, this, async (result, state) => {
+								switch (state) {
+									case ProfileState.CURRENT:
+										return;
+									case ProfileState.NEW:
+										// Create new Profile
+										await this.createProfile(result);
+										break;
+								}
+								this.switchProfile(result.name);
+							}).open();
+						}
+						else {
+							// Profile is not up to date
+							this.loadProfileSettings(profile)
+								.then((profile) => {
+									this.updateCurrentProfile(profile);
+									// Reload obsidian so changed settings can take effect
+									new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+										// Save Settings
+										this.saveSettings().then(() => {
+											// @ts-ignore
+											this.app.commands.executeCommandById("app:reload");
+										});
+									}, () => {
+										this.saveSettings();
+										new Notice('Need to reload obsidian!', 5000);
+									}, 'Reload')
+										.open();
+								});
+						}
+					}
+					else {
+						// Profile is not saved
+						this.saveProfileSettings(profile)
+							.then((profile) => {
+								this.updateCurrentProfile(profile);
+								this.saveSettings()
+									.then(() => {
+										new Notice('Saved profile successfully.');
+									});
+							});
+					}
+				} catch (e) {
+					(e as Error).message = 'Failed to handle status bar callback! ' + (e as Error).message;
+					console.error(e);
+				}
+			});
 		}
 	}
 
