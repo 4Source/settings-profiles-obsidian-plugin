@@ -38,12 +38,30 @@ export default class PluginExtended extends Plugin {
 
     updateStatusBarItem(item: HTMLElement, icon?: string, label?: string, ariaLabel?: string): void {
         if (icon) {
-            const iconWrapper = item.getElementsByClassName('status-bar-item-icon')[0] as HTMLElement;
+            let iconWrapper = item.getElementsByClassName('status-bar-item-icon')[0] as HTMLElement;
+            if (!iconWrapper) {
+                iconWrapper = item.createEl('span', { cls: ['status-bar-item-icon', 'status-bar-item-segment'] });
+            }
             setIcon(iconWrapper, icon);
         }
+        else {
+            let iconWrapper = item.getElementsByClassName('status-bar-item-icon')[0] as HTMLElement;
+            if (iconWrapper) {
+                iconWrapper.remove();
+            }
+        }
         if (label) {
-            const labelEl = item.getElementsByClassName('status-bar-item-label')[0] as HTMLElement
+            let labelEl = item.getElementsByClassName('status-bar-item-label')[0] as HTMLElement;
+            if (!labelEl) {
+                labelEl = item.createEl('span', { cls: ['status-bar-item-label', 'status-bar-item-segment'] });
+            }
             labelEl.setText(label);
+        }
+        else {
+            let labelEl = item.getElementsByClassName('status-bar-item-label')[0] as HTMLElement;
+            if (labelEl) {
+                labelEl.remove();
+            }
         }
         if (ariaLabel) {
             item.ariaLabel = ariaLabel;
