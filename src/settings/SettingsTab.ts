@@ -69,14 +69,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						console.error(e);
 					}
 				})
-				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
+				.buttonEl.setAttrs({ 'id': 'profile-path-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
 				.setValue(this.plugin.vaultSettings.profilesPath)
 				.onChange(value => {
 					try {
 						// Value is changed 
 						if (value !== this.plugin.vaultSettings.profilesPath) {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
 							if (!button) {
 								throw Error("Button element not found!");
 							}
@@ -84,7 +84,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						}
 						// Value is same as in file
 						else {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
 							if (!button) {
 								throw Error("Button element not found!");
 							}
@@ -96,6 +96,71 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					}
 				})
 				.inputEl.id = 'profile-path');
+
+		new Setting(containerEl)
+			.setName('Refresh intervall')
+			.setDesc('The time in ms in which profile changes are checked')
+			.addButton(button => button
+				.setButtonText('Change')
+				.setWarning()
+				.onClick(() => {
+					try {
+						// Get text component
+						const input: HTMLInputElement | null = this.containerEl.querySelector('#refresh-intervall');
+						if (!input) {
+							throw Error("Input element not found!");
+						}
+
+						// Backup to possible restore
+						const backupIntervall = this.plugin.vaultSettings.refreshIntervall;
+						// Set profiles path to textbox value
+						this.plugin.vaultSettings.refreshIntervall = input.valueAsNumber;
+
+						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+							// Save Settings
+							this.plugin.saveSettings().then(() => {
+								// @ts-ignore
+								this.app.commands.executeCommandById("app:reload");
+							});
+						}, () => {
+							// Restore old value
+							this.plugin.vaultSettings.refreshIntervall = backupIntervall;
+							this.display();
+						}).open();
+					} catch (e) {
+						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.buttonEl.setAttrs({ 'id': 'refresh-intervall-change', 'style': 'visibility:hidden' }))
+			.addSlider(slider => slider
+				.setLimits(100, 5000, 100)
+				.setValue(this.plugin.vaultSettings.refreshIntervall)
+				.setDynamicTooltip()
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.vaultSettings.refreshIntervall) {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
+							if (!button) {
+								throw Error("Button element not found!");
+							}
+							button.toggleVisibility(true);
+						}
+						// Value is same as in file
+						else {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
+							if (!button) {
+								throw Error("Button element not found!");
+							}
+							button.toggleVisibility(false);
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change refresh intervall! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.sliderEl.setAttr('id', 'refresh-intervall'))
 
 		new Setting(containerEl)
 			.addButton(button => button

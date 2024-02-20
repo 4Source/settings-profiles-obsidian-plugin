@@ -45,7 +45,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		// Update profiles at Intervall 
 		this.registerInterval(window.setInterval(() => {
 			this.update();
-		}, 1000));
+		}, this.vaultSettings.refreshIntervall));
 
 		// Add Command to Switch between profiles
 		this.addCommand({
