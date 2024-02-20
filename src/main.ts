@@ -22,7 +22,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// Make sure Profile path exists
 		try {
-			ensurePathExist([this.getProfilesPath()]);
+			ensurePathExist([this.getAbsolutProfilesPath()]);
 		} catch (e) {
 			new Notice("Profile save path is not valid!");
 			(e as Error).message = 'Profile path is not valid! ' + (e as Error).message;
@@ -35,7 +35,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// Add Settings change listener
 		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, (eventType, filename) => {
-			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 			const profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 			if (profile) {
 				this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
@@ -87,7 +87,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Update status bar
 	 */
 	update() {
-		this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+		this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 		let profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 
 		// Attach status bar item
@@ -212,7 +212,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Load global settings from profiles path
 			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
-			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 		} catch (e) {
 			(e as Error).message = 'Failed to load settings! ' + (e as Error).message;
 			console.error(e);
@@ -241,7 +241,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			const profile = this.getCurrentProfile();
 
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getProfilesPath(), profile.name];
+			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
 
 			// Check target dir exist
 			if (!existsSync(join(...sourcePath))) {
@@ -273,7 +273,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Load profile data
 			this.globalSettings.profilesList.forEach((value, index, array) => {
 				if (value.name === profile.name) {
-					array[index] = loadProfileOptions(profile, this.getProfilesPath()) || value;
+					array[index] = loadProfileOptions(profile, this.getAbsolutProfilesPath()) || value;
 				}
 			});
 			return this.getProfile(profile.name);
@@ -292,9 +292,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Save profile settings
 			await this.saveProfile(profile.name);
 			// Save profile data
-			saveProfileOptions(profile, this.getProfilesPath());
+			saveProfileOptions(profile, this.getAbsolutProfilesPath());
 
-			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 
 			return this.getProfile(profile.name);
 		} catch (e) {
@@ -309,7 +309,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	async switchProfile(profileName: string) {
 		try {
-			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 			const currentProfile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
 			const targetProfile = this.getProfile(profileName);
 
@@ -378,7 +378,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				// Sync the profile settings
 				this.saveProfileSettings(selectedProfile)
 					.then(() => {
-						this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+						this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 					});
 			}
 			else {
@@ -455,8 +455,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 
 			// Remove to profile settings
-			removeDirectoryRecursiveSync([this.getProfilesPath(), profileName]);
-			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+			removeDirectoryRecursiveSync([this.getAbsolutProfilesPath(), profileName]);
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 		} catch (e) {
 			new Notice(`Failed to remove ${profileName} profile!`);
 			(e as Error).message = 'Failed to remove profile! ' + (e as Error).message;
@@ -474,7 +474,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			let profile = this.getProfile(profileName);
 
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getProfilesPath(), profileName];
+			const targetPath = [this.getAbsolutProfilesPath(), profileName];
 			let changed = false;
 
 			// Check target dir exist
@@ -516,7 +516,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		try {
 			const profile = this.getProfile(profileName);
 
-			const sourcePath = [this.getProfilesPath(), profileName];
+			const sourcePath = [this.getAbsolutProfilesPath(), profileName];
 			const targetPath = [getVaultPath(), this.app.vault.configDir];
 
 			// Check target dir exist
@@ -548,7 +548,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	/**
 	 * Returns an absolut path to profiles. Recommendet to use this function instead of directly access settings.
 	 */
-	getProfilesPath(): string {
+	getAbsolutProfilesPath(): string {
 		let path = this.vaultSettings.profilesPath;
 
 		if (!isAbsolute(path)) {
@@ -619,7 +619,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is loaded profile newer/equal than saved profile
 	 */
 	isProfileUpToDate(profile: ProfileOptions): boolean {
-		const list = loadProfilesOptions(this.getProfilesPath());
+		const list = loadProfilesOptions(this.getAbsolutProfilesPath());
 		const profileData = list.find((value) => value.name === profile.name);
 
 		if (!profileData || !profileData.modifiedAt) {
@@ -638,7 +638,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is saved profile newer/equal than saved profile
 	 */
 	isProfileSaved(profile: ProfileOptions): boolean {
-		const list = loadProfilesOptions(this.getProfilesPath());
+		const list = loadProfilesOptions(this.getAbsolutProfilesPath());
 		const profileData = list.find((value, index, obj) => value.name === profile.name)
 
 		if (!profileData || !profileData.modifiedAt) {

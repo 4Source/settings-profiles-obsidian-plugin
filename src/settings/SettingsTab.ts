@@ -20,7 +20,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+		this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
@@ -47,7 +47,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						// Set profiles path to textbox value
 						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
 
-						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getProfilesPath()} `, () => {
+						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getAbsolutProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getAbsolutProfilesPath()} `, () => {
 							// Clean up settings
 							this.plugin.updateCurrentProfile(undefined);
 							this.plugin.globalSettings.profilesList = [];
@@ -56,7 +56,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							this.plugin.saveSettings()
 								.then(() => {
 									// Reload the profiles at new path
-									this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+									this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 									this.display();
 								});
 						}, () => {
@@ -101,7 +101,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.saveProfileSettings(profile)
@@ -118,7 +118,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Load profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.loadProfileSettings(profile)
@@ -162,7 +162,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setTooltip('Reload profiles')
 				.onClick(() => {
 					// Reload data from files
-					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 					this.display();
 				}));
 
@@ -174,7 +174,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon('settings')
 					.setTooltip('Options')
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 						const prevName = profile.name;
 						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
 							await this.plugin.editProfile(prevName, result);
@@ -200,7 +200,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
+						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 						this.plugin.switchProfile(profile.name);
 						this.display();
 					}));
