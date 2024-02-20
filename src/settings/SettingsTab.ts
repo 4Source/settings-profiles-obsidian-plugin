@@ -20,7 +20,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.vaultSettings.profilesPath);
+		this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getProfilesPath());
 
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
