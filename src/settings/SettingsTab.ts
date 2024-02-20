@@ -1,9 +1,11 @@
 import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_SETTINGS } from './SettingsInterface';
+import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
 import { loadProfileData } from '../util/SettingsFiles';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 import { DialogModal } from 'src/modals/DialogModal';
+import { isAbsolute } from 'path';
+
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
 	profilesSettings: Setting[];
@@ -32,17 +34,34 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						if (!input) {
 							throw Error("Input element not found!");
 						}
-						// Change path in file
-						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
-						this.plugin.vaultSettings.activeProfile = "";
-						this.plugin.globalSettings.profilesList = [];
 
-						this.plugin.saveSettings()
-							.then(() => {
-								// Reload the profiles at new path
-								this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
-								this.display();
-							});
+						// Textbox empty
+						if (input.value === '') {
+							input.value = DEFAULT_VAULT_SETTINGS.profilesPath;
+						}
+
+						// Backup to possible restore
+						const backupPath = this.plugin.vaultSettings.profilesPath;
+						// Set profiles path to textbox value
+						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
+
+						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getProfilesPath()} `, () => {
+							// Clean up settings
+							this.plugin.vaultSettings.activeProfile = "";
+							this.plugin.globalSettings.profilesList = [];
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									// Reload the profiles at new path
+									this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+									this.display();
+								});
+						}, () => {
+							// Restore old value
+							this.plugin.vaultSettings.profilesPath = backupPath;
+							this.display();
+						}).open();
 					} catch (e) {
 						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
 						console.error(e);
@@ -80,7 +99,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.saveProfile(profile.name)
@@ -93,7 +112,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.addButton(button => button
 				.setButtonText('Load profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
 						this.plugin.loadProfile(profile.name)
@@ -128,7 +147,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setTooltip('Reload profiles')
 				.onClick(() => {
 					// Reload data from files
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 					this.display();
 				}));
 
@@ -140,7 +159,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon('settings')
 					.setTooltip('Options')
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 						if (this.plugin.getProfile(profile.name)) {
 							const prevName = profile.name;
 							new ProfileSettingsModal(this.app, this.plugin, profile, (result) => {
@@ -169,7 +188,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.vaultSettings.profilesPath);
+						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
 						if (this.plugin.getProfile(profile.name)) {
 							if (!this.plugin.isEnabled(profile)) {
 								this.plugin.switchProfile(profile.name);
