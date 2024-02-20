@@ -1,8 +1,8 @@
 import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
-import { loadProfileData } from '../util/SettingsFiles';
-import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
+import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
+import { loadProfilesOptions } from '../util/SettingsFiles';
+import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { isAbsolute } from 'path';
 
@@ -19,6 +19,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+
+		this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
@@ -45,16 +47,16 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						// Set profiles path to textbox value
 						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
 
-						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getProfilesPath()} `, () => {
+						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getAbsolutProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getAbsolutProfilesPath()} `, () => {
 							// Clean up settings
-							this.plugin.vaultSettings.activeProfile = "";
+							this.plugin.updateCurrentProfile(undefined);
 							this.plugin.globalSettings.profilesList = [];
 
 							// Save settins
 							this.plugin.saveSettings()
 								.then(() => {
 									// Reload the profiles at new path
-									this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+									this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 									this.display();
 								});
 						}, () => {
@@ -67,14 +69,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						console.error(e);
 					}
 				})
-				.buttonEl.setAttrs({ 'id': 'profile-change', 'style': 'visibility:hidden' }))
+				.buttonEl.setAttrs({ 'id': 'profile-path-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
 				.setValue(this.plugin.vaultSettings.profilesPath)
 				.onChange(value => {
 					try {
 						// Value is changed 
 						if (value !== this.plugin.vaultSettings.profilesPath) {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
 							if (!button) {
 								throw Error("Button element not found!");
 							}
@@ -82,7 +84,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						}
 						// Value is same as in file
 						else {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-change');
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
 							if (!button) {
 								throw Error("Button element not found!");
 							}
@@ -96,36 +98,110 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.inputEl.id = 'profile-path');
 
 		new Setting(containerEl)
+			.setName('Refresh intervall')
+			.setDesc('The time in ms in which profile changes are checked')
+			.addButton(button => button
+				.setButtonText('Change')
+				.setWarning()
+				.onClick(() => {
+					try {
+						// Get text component
+						const input: HTMLInputElement | null = this.containerEl.querySelector('#refresh-intervall');
+						if (!input) {
+							throw Error("Input element not found!");
+						}
+
+						// Backup to possible restore
+						const backupIntervall = this.plugin.vaultSettings.refreshIntervall;
+						// Set profiles path to textbox value
+						this.plugin.vaultSettings.refreshIntervall = input.valueAsNumber;
+
+						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+							// Save Settings
+							this.plugin.saveSettings().then(() => {
+								// @ts-ignore
+								this.app.commands.executeCommandById("app:reload");
+							});
+						}, () => {
+							// Restore old value
+							this.plugin.vaultSettings.refreshIntervall = backupIntervall;
+							this.display();
+						}).open();
+					} catch (e) {
+						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.buttonEl.setAttrs({ 'id': 'refresh-intervall-change', 'style': 'visibility:hidden' }))
+			.addSlider(slider => slider
+				.setLimits(100, 5000, 100)
+				.setValue(this.plugin.vaultSettings.refreshIntervall)
+				.setDynamicTooltip()
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.vaultSettings.refreshIntervall) {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
+							if (!button) {
+								throw Error("Button element not found!");
+							}
+							button.toggleVisibility(true);
+						}
+						// Value is same as in file
+						else {
+							const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
+							if (!button) {
+								throw Error("Button element not found!");
+							}
+							button.toggleVisibility(false);
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change refresh intervall! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.sliderEl.setAttr('id', 'refresh-intervall'))
+
+		new Setting(containerEl)
 			.addButton(button => button
 				.setButtonText('Save profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
-						this.plugin.saveProfile(profile.name)
+						this.plugin.saveProfileSettings(profile)
 							.then(() => {
-								new Notice(`Saved ${profile.name} successfully.`);
+								new Notice('Saved profile successfully.');
+								this.display();
 							});
 					}
-					this.display();
 				}))
 			.addButton(button => button
 				.setButtonText('Load profile')
 				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 					const profile = this.plugin.getCurrentProfile();
 					if (profile) {
-						this.plugin.loadProfile(profile.name)
-							.then(() => {
+						this.plugin.loadProfileSettings(profile)
+							.then((profile) => {
+								this.plugin.updateCurrentProfile(profile);
 								// Reload obsidian so changed settings can take effect
 								new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-									// @ts-ignore
-									this.app.commands.executeCommandById("app:reload");
-								}, () => { }, 'Reload')
+									// Save Settings
+									this.plugin.saveSettings().then(() => {
+										// @ts-ignore
+										this.app.commands.executeCommandById("app:reload");
+									});
+								}, () => {
+									this.plugin.saveSettings()
+										.then(() => {
+											this.display();
+										});
+									new Notice('Need to reload obsidian!', 5000);
+								}, 'Reload')
 									.open();
 							});
 					}
-					this.display();
 				}));
 
 
@@ -137,8 +213,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon('plus')
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileSettingsModal(this.app, this.plugin, DEFAULT_PROFILE_SETTINGS, (result) => {
-						this.plugin.createProfile(result);
+					new ProfileOptionsModal(this.app, this.plugin, DEFAULT_PROFILE_OPTIONS, async (result) => {
+						await this.plugin.createProfile(result);
 						this.display();
 					}).open();
 				}))
@@ -147,7 +223,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setTooltip('Reload profiles')
 				.onClick(() => {
 					// Reload data from files
-					this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
+					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 					this.display();
 				}));
 
@@ -159,14 +235,11 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon('settings')
 					.setTooltip('Options')
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
-						if (this.plugin.getProfile(profile.name)) {
-							const prevName = profile.name;
-							new ProfileSettingsModal(this.app, this.plugin, profile, (result) => {
-								this.plugin.editProfile(prevName, result);
-								this.display();
-							}).open();
-						}
+						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
+						const prevName = profile.name;
+						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
+							await this.plugin.editProfile(prevName, result);
+						}).open();
 						this.display();
 					}))
 				// .addExtraButton(button => button
@@ -178,8 +251,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.addExtraButton(button => button
 					.setIcon('trash-2')
 					.setTooltip('Remove')
-					.onClick(() => {
-						this.plugin.removeProfile(profile.name);
+					.onClick(async () => {
+						await this.plugin.removeProfile(profile.name);
 						this.display();
 					}))
 
@@ -188,12 +261,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfileData(this.plugin.getProfilesPath());
-						if (this.plugin.getProfile(profile.name)) {
-							if (!this.plugin.isEnabled(profile)) {
-								this.plugin.switchProfile(profile.name);
-							}
-						}
+						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
+						this.plugin.switchProfile(profile.name);
 						this.display();
 					}));
 		})

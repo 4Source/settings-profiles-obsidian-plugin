@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from "fs";
 import { FileSystemAdapter } from "obsidian";
-import { dirname, join } from "path";
+import { dirname, join, normalize } from "path";
 
 /**
  * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
@@ -124,8 +124,8 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
  */
 export function copyFile(sourcePath: string[], targetPath: string[]) {
 	try {
-		const sourceFile = join(...sourcePath);
-		const targetFile = join(...targetPath);
+		const sourceFile = normalize(join(...sourcePath));
+		const targetFile = normalize(join(...targetPath));
 
 		// Check source exist
 		if (!isValidPath([sourceFile]) || !existsSync(sourceFile)) {
@@ -133,7 +133,7 @@ export function copyFile(sourcePath: string[], targetPath: string[]) {
 		}
 		// Check target path exist
 		isValidPath([...targetPath])
-		ensurePathExist(targetPath.slice(0, targetPath.length - 1));
+		ensurePathExist([targetFile.slice(0, targetFile.lastIndexOf('\\'))]);
 
 		copyFileSync(sourceFile, targetFile);
 	} catch (e) {

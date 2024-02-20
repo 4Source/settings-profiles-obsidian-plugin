@@ -26,3 +26,7 @@
 .modal-buttons {
     border-top: none;
 }
+
+.status-bar-item.plugin-settings-profiles {
+    padding: 0 var(--size-2-2);
+}

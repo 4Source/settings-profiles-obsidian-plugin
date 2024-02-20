@@ -2,7 +2,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 
 export interface GlobalSettings {
-	profilesList: ProfileSetting[];
+	profilesList: ProfileOptions[];
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
@@ -11,14 +11,17 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 
 export interface VaultSettings {
 	profilesPath: string;
-	activeProfile?: string;
+	activeProfile: Partial<ProfileOptions>;
+	refreshIntervall: number;
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	activeProfile: {},
+	refreshIntervall: 1000
 }
 
-export interface ProfileSetting {
+export interface ProfileOptions {
 	name: string;
 	autoSync: boolean;
 	appearance: boolean;
@@ -29,9 +32,10 @@ export interface ProfileSetting {
 	corePlugins: boolean;
 	graph: boolean;
 	hotkeys: boolean;
+	modifiedAt: Date;
 }
 
-export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
+export const DEFAULT_PROFILE_OPTIONS: ProfileOptions = {
 	name: '',
 	autoSync: true,
 	appearance: true,
@@ -42,16 +46,17 @@ export const DEFAULT_PROFILE_SETTINGS: ProfileSetting = {
 	corePlugins: true,
 	graph: true,
 	hotkeys: true,
+	modifiedAt: new Date(),
 }
 
-type ProfileSettingMap = {
-	[key in keyof ProfileSetting]: {
+type ProfileOptionsMap = {
+	[key in keyof ProfileOptions]: {
 		// Display name of the setting
 		name: string;
 		// Description text of the setting
 		description: string;
 		// The setting this is the Advanced option.
-		advanced?: keyof ProfileSetting;
+		advanced?: keyof ProfileOptions;
 		// Files/Paths there get synced with this option. 
 		file?: string | string[];
 		// Files/Paths there are ignored for sync
@@ -60,7 +65,7 @@ type ProfileSettingMap = {
 };
 
 
-export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
+export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 	name: {
 		name: 'Name',
 		description: 'Name of this profile.',
@@ -109,5 +114,9 @@ export const PROFILE_SETTINGS_MAP: ProfileSettingMap = {
 		name: 'Hotkeys',
 		description: 'Says whether the obsidian hotkey settings will sync.',
 		file: 'hotkeys.json'
+	},
+	modifiedAt: {
+		name: 'Modified at',
+		description: 'Date time of last modification.'
 	}
 }
