@@ -1,9 +1,9 @@
-import { Notice } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
-import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -34,8 +34,12 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.addSettingTab(this.settingsTab);
 
 		// Add Settings change listener
-		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), (eventType, filename) => {
-			this.settingsChanged = true;
+		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, (eventType, filename) => {
+			this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
+			const profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
+			if (profile) {
+				this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
+			}
 		});
 
 		// Update profiles at Intervall 
@@ -77,26 +81,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		if (this.settingsListener) {
 			this.settingsListener.close();
 		}
-		this.globalSettings.profilesList = loadProfilesOptions(this.getProfilesPath());
-		let profile = this.globalSettings.profilesList.find(profile => profile.name === this.vaultSettings.activeProfile?.name);
-
-		// Attach status bar item
-		if (profile) {
-			// Use modified at from vault settings
-			if (this.vaultSettings.activeProfile?.modifiedAt) {
-				profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
-			}
-			if (profile.autoSync && this.settingsChanged) {
-				this.saveProfileSettings(profile)
-					.then((profile) => {
-						this.updateCurrentProfile(profile);
-						this.saveSettings()
-							.then(() => {
-								this.settingsChanged = false;
-							});
-					});
-			}
-		}
 	}
 
 	/**
@@ -113,16 +97,23 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
 			}
 
-			if (profile.autoSync && this.settingsChanged) {
-				this.saveProfileSettings(profile)
-					.then((profile) => {
-						this.updateCurrentProfile(profile);
-						this.saveSettings()
-							.then(() => {
-								this.settingsChanged = false;
-							});
-					});
+			if (this.settingsChanged && this.areSettingsChanged()) {
+				// Save settings to profile
+				if (profile.autoSync) {
+					this.saveProfileSettings(profile)
+						.then((profile) => {
+							this.updateCurrentProfile(profile);
+							this.saveSettings();
+						});
+				}
+				// Update modifiedAt to now
+				else {
+					profile.modifiedAt = new Date()
+					this.updateCurrentProfile(profile);
+					this.saveSettings();
+				}
 			}
+			this.settingsChanged = false;
 
 			let icon = 'alert-circle';
 			let label = 'Settings profiles';
@@ -238,6 +229,36 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		} catch (e) {
 			(e as Error).message = 'Failed to save settings! ' + (e as Error).message;
 			console.error(e);
+		}
+	}
+
+	/**
+	 * Check relevant files for current profile are changed
+	 * @returns `ture` if at least one file has changed
+	 */
+	areSettingsChanged(): boolean {
+		try {
+			const profile = this.getCurrentProfile();
+
+			const sourcePath = [getVaultPath(), this.app.vault.configDir];
+			const targetPath = [this.getProfilesPath(), profile.name];
+
+			// Check target dir exist
+			if (!existsSync(join(...sourcePath))) {
+				throw Error('Source path do not exist!');
+			}
+
+			let filesList = getConfigFilesList(profile);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
+
+			return filesList.length > 0
+		} catch (e) {
+			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message;
+			console.error(e);
+			return true;
 		}
 	}
 
