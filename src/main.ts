@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
@@ -34,13 +34,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.addSettingTab(this.settingsTab);
 
 		// Add Settings change listener
-		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, (eventType, filename) => {
+		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 			const profile = this.getCurrentProfile();
 			if (profile) {
 				this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
 			}
-		});
+		},500, false));
 
 		// Update profiles at Intervall 
 		this.registerInterval(window.setInterval(() => {
