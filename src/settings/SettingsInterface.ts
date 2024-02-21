@@ -71,7 +71,7 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 		description: 'Name of this profile.',
 	},
 	autoSync: {
-		name: 'Auto Sync',
+		name: 'Auto-Sync',
 		description: 'Auto Sync this profile on startup.',
 	},
 	appearance: {
@@ -90,18 +90,18 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 		file: 'bookmarks.json'
 	},
 	communityPlugins: {
-		name: 'Community Plugins',
+		name: 'Community plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
 		file: ['community-plugins.json', 'plugins/*/*'],
 		ignore: 'plugins/settings-profiles/data.json'
 	},
 	communityPluginsAdvanced: {
-		name: 'Community Plugins Advanced',
+		name: 'Community plugins advanced',
 		description: 'Advanced settings for the community plugins.',
 		advanced: 'communityPlugins'
 	},
 	corePlugins: {
-		name: 'Core Plugins',
+		name: 'Core plugins',
 		description: 'Says whether the obsidian core plugin settings will sync.',
 		file: ['core-plugins.json', 'core-plugins-migration.json']
 	},
