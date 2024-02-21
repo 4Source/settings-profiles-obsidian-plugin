@@ -1,6 +1,6 @@
 import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
-import { ProfileSwitcherModal, ProfileState } from './modals/ProfileSwitcherModal';
+import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
 import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
@@ -52,17 +52,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			name: "Open profile switcher",
 			callback: () => {
 				// Open new profile switcher modal to switch or create a new profile
-				new ProfileSwitcherModal(this.app, this, async (result, state) => {
-					switch (state) {
-						case ProfileState.CURRENT:
-							return;
-						case ProfileState.NEW:
-							// Create new Profile
-							await this.createProfile(result);
-							break;
-					}
-					this.switchProfile(result.name);
-				}).open();
+				new ProfileSwitcherModal(this.app, this).open();
 			}
 		});
 
@@ -137,17 +127,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					if (!profile || this.isProfileSaved(profile)) {
 						if (!profile || this.isProfileUpToDate(profile)) {
 							// Profile is up-to-date and saved
-							new ProfileSwitcherModal(this.app, this, async (result, state) => {
-								switch (state) {
-									case ProfileState.CURRENT:
-										return;
-									case ProfileState.NEW:
-										// Create new Profile
-										await this.createProfile(result);
-										break;
-								}
-								this.switchProfile(result.name);
-							}).open();
+							new ProfileSwitcherModal(this.app, this).open();
 						}
 						else {
 							// Profile is not up to date
@@ -229,7 +209,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 
 			// Target does not exist 
-			if(!existsSync(join(...targetPath))) {
+			if (!existsSync(join(...targetPath))) {
 				return true;
 			}
 

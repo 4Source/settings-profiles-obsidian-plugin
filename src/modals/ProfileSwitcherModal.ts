@@ -1,11 +1,13 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "../main";
 import { DEFAULT_PROFILE_OPTIONS, ProfileOptions } from "../settings/SettingsInterface";
+import { ProfileOptionsModal } from "./ProfileOptionsModal";
 
-export enum ProfileState {
+enum ProfileState {
     EXIST,
     CURRENT,
-    NEW
+    NEW,
+    NEW_OPTIONS
 }
 
 interface SettingsProfileSuggestion extends ProfileOptions {
@@ -14,12 +16,18 @@ interface SettingsProfileSuggestion extends ProfileOptions {
 
 export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion> {
     plugin: SettingsProfilesPlugin;
-    onSubmit: (result: ProfileOptions, state: ProfileState) => void;
 
-    constructor(app: App, plugin: SettingsProfilesPlugin, onSubmit: (result: ProfileOptions, state: ProfileState) => void) {
+    constructor(app: App, plugin: SettingsProfilesPlugin) {
         super(app);
         this.plugin = plugin;
-        this.onSubmit = onSubmit;
+
+        // Register key combination shift + enter
+        this.scope.register(['Shift'], 'Enter', (evt: KeyboardEvent) => {
+            // @ts-ignore
+            if (!evt.isComposing && this.chooser.useSelectedItem(evt)) {
+                return false;
+            }
+        });
 
         this.setPlaceholder("Find or create a profile...")
 
@@ -30,6 +38,10 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
         {
             command: "↵",
             purpose: "to switch"
+        },
+        {
+            command: "shift ↵",
+            purpose: "to create with options"
         },
         {
             command: "esc",
@@ -46,20 +58,21 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
         );
         // Expand SettingsProfile to SettingsProfileSuggestion
         const suggestions: SettingsProfileSuggestion[] = [];
-        profiles.forEach(profile => {
-            suggestions.push({
-                ...profile,
-                state: this.plugin.isEnabled(profile) ? ProfileState.CURRENT : ProfileState.EXIST
-            });
-        });
-        // If nothing Matches add createable
-        if (suggestions.length <= 0) {
+        // Attach query string to suggestion
+        if (profiles.every((value) => value.name.toLowerCase() !== query.toLowerCase()) && query.length > 0) {
             suggestions.push({
                 ...DEFAULT_PROFILE_OPTIONS,
                 name: query,
                 state: ProfileState.NEW
             });
         }
+        // Attach profiles to suggestions
+        profiles.forEach(profile => {
+            suggestions.push({
+                ...profile,
+                state: this.plugin.isEnabled(profile) ? ProfileState.CURRENT : ProfileState.EXIST
+            });
+        });
         return suggestions
     }
 
@@ -85,9 +98,33 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     // Perform action on the selected suggestion.
     onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
-        const { state, ...rest } = suggestion;
+        let { state, ...rest } = suggestion;
         const profile: ProfileOptions = { ...rest };
-        // Submit profile
-        this.onSubmit(profile, state);
+
+        if (evt.shiftKey && state !== ProfileState.EXIST && state !== ProfileState.CURRENT) {
+            state = ProfileState.NEW_OPTIONS;
+        }
+
+        // Handle choice depending on state
+        switch (state) {
+            case ProfileState.NEW:
+                // Create new Profile
+                this.plugin.createProfile(profile).then(() => {
+                    this.plugin.switchProfile(profile.name);
+                });
+                break;
+            case ProfileState.NEW_OPTIONS:
+                new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
+                    this.plugin.createProfile(result)
+                        .then(() => {
+                            this.plugin.switchProfile(result.name);
+                        });
+                }).open();
+                break;
+            case ProfileState.EXIST:
+                this.plugin.switchProfile(profile.name);
+                break;
+        }
+        this.close()
     }
 }
