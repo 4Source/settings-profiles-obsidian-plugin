@@ -259,12 +259,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 				.addExtraButton(button => button
 					.setIcon(this.plugin.isEnabled(profile) ? ICON_CURRENT_PROFILE : ICON_NOT_CURRENT_PROFILE)
-					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
-					.setDisabled(this.plugin.isEnabled(profile))
+					.setTooltip(this.plugin.isEnabled(profile) ? "Deselect profile" : 'Switch to profile')
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
-						this.plugin.switchProfile(profile.name);
+						this.plugin.switchProfile(this.plugin.isEnabled(profile) ? "" : profile.name)
+							.then(() => {
 						this.display();
+							});
 					}));
 		})
 	}

@@ -299,6 +299,19 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		try {
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 			const currentProfile = this.getCurrentProfile();
+
+			// Save current profile 
+			if (currentProfile?.autoSync) {
+				await this.saveProfileSettings(currentProfile);
+			}
+
+			// Deselect profile
+			if (profileName === "") {
+				this.updateCurrentProfile(undefined);
+				await this.saveSettings();
+				return;
+			}
+
 			const targetProfile = this.getProfile(profileName);
 
 			// Is target profile existing
@@ -310,11 +323,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (currentProfile?.name === targetProfile.name) {
 				new Notice('Allready current profile!');
 				return;
-			}
-
-			// Save current profile 
-			if (currentProfile?.autoSync) {
-				await this.saveProfileSettings(currentProfile);
 			}
 
 			// Load new profile
@@ -330,11 +338,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					// @ts-ignore
 					this.app.commands.executeCommandById("app:reload");
 				});
-			}, () => {
-				this.saveSettings()
-					.then(() => {
-						this.settingsTab.display();
-					});
+			}, async () => {
+				await this.saveSettings();
 				new Notice('Need to reload obsidian!', 5000);
 			}, 'Reload')
 				.open();
