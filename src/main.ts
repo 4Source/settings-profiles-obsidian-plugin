@@ -94,7 +94,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// Attach status bar item
 		if (profile) {
-			if (this.settingsChanged && this.areSettingsChanged()) {
+			if (this.settingsChanged && this.areSettingsChanged(profile)) {
 				// Save settings to profile
 				if (profile.autoSync) {
 					this.saveProfileSettings(profile);
@@ -218,20 +218,19 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Check relevant files for current profile are changed
 	 * @returns `ture` if at least one file has changed
 	 */
-	areSettingsChanged(): boolean {
+	areSettingsChanged(profile: ProfileOptions): boolean {
 		try {
-			const profile = this.getCurrentProfile();
-
-			if (!profile) {
-				return true;
-			}
-
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
 			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
 
 			// Check target dir exist
 			if (!existsSync(join(...sourcePath))) {
 				throw Error('Source path do not exist!');
+			}
+
+			// Target does not exist 
+			if(!existsSync(join(...targetPath))) {
+				return true;
 			}
 
 			let filesList = getConfigFilesList(profile);
