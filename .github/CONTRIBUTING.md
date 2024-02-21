@@ -32,7 +32,7 @@ Scan through the [existing issues](https://github.com/4Source/settings-profiles-
     - ``npm run dev``
 9. Enable the plugin in Obsidian settings
 > [!TIP]  
-> Install the [Hot-Reload](https://github.com/pjeby/hot-reload) plugin to automatically reload your plugin while developing.
+> Install the [Hot-Reload](https://github.com/pjeby/hot-reload) plugin to automatically reload the plugin while developing.
 
 ### Commit your update
 Commit the changes once you are happy with them. 
