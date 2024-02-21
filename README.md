@@ -96,6 +96,8 @@ Or instead create a [pull request](https://github.com/4Source/SettingsProfiles-O
 
 **Not a developer** but still want to help? You can help with testing. Either you test the current version for possible problems or, if there are currently any, you can also test [pre-releases](https://github.com/4Source/settings-profiles-obsidian-plugin/releases). To do this, you need to install the BRAT plugin, then select “Add Beta plugin with forzen version” under the Beta plugin list. Put in the URL ``https://github.com/4Source/settings-profiles-obsidian-plugin`` and the name of the version you want to test. If you found a bug or unexpected behavior create an [issue](https://github.com/4Source/SettingsProfiles-Obsidian-Plugin/issues) with the current version you have tested. Before creating an issue, make sure you know how to reproduce the bug. If there is already an issue for the bug you found that is still open but you have additional information, add it to the issue.
 
+For more info see [CONTRIBUTING](https://github.com/4Source/settings-profiles-obsidian-plugin/blob/master/.github/CONTRIBUTING.md)
+
 # Support
 If you want to support me and my work.
 
