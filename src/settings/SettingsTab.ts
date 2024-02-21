@@ -5,7 +5,7 @@ import { loadProfilesOptions } from '../util/SettingsFiles';
 import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { isAbsolute } from 'path';
-import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_RELOAD_PROFILES } from 'src/constants';
+import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES } from 'src/constants';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
@@ -163,49 +163,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				})
 				.sliderEl.setAttr('id', 'refresh-intervall'))
 
-		new Setting(containerEl)
-			.addButton(button => button
-				.setButtonText('Save profile')
-				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
-					const profile = this.plugin.getCurrentProfile();
-					if (profile) {
-						this.plugin.saveProfileSettings(profile)
-							.then(() => {
-								new Notice('Saved profile successfully.');
-								this.display();
-							});
-					}
-				}))
-			.addButton(button => button
-				.setButtonText('Load profile')
-				.onClick(() => {
-					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
-					const profile = this.plugin.getCurrentProfile();
-					if (profile) {
-						this.plugin.loadProfileSettings(profile)
-							.then((profile) => {
-								this.plugin.updateCurrentProfile(profile);
-								// Reload obsidian so changed settings can take effect
-								new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-									// Save Settings
-									this.plugin.saveSettings().then(() => {
-										// @ts-ignore
-										this.app.commands.executeCommandById("app:reload");
-									});
-								}, () => {
-									this.plugin.saveSettings()
-										.then(() => {
-											this.display();
-										});
-									new Notice('Need to reload obsidian!', 5000);
-								}, 'Reload')
-									.open();
-							});
-					}
-				}));
-
-
 		// Heading for Profiles
 		new Setting(containerEl)
 			.setHeading()
@@ -262,7 +219,19 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								this.display();
 							});
 					}))
-
+				.addExtraButton(button => button
+					.setIcon(ICON_PROFILE_SAVE)
+					.setTooltip('Save settings to profile')
+					.onClick(() => {
+						new DialogModal(this.app, 'Save current settings to profile?', 'You are about to overwrite the current settings of this profile. This cannot be undone.', async () => {
+							this.plugin.saveProfileSettings(profile)
+								.then(() => {
+									new Notice('Saved profile successfully.');
+									this.display();
+								});
+						}, async () => { }, 'Override')
+							.open();
+					}))
 				.addExtraButton(button => button
 					.setIcon(this.plugin.isEnabled(profile) ? ICON_CURRENT_PROFILE : ICON_NOT_CURRENT_PROFILE)
 					.setTooltip(this.plugin.isEnabled(profile) ? "Deselect profile" : 'Switch to profile')
