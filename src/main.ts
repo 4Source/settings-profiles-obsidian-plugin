@@ -13,7 +13,6 @@ import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, I
 export default class SettingsProfilesPlugin extends PluginExtended {
 	vaultSettings: VaultSettings;
 	globalSettings: GlobalSettings;
-	settingsTab: SettingsProfilesSettingTab;
 	statusBarItem: HTMLElement;
 	settingsListener: FSWatcher;
 	settingsChanged: boolean;
@@ -31,8 +30,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.settingsTab = new SettingsProfilesSettingTab(this.app, this);
-		this.addSettingTab(this.settingsTab);
+		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
 		// Add Settings change listener
 		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
@@ -369,10 +367,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			const selectedProfile = this.globalSettings.profilesList.find(value => value.name === profile.name);
 			if (selectedProfile) {
 				// Sync the profile settings
-				this.saveProfileSettings(selectedProfile);
+				await this.saveProfileSettings(selectedProfile);
 			}
 			else {
-				this.removeProfile(profile.name);
+				await this.removeProfile(profile.name);
 				new Notice(`Failed to create profile ${profile.name}!`);
 			}
 		} catch (e) {
@@ -415,10 +413,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				await this.removeProfile(profileName);
 			}
 			else {
-				this.saveProfileSettings(profile)
-					.then(() => {
-						this.settingsTab.display();
-					});
+				await this.saveProfileSettings(profile);
 			}
 		} catch (e) {
 			new Notice(`Failed to edit ${profileName} profile!`);
@@ -443,6 +438,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Remove to profile settings
 			removeDirectoryRecursiveSync([this.getAbsolutProfilesPath(), profileName]);
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
+			await this.saveSettings();
 		} catch (e) {
 			new Notice(`Failed to remove ${profileName} profile!`);
 			(e as Error).message = 'Failed to remove profile! ' + (e as Error).message;

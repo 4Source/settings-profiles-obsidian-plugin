@@ -215,8 +215,10 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setTooltip('Add new profile')
 				.onClick(() => {
 					new ProfileOptionsModal(this.app, this.plugin, DEFAULT_PROFILE_OPTIONS, async (result) => {
-						await this.plugin.createProfile(result);
-						this.display();
+						this.plugin.createProfile(result)
+							.then(() => {
+								this.display();
+							});
 					}).open();
 				}))
 			.addExtraButton(button => button
@@ -239,9 +241,11 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
 						const prevName = profile.name;
 						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
-							await this.plugin.editProfile(prevName, result);
+							this.plugin.editProfile(prevName, result)
+								.then(() => {
+									this.display();
+								});
 						}).open();
-						this.display();
 					}))
 				// .addExtraButton(button => button
 				// 	.setIcon(ICON_PROFILE_ADD_HOTKEY)
@@ -253,8 +257,10 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon(ICON_PROFILE_REMOVE)
 					.setTooltip('Remove')
 					.onClick(async () => {
-						await this.plugin.removeProfile(profile.name);
-						this.display();
+						this.plugin.removeProfile(profile.name)
+							.then(() => {
+								this.display();
+							});
 					}))
 
 				.addExtraButton(button => button
@@ -263,7 +269,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onClick(() => {
 						this.plugin.switchProfile(this.plugin.isEnabled(profile) ? "" : profile.name)
 							.then(() => {
-						this.display();
+								this.display();
 							});
 					}));
 		})
