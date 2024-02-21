@@ -3,21 +3,22 @@
     border-top: 1px solid var(--background-modifier-border);
 }
 
-.profiles-container .profile-enabled {
+.profile-enabled {
     font-weight: bolder;
 }
 
-.profiles-container .setting-editor-extra-setting-button .is-disabled {
+.setting-editor-extra-setting-button .is-disabled {
     opacity: 0.5;
 }
 
 
-.profiles-container .clickable-icon.setting-editor-extra-setting-button.is-disabled:hover {
+.clickable-icon.setting-editor-extra-setting-button.is-disabled:hover {
     box-shadow: none;
     background-color: transparent;
+    opacity: var(--icon-opacity);
 }
 
-.profiles-container .clickable-icon.setting-editor-extra-setting-button.is-disabled:active {
+.clickable-icon.setting-editor-extra-setting-button.is-disabled:active {
     box-shadow: none;
     background-color: transparent;
     color: var(--icon-color);
