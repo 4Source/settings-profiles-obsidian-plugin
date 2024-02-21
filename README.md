@@ -27,10 +27,6 @@ This setting controls how often it checks whether there are changes to the profi
 **Max:** ``5000ms``
 
 **Default:** ``1000ms``
-## Save profile *Button*
-For manual save the current profile. To make sure if you changed some settings you could press the "Save profile" Button.
-## Load profile *Button*
-For manual load the current profile. 
 ## Profiles ![plus](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/ec66911b-69dc-436a-9860-f9cdde4b27ac) *Button*
 Let you create a new profile with the current settings. Pressing on it will open a new window [Profile options](#Profile-options) here you can configure the profile. 
 ## Profiles ![refresh-cw](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/e3a66b68-d30d-4990-8938-20db7b5e7cdd) *Button*
@@ -44,12 +40,8 @@ Deletes this profile and all settings. **Attention!** This will delete this prof
 <!-- ### Profile ![plus-circle](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/228a9cd7-1904-48d2-9c9c-5c1b5f2691c9) *Button*
 Let you attach a hotkey to this profile.
 -->
-<!-- ### Profile ![save](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/e2b57e9f-be4f-44b8-b5ba-8783909f72e3) *Button*
-Is displayed if the profile has unsaved changes
--->
-<!-- ### Profile ![download](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/66bdb904-3875-4ba9-8cfa-6747f5fc1e24) *Button*
-Is displayed if the profile has unloaded changes
--->
+### Profile ![save](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/e2b57e9f-be4f-44b8-b5ba-8783909f72e3) *Button*
+Lets you save the current settings to the profile. **Attention!** This will overwrite the current settings in this profile and cannot be undone. Is disabled if the profile settings match the current setting.
 ### Profile Status ![user-check](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/a6a685c1-3af0-45f5-a53a-f6664abfa637) *Button*
 This shows which profile is currently active. Pressing will deselect the current profile.
 ### Profile Status ![user](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/6aa7fa2e-9ff5-45b7-8865-4de3c459b117) *Button*
