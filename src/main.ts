@@ -39,7 +39,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (profile) {
 				this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
 			}
-		},500, false));
+		}, 500, false));
 
 		// Update profiles at Intervall 
 		this.registerInterval(window.setInterval(() => {
@@ -298,13 +298,16 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 			const currentProfile = this.getCurrentProfile();
 
-			// Save current profile 
-			if (currentProfile?.autoSync) {
-				await this.saveProfileSettings(currentProfile);
-			}
-
 			// Deselect profile
 			if (profileName === "") {
+				// Open dialog save current profile
+				if (currentProfile) {
+					new DialogModal(this.app, 'Save befor deselect profile?', 'Otherwise, unsaved changes will be lost.', async () => {
+						// Save current profile 
+						await this.saveProfileSettings(currentProfile);
+					}, async () => { }, 'Save', 'Do not Save')
+						.open();
+				}
 				this.updateCurrentProfile(undefined);
 				await this.saveSettings();
 				return;
@@ -321,6 +324,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (currentProfile?.name === targetProfile.name) {
 				new Notice('Allready current profile!');
 				return;
+			}
+
+			// Save current profile 
+			if (currentProfile?.autoSync) {
+				await this.saveProfileSettings(currentProfile);
 			}
 
 			// Load new profile
