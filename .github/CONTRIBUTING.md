@@ -21,7 +21,7 @@ Scan through the [existing issues](https://github.com/4Source/settings-profiles-
     - ``cd path/to/vault``
     - ``mkdir .obsidian/plugins``
     - ``cd .obsidian/plugins``
-    - ``git clone https://github.com/4Source/settings-profiles-obsidian-plugin.git settings-profiles``
+    - ``git clone <your-repository-url> settings-profiles``
 6. Install dependencies
     - ``cd settings-profiles``
     - ``npm install``
@@ -31,7 +31,7 @@ Scan through the [existing issues](https://github.com/4Source/settings-profiles-
 8. Compile the source code. The following command keeps running in the terminal and rebuilds the plugin when you modify the source code.
     - ``npm run dev``
 9. Enable the plugin in Obsidian settings
-> [!Hot reloading]  
+> [!Info]  
 > Install the [Hot-Reload](https://github.com/pjeby/hot-reload) plugin to automatically reload your plugin while developing.
 
 ### Commit your update
