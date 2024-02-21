@@ -31,7 +31,7 @@ Scan through the [existing issues](https://github.com/4Source/settings-profiles-
 8. Compile the source code. The following command keeps running in the terminal and rebuilds the plugin when you modify the source code.
     - ``npm run dev``
 9. Enable the plugin in Obsidian settings
-> [!Info]  
+> [!TIP]  
 > Install the [Hot-Reload](https://github.com/pjeby/hot-reload) plugin to automatically reload your plugin while developing.
 
 ### Commit your update
