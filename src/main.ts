@@ -8,6 +8,7 @@ import { isAbsolute, join } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
+import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	vaultSettings: VaultSettings;
@@ -90,7 +91,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 		let profile = this.getCurrentProfile();
 
-		let icon = 'users';
+		let icon = ICON_NO_CURRENT_PROFILE;
 		let label = 'Switch profile';
 
 		// Attach status bar item
@@ -112,18 +113,18 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (this.isProfileSaved(profile)) {
 				if (this.isProfileUpToDate(profile)) {
 					// Profile is up-to-date and saved
-					icon = 'user-check';
+					icon = ICON_CURRENT_PROFILE;
 					label = 'Profile up-to-date';
 				}
 				else {
 					// Profile is not up to date
-					icon = 'user-x';
+					icon = ICON_UNSAVED_PROFILE;
 					label = 'Unloaded changes for this profile';
 				}
 			}
 			else {
 				// Profile is not saved
-				icon = 'user-cog';
+				icon = ICON_UNLOADED_PROFILE;
 				label = 'Unsaved changes for this profile';
 			}
 		}

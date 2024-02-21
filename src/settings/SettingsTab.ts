@@ -5,6 +5,7 @@ import { loadProfilesOptions } from '../util/SettingsFiles';
 import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { isAbsolute } from 'path';
+import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_RELOAD_PROFILES } from 'src/constants';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
@@ -210,7 +211,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			.setHeading()
 			.setName('Profiles')
 			.addExtraButton(button => button
-				.setIcon('plus')
+				.setIcon(ICON_ADD_PROFILE)
 				.setTooltip('Add new profile')
 				.onClick(() => {
 					new ProfileOptionsModal(this.app, this.plugin, DEFAULT_PROFILE_OPTIONS, async (result) => {
@@ -219,7 +220,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					}).open();
 				}))
 			.addExtraButton(button => button
-				.setIcon('refresh-cw')
+				.setIcon(ICON_RELOAD_PROFILES)
 				.setTooltip('Reload profiles')
 				.onClick(() => {
 					// Reload data from files
@@ -232,7 +233,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
 				.addExtraButton(button => button
-					.setIcon('settings')
+					.setIcon(ICON_PROFILE_OPTIONS)
 					.setTooltip('Options')
 					.onClick(() => {
 						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
@@ -243,13 +244,13 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						this.display();
 					}))
 				// .addExtraButton(button => button
-				// 	.setIcon('plus-circle')
+				// 	.setIcon(ICON_PROFILE_ADD_HOTKEY)
 				// 	.setTooltip('Hotkeys')
 				// 	.onClick(() => {
 
 				// 	}))
 				.addExtraButton(button => button
-					.setIcon('trash-2')
+					.setIcon(ICON_PROFILE_REMOVE)
 					.setTooltip('Remove')
 					.onClick(async () => {
 						await this.plugin.removeProfile(profile.name);
@@ -257,7 +258,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					}))
 
 				.addExtraButton(button => button
-					.setIcon(this.plugin.isEnabled(profile) ? 'check' : 'download')
+					.setIcon(this.plugin.isEnabled(profile) ? ICON_CURRENT_PROFILE : ICON_NOT_CURRENT_PROFILE)
 					.setTooltip(this.plugin.isEnabled(profile) ? "" : 'Switch to profile')
 					.setDisabled(this.plugin.isEnabled(profile))
 					.onClick(() => {
