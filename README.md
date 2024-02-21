@@ -36,7 +36,7 @@ Let you create a new profile with the current settings. Pressing on it will open
 ## Profiles ![refresh-cw](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/e3a66b68-d30d-4990-8938-20db7b5e7cdd) *Button*
 The [profiles list](#Profiles-list) below will be reloaded from the files.
 ## Profiles list
-As soon as you have created a profile, all profiles stored in the [Profile save path](#Profile-save-path) will be listed here.
+As soon as you have created a profile, all profiles stored in the [Profile save path](#Profile-save-path-) will be listed here.
 ### Profile ![settings](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/88596802-e7b7-4bba-986d-6972758fce99) *Button*
 Let you cange the [Profile options](#Profile-options) for the profile. 
 ### Profile ![trash-2](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/ec7767a9-1b49-4cc1-874e-7ee85aec907f) *Button*
