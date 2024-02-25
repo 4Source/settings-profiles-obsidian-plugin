@@ -1,5 +1,5 @@
 import { homedir } from 'os';
-import { join } from 'path';
+import { join, normalize } from 'path';
 
 export interface GlobalSettings {
 	profilesList: ProfileOptions[];
@@ -16,7 +16,7 @@ export interface VaultSettings {
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
-	profilesPath: join(homedir(), 'Documents', 'Obsidian', 'Profiles'),
+	profilesPath: normalize(join(homedir(), 'Documents', 'Obsidian', 'Profiles')),
 	activeProfile: {},
 	refreshIntervall: 1000
 }

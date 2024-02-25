@@ -53,7 +53,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     // Returns all available suggestions.
     getSuggestions(query: string): SettingsProfileSuggestion[] {
         // Get all matching SettingsProfiles
-        const profiles = this.plugin.globalSettings.profilesList.filter((profile) =>
+        const profiles = this.plugin.getProfilesList().filter((profile) =>
             profile.name.toLowerCase().includes(query.toLowerCase())
         );
         // Expand SettingsProfile to SettingsProfileSuggestion

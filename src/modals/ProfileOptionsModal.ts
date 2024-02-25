@@ -65,7 +65,7 @@ export class ProfileOptionsModal extends Modal {
                 .onClick(() => {
                     if (this.profile.name === "" || this.profile.name === undefined) {
                         new Notice("Profile name cannot be empty!");
-                    } else if (this.initialProfile.name !== this.profile.name && this.plugin.globalSettings.profilesList.find(profile => profile.name === this.profile.name)) {
+                    } else if (this.initialProfile.name !== this.profile.name && this.plugin.getProfilesList().find(profile => profile.name === this.profile.name)) {
                         new Notice("Profile with this name already exists!");
                     } else {
                         this.onSubmit(this.profile);
