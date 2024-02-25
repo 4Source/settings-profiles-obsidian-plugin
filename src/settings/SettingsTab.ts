@@ -1,7 +1,6 @@
-import { App, Notice, PluginSettingTab, Setting, normalizePath } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
 import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
-import { loadProfilesOptions } from '../util/SettingsFiles';
 import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { isAbsolute } from 'path';
@@ -21,7 +20,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
+		this.plugin.refreshProfilesList();
 
 		// Path where the Profiles are Saved
 		new Setting(containerEl)
@@ -33,36 +32,36 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.onClick(() => {
 					try {
 						// Get text component
-						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
-						if (!input) {
+						const inputEl: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
+						if (!inputEl) {
 							throw Error("Input element not found! #profile-path");
 						}
 
 						// Textbox empty
-						if (input.value === '') {
-							input.value = DEFAULT_VAULT_SETTINGS.profilesPath;
+						if (inputEl.value === '') {
+							inputEl.value = DEFAULT_VAULT_SETTINGS.profilesPath;
 						}
 
 						// Backup to possible restore
-						const backupPath = this.plugin.vaultSettings.profilesPath;
+						const backupPath = this.plugin.getProfilesPath();
 						// Set profiles path to textbox value
-						this.plugin.vaultSettings.profilesPath = normalizePath(input.value);
+						this.plugin.setProfilePath(inputEl.value);
 
-						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(input.value) ? `Absolut path: ${this.plugin.getAbsolutProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getAbsolutProfilesPath()} `, () => {
+						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(inputEl.value) ? `Absolut path: ${this.plugin.getAbsolutProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getAbsolutProfilesPath()} `, () => {
 							// Clean up settings
 							this.plugin.updateCurrentProfile(undefined);
-							this.plugin.globalSettings.profilesList = [];
+							this.plugin.setProfilesList([]);
 
 							// Save settins
 							this.plugin.saveSettings()
 								.then(() => {
 									// Reload the profiles at new path
-									this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
+									this.plugin.refreshProfilesList();
 									this.display();
 								});
 						}, () => {
 							// Restore old value
-							this.plugin.vaultSettings.profilesPath = backupPath;
+							this.plugin.setProfilePath(backupPath);
 							this.display();
 						}).open();
 					} catch (e) {
@@ -72,7 +71,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				})
 				.buttonEl.setAttrs({ 'id': 'profile-path-change', 'style': 'visibility:hidden' }))
 			.addText(text => text
-				.setValue(this.plugin.vaultSettings.profilesPath)
+				.setValue(this.plugin.getProfilesPath())
 				.onChange(value => {
 					try {
 						const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
@@ -80,7 +79,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							throw Error("Button element not found! #profile-path-change");
 						}
 						// Value is changed 
-						if (value !== this.plugin.vaultSettings.profilesPath) {
+						if (value !== this.plugin.getProfilesPath()) {
 							button.toggleVisibility(true);
 						}
 						// Value is same as in file
@@ -103,15 +102,15 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.onClick(() => {
 					try {
 						// Get text component
-						const input: HTMLInputElement | null = this.containerEl.querySelector('#refresh-intervall');
-						if (!input) {
+						const inputEl: HTMLInputElement | null = this.containerEl.querySelector('#refresh-intervall');
+						if (!inputEl) {
 							throw Error("Input element not found! #refresh-intervall");
 						}
 
 						// Backup to possible restore
-						const backupIntervall = this.plugin.vaultSettings.refreshIntervall;
+						const backupIntervall = this.plugin.getRefreshIntervall();
 						// Set profiles path to textbox value
-						this.plugin.vaultSettings.refreshIntervall = input.valueAsNumber;
+						this.plugin.setRefreshIntervall(inputEl.valueAsNumber);
 
 						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 							// Save Settings
@@ -121,7 +120,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							});
 						}, () => {
 							// Restore old value
-							this.plugin.vaultSettings.refreshIntervall = backupIntervall;
+							this.plugin.setRefreshIntervall(backupIntervall);
 							this.display();
 						}).open();
 					} catch (e) {
@@ -132,7 +131,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.buttonEl.setAttrs({ 'id': 'refresh-intervall-change', 'style': 'visibility:hidden' }))
 			.addSlider(slider => slider
 				.setLimits(100, 5000, 100)
-				.setValue(this.plugin.vaultSettings.refreshIntervall)
+				.setValue(this.plugin.getRefreshIntervall())
 				.setDynamicTooltip()
 				.onChange(value => {
 					try {
@@ -141,7 +140,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							throw Error("Button element not found! #refresh-intervall-change");
 						}
 						// Value is changed 
-						if (value !== this.plugin.vaultSettings.refreshIntervall) {
+						if (value !== this.plugin.getRefreshIntervall()) {
 							button.toggleVisibility(true);
 						}
 						// Value is same as in file
@@ -175,11 +174,11 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setTooltip('Reload profiles')
 				.onClick(() => {
 					// Reload data from files
-					this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
+					this.plugin.refreshProfilesList();
 					this.display();
 				}));
 
-		this.plugin.globalSettings.profilesList.forEach(profile => {
+		this.plugin.getProfilesList().forEach(profile => {
 			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
@@ -187,7 +186,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon(ICON_PROFILE_OPTIONS)
 					.setTooltip('Options')
 					.onClick(() => {
-						this.plugin.globalSettings.profilesList = loadProfilesOptions(this.plugin.getAbsolutProfilesPath());
+						this.plugin.refreshProfilesList();
 						const prevName = profile.name;
 						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
 							this.plugin.editProfile(prevName, result)
