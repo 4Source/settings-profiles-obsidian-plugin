@@ -35,7 +35,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						// Get text component
 						const input: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
 						if (!input) {
-							throw Error("Input element not found!");
+							throw Error("Input element not found! #profile-path");
 						}
 
 						// Textbox empty
@@ -75,20 +75,16 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.vaultSettings.profilesPath)
 				.onChange(value => {
 					try {
+						const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
+						if (!button) {
+							throw Error("Button element not found! #profile-path-change");
+						}
 						// Value is changed 
 						if (value !== this.plugin.vaultSettings.profilesPath) {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
-							if (!button) {
-								throw Error("Button element not found!");
-							}
 							button.toggleVisibility(true);
 						}
 						// Value is same as in file
 						else {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
-							if (!button) {
-								throw Error("Button element not found!");
-							}
 							button.toggleVisibility(false);
 						}
 					} catch (e) {
@@ -109,7 +105,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						// Get text component
 						const input: HTMLInputElement | null = this.containerEl.querySelector('#refresh-intervall');
 						if (!input) {
-							throw Error("Input element not found!");
+							throw Error("Input element not found! #refresh-intervall");
 						}
 
 						// Backup to possible restore
@@ -140,20 +136,16 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setDynamicTooltip()
 				.onChange(value => {
 					try {
+						const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
+						if (!button) {
+							throw Error("Button element not found! #refresh-intervall-change");
+						}
 						// Value is changed 
 						if (value !== this.plugin.vaultSettings.refreshIntervall) {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
-							if (!button) {
-								throw Error("Button element not found!");
-							}
 							button.toggleVisibility(true);
 						}
 						// Value is same as in file
 						else {
-							const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-intervall-change');
-							if (!button) {
-								throw Error("Button element not found!");
-							}
 							button.toggleVisibility(false);
 						}
 					} catch (e) {

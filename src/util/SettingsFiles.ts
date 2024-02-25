@@ -12,11 +12,11 @@ export function saveProfileOptions(profile: ProfileOptions, profilesPath: string
     try {
         // Ensure is valid profile
         if (!profile) {
-            throw Error("Can't save undefined profile!");
+            throw Error(`Can't save undefined profile! Profile: ${JSON.stringify(profile)}`);
         }
         // Ensure is valid path
         if (!isValidPath([profilesPath, profile.name])) {
-            throw Error("Invalid path received!")
+            throw Error(`Invalid path received! ProfilesPath: ${profilesPath}`)
         }
         // Ensure path exist
         ensurePathExist([profilesPath, profile.name]);
@@ -41,11 +41,11 @@ export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath
         profilesList.forEach(profile => {
             // Ensure is valid profile
             if (!profile) {
-                throw Error("Can't save undefined profile!");
+                throw Error(`Can't save undefined profile! Profile: ${JSON.stringify(profile)}`);
             }
             // Ensure is valid path
             if (!isValidPath([profilesPath, profile.name])) {
-                throw Error("Invalid path received!")
+                throw Error(`Invalid path received! ProfilesPath: ${profilesPath}`)
             }
             // Ensure path exist
             ensurePathExist([profilesPath, profile.name]);
@@ -56,7 +56,7 @@ export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath
             writeFileSync(file, profileSettings, 'utf-8');
         });
     } catch (e) {
-        (e as Error).message = 'Failed to save profiles data! ' + (e as Error).message;
+        (e as Error).message = 'Failed to save profiles data! ' + (e as Error).message + ` ProfilesList: ${JSON.stringify(profilesList)}`;
         throw e;
     }
 }
@@ -67,19 +67,29 @@ export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath
  * @param profilesPath The path where the profiles are saved
  * @param
  */
-export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPath: string): ProfileOptions | undefined {
+export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPath: string): ProfileOptions {
     try {
         if (!profile.name) {
-            throw Error('Name is requierd!');
+            throw Error(`Name is requierd! Profile: ${JSON.stringify(profile)}`);
         }
         // Search for all profiles existing
         const file = join(profilesPath, profile.name, 'profile.json');
         let profileData: ProfileOptions | undefined = undefined;
 
+        if (!existsSync(file)) {
+            throw Error(`Path does not exist! Path: ${file}`);
+        }
+
+        if (!statSync(file).isFile()) {
+            throw Error(`The path does not point to a file. Path: ${file}`);
+        }
+
         // Read profile settings
-        if (existsSync(file) && statSync(file).isFile()) {
-            const data = readFileSync(file, "utf-8");
-            profileData = JSON.parse(data);
+        const data = readFileSync(file, "utf-8");
+        profileData = JSON.parse(data);
+
+        if (!profileData) {
+            throw Error(`Failed to read profile from file!`);
         }
 
         return profileData;
@@ -101,10 +111,20 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
 
         // Read profile settings
         files.forEach(file => {
-            if (existsSync(file) && statSync(file).isFile()) {
-                const data = readFileSync(file, "utf-8");
-                profilesList.push(JSON.parse(data));
+            if (!existsSync(file)) {
+                throw Error(`Path does not exist! Path: ${file}`);
             }
+
+            if (!statSync(file).isFile()) {
+                throw Error(`The path does not point to a file. Path: ${file}`);
+            }
+            const data = readFileSync(file, "utf-8");
+            let profileData = JSON.parse(data);
+
+            if (!profileData) {
+                throw Error(`Failed to read profile from file!`);
+            }
+            profilesList.push(profileData);
         });
         return profilesList;
     } catch (e) {

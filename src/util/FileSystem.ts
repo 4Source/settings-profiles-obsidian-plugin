@@ -129,7 +129,7 @@ export function copyFile(sourcePath: string[], targetPath: string[]) {
 
 		// Check source exist
 		if (!isValidPath([sourceFile]) || !existsSync(sourceFile)) {
-			throw Error(`Source file does not exist! ${sourceFile}`);
+			throw Error(`Source file does not exist! SourceFile: ${sourceFile}`);
 		}
 		// Check target path exist
 		isValidPath([...targetPath])
@@ -153,7 +153,7 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 
 		// Check source is a valid path and exist
 		if (!isValidPath([source]) || !existsSync(source)) {
-			throw Error('Source path does not exist!');
+			throw Error(`Source path does not exist! SourcePath: ${source}`);
 		}
 		// Check target is a valid path and ensure exist 
 		isValidPath([target])
@@ -191,7 +191,7 @@ export function ensurePathExist(path: string[], recursive = true) {
 		if (!existsSync(join(...path))) {
 			mkdirSync(join(...path), { recursive });
 			if (!existsSync(join(...path))) {
-				throw Error('Could not create path!');
+				throw Error(`Could not create path! Path: ${path}`);
 			}
 		}
 	} catch (e) {

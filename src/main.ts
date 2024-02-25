@@ -176,7 +176,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
 			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
 		} catch (e) {
-			(e as Error).message = 'Failed to load settings! ' + (e as Error).message;
+			(e as Error).message = 'Failed to load settings! ' + (e as Error).message + ` VaultSettings: ${JSON.stringify(this.vaultSettings)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
 		}
 	}
@@ -189,7 +189,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
 		} catch (e) {
-			(e as Error).message = 'Failed to save settings! ' + (e as Error).message;
+			(e as Error).message = 'Failed to save settings! ' + (e as Error).message + ` VaultSettings: ${JSON.stringify(this.vaultSettings)}`;
 			console.error(e);
 		}
 	}
@@ -205,7 +205,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Check target dir exist
 			if (!existsSync(join(...sourcePath))) {
-				throw Error('Source path do not exist!');
+				throw Error(`Source path do not exist! SourcePath: ${join(...sourcePath)}`);
 			}
 
 			// Target does not exist 
@@ -221,7 +221,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			return filesList.length > 0
 		} catch (e) {
-			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message;
+			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)}`;
 			console.error(e);
 			return true;
 		}
@@ -243,7 +243,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			});
 			return this.getProfile(profile.name);
 		} catch (e) {
-			(e as Error).message = 'Failed to load profile settings! ' + (e as Error).message;
+			(e as Error).message = 'Failed to load profile settings! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
 		}
 	}
@@ -263,7 +263,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			return this.getProfile(profile.name);
 		} catch (e) {
-			(e as Error).message = 'Failed to save profile settings! ' + (e as Error).message;
+			(e as Error).message = 'Failed to save profile settings! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
 		}
 	}
@@ -296,7 +296,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Is target profile existing
 			if (!targetProfile || !targetProfile.name) {
-				throw Error('Target profile does not exist!');
+				throw Error(`Target profile does not exist! TargetProfile: ${JSON.stringify(targetProfile)}`);
 			}
 
 			// Check is current profile
@@ -331,7 +331,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		} catch (e) {
 			this.updateCurrentProfile(undefined);
 			new Notice(`Failed to switch to ${profileName} profile!`);
-			(e as Error).message = 'Failed to switch profile! ' + (e as Error).message;
+			(e as Error).message = 'Failed to switch profile! ' + (e as Error).message + ` ProfileName: ${profileName} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
 		}
 	}
@@ -362,7 +362,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		} catch (e) {
 			new Notice(`Failed to create ${profile.name} profile!`);
-			(e as Error).message = 'Failed to create profile! ' + (e as Error).message;
+			(e as Error).message = 'Failed to create profile! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
 		}
 	}
@@ -370,24 +370,24 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	/**
 	 * Edit the profile with the given profile name to be profileSettings
 	 * @param profileName The profile name to edit
-	 * @param profileSettings The new profile options
+	 * @param profileOptions The new profile options
 	 */
-	async editProfile(profileName: string, profileSettings: ProfileOptions) {
+	async editProfile(profileName: string, profileOptions: ProfileOptions) {
 		try {
 			const profile = this.getProfile(profileName);
 
 			let renamed = false;
 
-			Object.keys(profileSettings).forEach(key => {
+			Object.keys(profileOptions).forEach(key => {
 				const objKey = key as keyof ProfileOptions;
 
 				// Name changed
-				if (objKey === 'name' && profileSettings.name !== profileName) {
+				if (objKey === 'name' && profileOptions.name !== profileName) {
 					renamed = true;
 				}
 
 				// Values changed
-				const value = profileSettings[objKey];
+				const value = profileOptions[objKey];
 				if (typeof value === 'boolean') {
 					(profile[objKey] as boolean) = value;
 				}
@@ -395,8 +395,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Profile renamed
 			if (renamed) {
-				await this.createProfile(profileSettings);
-				await this.switchProfile(profileSettings.name);
+				await this.createProfile(profileOptions);
+				await this.switchProfile(profileOptions.name);
 				await this.removeProfile(profileName);
 			}
 			else {
@@ -404,7 +404,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		} catch (e) {
 			new Notice(`Failed to edit ${profileName} profile!`);
-			(e as Error).message = 'Failed to edit profile! ' + (e as Error).message;
+			(e as Error).message = 'Failed to edit profile! ' + (e as Error).message + ` ProfileName: ${profileName} ProfileOptions: ${JSON.stringify(profileOptions)}`;
 			console.error(e);
 		}
 	}
@@ -428,7 +428,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			await this.saveSettings();
 		} catch (e) {
 			new Notice(`Failed to remove ${profileName} profile!`);
-			(e as Error).message = 'Failed to remove profile! ' + (e as Error).message;
+			(e as Error).message = 'Failed to remove profile! ' + (e as Error).message + ` ProfileName: ${profileName} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
 		}
 	}
@@ -472,7 +472,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 		catch (e) {
 			new Notice(`Failed to save ${profileName} profile!`);
-			(e as Error).message = 'Failed to save profile! ' + (e as Error).message;
+			(e as Error).message = 'Failed to save profile! ' + (e as Error).message + ` ProfileName: ${profileName}`;
 			console.error(e);
 		}
 	}
@@ -490,7 +490,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Check target dir exist
 			if (!existsSync(join(...sourcePath))) {
-				throw Error('Source path do not exist!');
+				throw Error(`Source path do not exist! SourcePath: ${join(...sourcePath)}`);
 			}
 
 			let filesList = getConfigFilesList(profile);
@@ -509,7 +509,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.updateCurrentProfile(profile);
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
-			(e as Error).message = 'Failed to load profile! ' + (e as Error).message;
+			(e as Error).message = 'Failed to load profile! ' + (e as Error).message + ` ProfileName: ${profileName}`;
 			console.error(e);
 		}
 	}
@@ -525,7 +525,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 
 		if (!isValidPath([path])) {
-			throw Error('No valid profiles path could be found!');
+			throw Error(`No valid profiles path could be found! Path: ${path} ProfilesPath: ${this.vaultSettings.profilesPath}`);
 		}
 		return path;
 	}
@@ -538,7 +538,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	getProfile(name: string): ProfileOptions {
 		const profile = this.globalSettings.profilesList.find(profile => profile.name === name);
 		if (!profile) {
-			throw Error('Profile does not exist!');
+			throw Error(`Profile does not exist! ProfileName: ${name} ProfilesList: ${JSON.stringify(this.globalSettings.profilesList)}`);
 		}
 		return profile;
 	}
