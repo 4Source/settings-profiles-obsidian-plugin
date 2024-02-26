@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from "fs";
 import { FileSystemAdapter } from "obsidian";
-import { dirname, join, normalize } from "path";
+import { dirname, join, normalize, sep } from "path";
 
 /**
  * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
@@ -13,8 +13,8 @@ export function getAllFiles(path: string[]): string[] {
 
 	try {
 		// Check path contains path placeholder
-		if (join(...path).includes('\\*\\')) {
-			pathSections = join(...path).split('\\*\\');
+		if (join(...path).includes(`${sep}*${sep}`)) {
+			pathSections = join(...path).split(`${sep}*${sep}`);
 
 			if (pathSections.length > 0 && existsSync(pathSections[0])) {
 				// Get existing paths for placeholders
@@ -28,8 +28,8 @@ export function getAllFiles(path: string[]): string[] {
 			}
 		}
 		// Check path contains file placeholder
-		else if (join(...path).endsWith('\\*')) {
-			pathSections = join(...path).split('\\*');
+		else if (join(...path).endsWith(`${sep}*`)) {
+			pathSections = join(...path).split(`${sep}*`);
 
 			if (pathSections.length > 0 && existsSync(pathSections[0])) {
 				let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
@@ -59,8 +59,8 @@ export function getAllSubPaths(path: string[]): string[] {
 
 	try {
 		// Check path contains placeholder
-		if (join(...path).includes('\\*\\')) {
-			pathSections = join(...path).split('\\*\\');
+		if (join(...path).includes(`${sep}*${sep}`)) {
+			pathSections = join(...path).split(`${sep}*${sep}`);
 
 			if (pathSections.length > 0 && existsSync(pathSections[0])) {
 				// Get existing paths for placeholder
@@ -133,7 +133,7 @@ export function copyFile(sourcePath: string[], targetPath: string[]) {
 		}
 		// Check target path exist
 		isValidPath([...targetPath])
-		ensurePathExist([targetFile.slice(0, targetFile.lastIndexOf('\\'))]);
+		ensurePathExist([targetFile.slice(0, targetFile.lastIndexOf(sep))]);
 
 		copyFileSync(sourceFile, targetFile);
 	} catch (e) {
