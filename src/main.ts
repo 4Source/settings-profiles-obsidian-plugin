@@ -608,6 +608,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		if (!profile) {
 			throw Error(`Profile does not exist! ProfileName: ${name} ProfilesList: ${JSON.stringify(this.getProfilesList())}`);
 		}
+
+		// Convert date string to date
+		profile.modifiedAt = new Date(profile.modifiedAt);
+
 		return profile;
 	}
 
@@ -626,8 +630,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 
 		// Use modified at from vault settings
-		if (this.vaultSettings.activeProfile?.modifiedAt) {
-			profile.modifiedAt = this.vaultSettings.activeProfile?.modifiedAt;
+		if (this.vaultSettings.activeProfile) {
+			let modifiedAt = this.vaultSettings.activeProfile.modifiedAt;
+			if (modifiedAt) {
+				// Convert date string to date
+				modifiedAt = new Date(modifiedAt);
+				profile.modifiedAt = modifiedAt;
+			}
 		}
 		return profile;
 	}

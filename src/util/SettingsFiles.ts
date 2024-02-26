@@ -92,6 +92,9 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
             throw Error(`Failed to read profile from file!`);
         }
 
+        // Convert date string to date
+        profileData.modifiedAt = new Date(profileData.modifiedAt);
+
         return profileData;
     } catch (e) {
         (e as Error).message = 'Failed to load profile data! ' + (e as Error).message;
@@ -124,6 +127,10 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
             if (!profileData) {
                 throw Error(`Failed to read profile from file!`);
             }
+
+            // Convert date string to date
+            profileData.modifiedAt = new Date(profileData.modifiedAt);
+
             profilesList.push(profileData);
         });
         return profilesList;
