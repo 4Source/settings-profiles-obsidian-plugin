@@ -1,7 +1,7 @@
 {
 	"id": "settings-profiles",
 	"name": "Settings profiles",
-	"version": "0.5.2",
+	"version": "0.5.3-beta.0",
 	"minAppVersion": "0.15.0",
 	"description": "Allows you to create various global settings profiles. You can sync them between different vaults. To keep all your settings in sync, you'll never have to manually adjust them again for every vault you have or create in the future.",
 	"author": "4Source",
