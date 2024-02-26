@@ -2,7 +2,7 @@ import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS } from './settings/SettingsInterface';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
 import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
@@ -342,13 +342,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	async createProfile(profile: ProfileOptions) {
 		try {
-			// Check profile Exist
-			if (this.getProfilesList().find(p => profile.name === p.name)) {
-				throw Error('Profile does already exist!');
-			}
-
 			// Add profile to profileList
-			this.globalSettings.profilesList.push(profile);
+			this.appendProfilesList(profile);
 
 			// Enabel new Profile
 			const selectedProfile = this.getProfilesList().find(value => value.name === profile.name);
@@ -560,6 +555,23 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
+	 * Appends the profile list with new profile
+	 * @param profile The profile to add to the profiles list
+	 */
+	appendProfilesList(profile: ProfileOptions) {
+		if (!this.isValidProfile(profile)) {
+			throw Error(`No valid profile received! Profile: ${JSON.stringify(profile)}`);
+		}
+		if (this.getProfilesList().find(p => profile.name === p.name)) {
+			throw Error(`Profile does already exist! Profile: ${JSON.stringify(profile)} ProfilesList: ${JSON.stringify(this.globalSettings.profilesList)}`);
+		}
+		const length = this.globalSettings.profilesList.length;
+		if (length >= this.globalSettings.profilesList.push(profile)) {
+			throw Error(`Profile could not be added to the profile list! Profile: ${JSON.stringify(profile)} ProfilesList: ${JSON.stringify(this.globalSettings.profilesList)}`);
+		}
+	}
+
+	/**
 	 * Returns the profiles list currently in the settings
 	 */
 	getProfilesList(): ProfileOptions[] {
@@ -660,6 +672,33 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	isEnabled(profile: ProfileOptions): boolean {
 		return this.vaultSettings.activeProfile?.name === profile.name;
+	}
+
+	/**
+	 * Checks profile contains all requiered properties
+	 * @param profile The profile to check
+	 * @returns True if profile contains all requiered properties
+	 */
+	isValidProfile(profile: ProfileOptions): boolean {
+		let result = true;
+		for (const key in DEFAULT_PROFILE_OPTIONS) {
+			if (!profile.hasOwnProperty(key)) {
+				console.warn(`Missing property in profile! Property: ${key} Profile: ${JSON.stringify(profile)}`);
+				result = false;
+				break;
+			}
+			else if (typeof profile[key as keyof ProfileOptions] !== typeof DEFAULT_PROFILE_OPTIONS[key as keyof ProfileOptions]) {
+				console.warn(`Wrong type of property in profile! Property: ${key} Type: ${typeof DEFAULT_PROFILE_OPTIONS[key as keyof ProfileOptions]} Profile: ${JSON.stringify(profile)}`);
+				result = false;
+				break;
+			}
+			else if (!profile[key as keyof ProfileOptions]) {
+				console.warn(`Undefined property in profile! Property: ${key} Profile: ${JSON.stringify(profile)}`)
+				result = false;
+				break;
+			}
+		}
+		return result;
 	}
 
 	/**
