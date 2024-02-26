@@ -257,8 +257,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Save profile settings
 			await this.saveProfile(profile.name);
 			// Save profile data
-			saveProfileOptions(profile, this.getAbsolutProfilesPath());
-
+			await saveProfileOptions(profile, this.getAbsolutProfilesPath())
+			// Reload profiles list from files
 			this.refreshProfilesList();
 
 			return this.getProfile(profile.name);

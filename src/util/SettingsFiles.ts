@@ -8,7 +8,7 @@ import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
  * @param profile The profile to save
  * @param profilesPath The path where the profile should be saved 
  */
-export function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
+export async function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
     try {
         // Ensure is valid profile
         if (!profile) {
@@ -36,7 +36,7 @@ export function saveProfileOptions(profile: ProfileOptions, profilesPath: string
  * @param profilesList The profiles to save
  * @param profilesPath The path where the profiles should be saved 
  */
-export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
+export async function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
     try {
         profilesList.forEach(profile => {
             // Ensure is valid profile
