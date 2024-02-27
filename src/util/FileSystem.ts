@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from "fs";
 import { FileSystemAdapter } from "obsidian";
-import { dirname, join, normalize, sep as slash } from "path";
+import { basename, dirname, join, normalize, sep as slash } from "path";
 
 /**
  * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
@@ -34,13 +34,15 @@ export function getAllFiles(path: string[]): string[] {
 			if (pathSections.length > 0 && existsSync(pathSections[0])) {
 				let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
 				files = files.concat(...pathContent.filter((value) => {
-					return statSync(value).isFile();
+					return statSync(value).isFile() && !FILE_IGNORE_LIST.contains(basename(value));
 				}));
 			}
 		}
 		// Path is file
 		else if (existsSync(join(...path)) && statSync(join(...path)).isFile()) {
-			files.push(...path);
+			if (!FILE_IGNORE_LIST.contains(basename(join(...path)))) {
+				files.push(...path);
+			}
 		}
 		return files;
 	} catch (e) {
@@ -135,6 +137,12 @@ export function copyFile(sourcePath: string[], targetPath: string[]) {
 		isValidPath([...targetPath])
 		ensurePathExist([targetFile.slice(0, targetFile.lastIndexOf(slash))]);
 
+		// Check source is on ignore list
+		if (FILE_IGNORE_LIST.contains(basename(sourceFile))) {
+			console.warn(`An attempt was made to copy a file that is on the ignore list. File: ${sourceFile}`);
+			return;
+		}
+		// Copy file
 		copyFileSync(sourceFile, targetFile);
 	} catch (e) {
 		throw e;
@@ -170,6 +178,11 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 				// Copy files in subpath
 				copyFolderRecursiveSync([sourceFile], [targetFile]);
 			} else {
+				// Check source is on ignore list
+				if (FILE_IGNORE_LIST.contains(basename(sourceFile))) {
+					console.warn(`An attempt was made to copy a file that is on the ignore list. File: ${sourceFile}`);
+					return;
+				}
 				// Copy file
 				copyFileSync(sourceFile, targetFile);
 			}
@@ -255,3 +268,10 @@ export function getVaultPath() {
 
 	return '';
 }
+
+/**
+ * Files that generally should not be copied
+ */
+export const FILE_IGNORE_LIST = [
+	'.DS_Store'
+];
