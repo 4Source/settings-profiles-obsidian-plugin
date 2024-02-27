@@ -33,6 +33,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
 		// Add Settings change listener
+		/**@todo watch didn't support recursive on Linux */
 		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
 			this.refreshProfilesList();
 			const profile = this.getCurrentProfile();

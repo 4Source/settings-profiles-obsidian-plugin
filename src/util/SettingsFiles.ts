@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
-import { join, normalize, sep } from "path";
+import { join, normalize, sep as slash } from "path";
 import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
@@ -109,7 +109,7 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
 export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
     try {
         // Search for all profiles existing
-        const files = getAllFiles([profilesPath, `${sep}*${sep}profile.json`]);
+        const files = getAllFiles([profilesPath, `${slash}*${slash}profile.json`]);
         let profilesList: ProfileOptions[] = [];
 
         // Read profile settings
@@ -177,10 +177,10 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
 export function getFilesWithoutPlaceholder(filesList: string[], path: string[]): string[] {
     const files: string[] = [];
     filesList.forEach(file => {
-        if ((file.includes(`${sep}*${sep}`) || file.includes(`${sep}*`))) {
+        if ((file.includes(`${slash}*${slash}`) || file.includes(`${slash}*`))) {
             const pathVariants = getAllFiles([...path, file])
                 // Trim the start of path
-                .map(value => value.split(sep).slice(-file.split(sep).length))
+                .map(value => value.split(slash).slice(-file.split(slash).length))
 
             pathVariants.forEach(value => {
                 files.push(join(...value))

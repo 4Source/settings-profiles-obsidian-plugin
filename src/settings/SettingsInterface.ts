@@ -1,5 +1,5 @@
 import { homedir } from 'os';
-import { join, normalize, sep } from 'path';
+import { join, normalize, sep as slash } from 'path';
 
 export interface GlobalSettings {
 	profilesList: ProfileOptions[];
@@ -77,7 +77,7 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 	appearance: {
 		name: 'Appearance',
 		description: 'Says whether the obsidian appearance settings will sync.',
-		file: ['appearance.json', `snippets${sep}*`, `themes${sep}*${sep}*`],
+		file: ['appearance.json', `snippets${slash}*`, `themes${slash}*${slash}*`],
 	},
 	app: {
 		name: 'App',
@@ -92,8 +92,8 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 	communityPlugins: {
 		name: 'Community plugins',
 		description: 'Says whether the community plugins and there settings will sync.',
-		file: ['community-plugins.json', `plugins${sep}*${sep}*`],
-		ignore: `plugins${sep}settings-profiles${sep}data.json`
+		file: ['community-plugins.json', `plugins${slash}*${slash}*`],
+		ignore: `plugins${slash}settings-profiles${slash}data.json`
 	},
 	communityPluginsAdvanced: {
 		name: 'Community plugins advanced',
