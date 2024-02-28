@@ -49,7 +49,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}, this.vaultSettings.refreshInterval));
 		}
 
-		// Add Command to Switch between profiles
+		// Command to Switch between profiles
 		this.addCommand({
 			id: "open-profile-switcher",
 			name: "Open profile switcher",
@@ -59,12 +59,71 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		});
 
-		// Add Command to Show current profile
+		// Command to Show current profile
 		this.addCommand({
 			id: "current-profile",
 			name: "Show current profile",
 			callback: () => {
 				new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
+			}
+		});
+
+		// Command to save current profile
+		this.addCommand({
+			id: "save-current-profile",
+			name: "Save current profile",
+			callback: () => {
+				this.refreshProfilesList();
+				const profile = this.getCurrentProfile();
+				if (profile) {
+					this.saveProfileSettings(profile)
+						.then(() => {
+							new Notice('Saved profile successfully.');
+						})
+						.catch((e) => {
+							new Notice('Failed to save profile!');
+							(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
+							console.error(e);
+						})
+				}
+			}
+		});
+
+		// Command to load current profile
+		this.addCommand({
+			id: "load-current-profile",
+			name: "Reload current profile",
+			callback: () => {
+				this.refreshProfilesList();
+				const profile = this.getCurrentProfile();
+				if (profile) {
+					this.loadProfileSettings(profile)
+						.then((profile) => {
+							this.updateCurrentProfile(profile);
+							// Reload obsidian so changed settings can take effect
+							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+								// Save Settings
+								this.saveSettings().then(() => {
+									// @ts-ignore
+									this.app.commands.executeCommandById("app:reload");
+								});
+							}, () => {
+								this.saveSettings();
+								new Notice('Need to reload obsidian!', 5000);
+							}, 'Reload')
+								.open();
+						});
+
+				}
+			}
+		});
+
+		// Command to update profile status 
+		this.addCommand({
+			id: "update-profile-status",
+			name: "Update profile status",
+			callback: () => {
+				this.update();
 			}
 		});
 	}
