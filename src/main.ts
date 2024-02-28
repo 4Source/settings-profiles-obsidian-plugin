@@ -32,7 +32,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
-		if (this.getRefreshIntervall() >= 0) {
+		if (this.getRefreshInterval() >= 0) {
 			// Add Settings change listener
 			/**@todo watch didn't support recursive on Linux */
 			this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
@@ -43,10 +43,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				}
 			}, 500, false));
 
-			// Update profiles at Intervall 
+			// Update profiles at Interval 
 			this.registerInterval(window.setInterval(() => {
 				this.update();
-			}, this.vaultSettings.refreshIntervall));
+			}, this.vaultSettings.refreshInterval));
 		}
 
 		// Add Command to Switch between profiles
@@ -174,6 +174,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		try {
 			// Load vault settings from file if exist or create default
 			this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
+
+			// Remove Legacy Settings
+			//@ts-ignore
+			this.vaultSettings = { refreshInterval: this.vaultSettings.refreshIntervall || this.vaultSettings.refreshInterval, activeProfile: this.vaultSettings.activeProfile, profilesPath: this.vaultSettings.profilesPath };
 
 			// Load global settings from profiles path
 			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
@@ -590,26 +594,26 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Returns the refresh intervall currently in the settings
+	 * Returns the refresh interval currently in the settings
 	 * @returns 
 	 */
-	getRefreshIntervall(): number {
-		if (!this.vaultSettings.refreshIntervall || this.vaultSettings.refreshIntervall <= 0 || this.vaultSettings.refreshIntervall >= 900000) {
-			this.setRefreshIntervall(-1);
+	getRefreshInterval(): number {
+		if (!this.vaultSettings.refreshInterval || this.vaultSettings.refreshInterval <= 0 || this.vaultSettings.refreshInterval >= 900000) {
+			this.setRefreshInterval(-1);
 		}
-		return this.vaultSettings.refreshIntervall;
+		return this.vaultSettings.refreshInterval;
 	}
 
 	/**
-	 * Set the refresh intervall in current settings
-	 * @param intervall To what the invervall should be set to
+	 * Set the refresh interval in current settings
+	 * @param interval To what the invervall should be set to
 	 */
-	setRefreshIntervall(intervall: number) {
-		if (intervall >= -1 && intervall < 900000) {
-			this.vaultSettings.refreshIntervall = intervall;
+	setRefreshInterval(interval: number) {
+		if (interval >= -1 && interval < 900000) {
+			this.vaultSettings.refreshInterval = interval;
 		}
 		else {
-			this.vaultSettings.refreshIntervall = DEFAULT_VAULT_SETTINGS.refreshIntervall;
+			this.vaultSettings.refreshInterval = DEFAULT_VAULT_SETTINGS.refreshInterval;
 		}
 	}
 
