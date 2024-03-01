@@ -3,19 +3,18 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
-import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
-import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
+import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
 	private globalSettings: GlobalSettings;
 	private statusBarItem: HTMLElement;
 	private settingsListener: FSWatcher;
-	private settingsChanged: boolean;
 
 	async onload() {
 		await this.loadSettings();
@@ -32,24 +31,24 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
-		if (this.getRefreshIntervall() >= 0) {
-			// Add Settings change listener
+		// Add settings change listener
+		this.refreshProfilesList();
+		const profile = this.getCurrentProfile();
+		if (profile && profile.autoSync) {
 			/**@todo watch didn't support recursive on Linux */
 			this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
-				this.refreshProfilesList();
-				const profile = this.getCurrentProfile();
-				if (profile) {
-					this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
-				}
-			}, 500, false));
-
-			// Update profiles at Intervall 
-			this.registerInterval(window.setInterval(() => {
-				this.update();
-			}, this.vaultSettings.refreshIntervall));
+				if (eventType !== 'change') return;
+				this.updateProfile();
+			}, this.getProfileUpdateDelay(), false));
 		}
 
-		// Add Command to Switch between profiles
+		// Update UI at Interval 
+		this.updateUI();
+		this.registerInterval(window.setInterval(() => {
+			this.updateUI();
+		}, this.getUiRefreshInterval()));
+
+		// Command to Switch between profiles
 		this.addCommand({
 			id: "open-profile-switcher",
 			name: "Open profile switcher",
@@ -59,12 +58,71 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		});
 
-		// Add Command to Show current profile
+		// Command to Show current profile
 		this.addCommand({
 			id: "current-profile",
 			name: "Show current profile",
 			callback: () => {
 				new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
+			}
+		});
+
+		// Command to save current profile
+		this.addCommand({
+			id: "save-current-profile",
+			name: "Save current profile",
+			callback: () => {
+				this.refreshProfilesList();
+				const profile = this.getCurrentProfile();
+				if (profile) {
+					this.saveProfileSettings(profile)
+						.then(() => {
+							new Notice('Saved profile successfully.');
+						})
+						.catch((e) => {
+							new Notice('Failed to save profile!');
+							(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
+							console.error(e);
+						})
+				}
+			}
+		});
+
+		// Command to load current profile
+		this.addCommand({
+			id: "load-current-profile",
+			name: "Reload current profile",
+			callback: () => {
+				this.refreshProfilesList();
+				const profile = this.getCurrentProfile();
+				if (profile) {
+					this.loadProfileSettings(profile)
+						.then((profile) => {
+							this.updateCurrentProfile(profile);
+							// Reload obsidian so changed settings can take effect
+							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+								// Save Settings
+								this.saveSettings().then(() => {
+									// @ts-ignore
+									this.app.commands.executeCommandById("app:reload");
+								});
+							}, () => {
+								this.saveSettings();
+								new Notice('Need to reload obsidian!', 5000);
+							}, 'Reload')
+								.open();
+						});
+
+				}
+			}
+		});
+
+		// Command to update profile status 
+		this.addCommand({
+			id: "update-profile-status",
+			name: "Update profile status",
+			callback: () => {
+				this.updateUI();
 			}
 		});
 	}
@@ -76,18 +134,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Update status bar
+	 * Update profile save state
 	 */
-	update() {
+	updateProfile() {
 		this.refreshProfilesList();
-		let profile = this.getCurrentProfile();
+		const profile = this.getCurrentProfile();
 
-		let icon = ICON_NO_CURRENT_PROFILE;
-		let label = 'Switch profile';
-
-		// Attach status bar item
 		if (profile) {
-			if (this.settingsChanged && this.areSettingsChanged(profile)) {
+			if (this.areSettingsChanged(profile)) {
 				// Save settings to profile
 				if (profile.autoSync) {
 					this.saveProfileSettings(profile);
@@ -99,9 +153,24 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.saveSettings();
 				}
 			}
-			this.settingsChanged = false;
+		}
+	}
+	/**
+	 * Update status bar
+	 */
+	updateUI() {
+		let profile = this.getCurrentProfile();
 
-			if (this.isProfileSaved(profile)) {
+		let icon = ICON_NO_CURRENT_PROFILE;
+		let label = 'Switch profile';
+
+		// Attach status bar item
+		if (profile) {
+			if (!profile.autoSync) {
+				// Status unknown
+				icon = ICON_PROFILE;
+			}
+			else if (this.isProfileSaved(profile)) {
 				if (this.isProfileUpToDate(profile)) {
 					// Profile is up-to-date and saved
 					icon = ICON_CURRENT_PROFILE;
@@ -128,7 +197,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				try {
 					const profile = this.getCurrentProfile();
 					if (!profile || this.isProfileSaved(profile)) {
-						if (!profile || this.isProfileUpToDate(profile)) {
+						if (!profile || !profile.autoSync || this.isProfileUpToDate(profile)) {
 							// Profile is up-to-date and saved
 							new ProfileSwitcherModal(this.app, this).open();
 						}
@@ -189,6 +258,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	async saveSettings() {
 		try {
+			// Remove Legacy Settings
+			for (const key in this.vaultSettings) {
+				if (!DEFAULT_VAULT_SETTINGS.hasOwnProperty(key)) {
+					delete this.vaultSettings[key as keyof VaultSettings]
+				}
+			}
+
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
 		} catch (e) {
@@ -590,26 +666,50 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Returns the refresh intervall currently in the settings
+	 * Returns the refresh interval currently in the settings
 	 * @returns 
 	 */
-	getRefreshIntervall(): number {
-		if (!this.vaultSettings.refreshIntervall || this.vaultSettings.refreshIntervall <= 0 || this.vaultSettings.refreshIntervall >= 900000) {
-			this.setRefreshIntervall(-1);
+	getUiRefreshInterval(): number {
+		if (!this.vaultSettings.uiRefreshInterval || this.vaultSettings.uiRefreshInterval <= 0 || this.vaultSettings.uiRefreshInterval >= 900000) {
+			this.setUiRefreshInterval(-1);
 		}
-		return this.vaultSettings.refreshIntervall;
+		return this.vaultSettings.uiRefreshInterval;
 	}
 
 	/**
-	 * Set the refresh intervall in current settings
-	 * @param intervall To what the invervall should be set to
+	 * Set the refresh interval in current settings
+	 * @param interval To what the invervall should be set to
 	 */
-	setRefreshIntervall(intervall: number) {
-		if (intervall >= -1 && intervall < 900000) {
-			this.vaultSettings.refreshIntervall = intervall;
+	setUiRefreshInterval(interval: number) {
+		if (interval > 0 && interval < 900000) {
+			this.vaultSettings.uiRefreshInterval = interval;
 		}
 		else {
-			this.vaultSettings.refreshIntervall = DEFAULT_VAULT_SETTINGS.refreshIntervall;
+			this.vaultSettings.uiRefreshInterval = DEFAULT_VAULT_SETTINGS.uiRefreshInterval;
+		}
+	}
+
+	/**
+	 * Returns the delay time for profile update currently in the settings
+	 * @returns 
+	 */
+	getProfileUpdateDelay(): number {
+		if (!this.vaultSettings.profileUpdateDelay || this.vaultSettings.profileUpdateDelay <= 0 || this.vaultSettings.profileUpdateDelay >= 900000) {
+			this.setProfileUpdateDelay(-1);
+		}
+		return this.vaultSettings.profileUpdateDelay;
+	}
+
+	/**
+	 * Set the delay time for profile update in current settings
+	 * @param delay To what the invervall should be set to
+	 */
+	setProfileUpdateDelay(delay: number) {
+		if (delay > 100 && delay < 900000) {
+			this.vaultSettings.profileUpdateDelay = delay;
+		}
+		else {
+			this.vaultSettings.profileUpdateDelay = DEFAULT_VAULT_SETTINGS.profileUpdateDelay;
 		}
 	}
 
@@ -695,7 +795,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				result = false;
 				break;
 			}
-			else if (!profile[key as keyof ProfileOptions]) {
+			else if (profile[key as keyof ProfileOptions] === undefined || profile[key as keyof ProfileOptions] === null) {
 				console.warn(`Undefined property in profile! Property: ${key} Profile: ${JSON.stringify(profile)}`)
 				result = false;
 				break;
