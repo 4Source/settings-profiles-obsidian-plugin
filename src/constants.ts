@@ -10,6 +10,7 @@ export const ICON_PROFILE_SAVE = 'save';
 export const ICON_PROFILE_LOAD = 'download';
 
 export const ICON_CURRENT_PROFILE = 'user-check';
+export const ICON_PROFILE = 'user';
 export const ICON_NOT_CURRENT_PROFILE = 'user';
 export const ICON_NO_CURRENT_PROFILE = 'users';
 export const ICON_UNSAVED_PROFILE = 'user-x';

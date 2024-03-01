@@ -94,40 +94,23 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.inputEl.id = 'profile-path');
 
 		new Setting(containerEl)
-			.setName('Profile status update interval')
-			.setDesc('The time in ms in which profile changes are checked')
+			.setName('UI update interval')
+			.setDesc('The time in ms in which ui is updated')
 			.addButton(button => button
 				.setButtonText('Change')
 				.setWarning()
 				.onClick(() => {
 					try {
-						// Get toggle component
-						const toggleEl: HTMLInputElement | null = this.containerEl.querySelector('#refresh-interval-toggle');
-						if (!toggleEl) {
-							throw Error("Input element not found! #refresh-interval-toggle");
+						// Get slider component
+						const sliderEl: HTMLInputElement | null = this.containerEl.querySelector('#ui-interval');
+						if (!sliderEl) {
+							throw Error("Input element not found! #ui-interval");
 						}
 
 						// Backup to possible restore
-						const backupInterval = this.plugin.getRefreshInterval();
-
-						if (toggleEl.hasClass('is-enabled') && this.plugin.getRefreshInterval() < 0) {
-							// Set interval to slider value
-							this.plugin.setRefreshInterval(DEFAULT_VAULT_SETTINGS.refreshInterval);
-						}
-						else if (toggleEl.hasClass('is-enabled')) {
-							// Get slider component
-							const sliderEl: HTMLInputElement | null = this.containerEl.querySelector('#refresh-interval');
-							if (!sliderEl) {
-								throw Error("Input element not found! #refresh-interval");
-							}
-
-							// Set interval to slider value
-							this.plugin.setRefreshInterval(sliderEl.valueAsNumber);
-						}
-						else {
-							// Set interval to disabeled value
-							this.plugin.setRefreshInterval(-1);
-						}
+						const backupInterval = this.plugin.getUiRefreshInterval();
+						// Set interval to slider value
+						this.plugin.setUiRefreshInterval(sliderEl.valueAsNumber);
 
 						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 							// Save Settings
@@ -137,7 +120,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							});
 						}, () => {
 							// Restore old value
-							this.plugin.setRefreshInterval(backupInterval);
+							this.plugin.setUiRefreshInterval(backupInterval);
 							this.display();
 						}).open();
 					} catch (e) {
@@ -145,20 +128,19 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						console.error(e);
 					}
 				})
-				.buttonEl.setAttrs({ 'id': 'refresh-interval-change', 'style': 'visibility:hidden' }))
+				.buttonEl.setAttrs({ 'id': 'ui-interval-change', 'style': 'visibility:hidden' }))
 			.addSlider(slider => slider
 				.setLimits(100, 5000, 100)
-				.setValue(this.plugin.getRefreshInterval())
+				.setValue(this.plugin.getUiRefreshInterval())
 				.setDynamicTooltip()
-				.setDisabled(this.plugin.getRefreshInterval() < 0)
 				.onChange(value => {
 					try {
-						const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-interval-change');
+						const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#ui-interval-change');
 						if (!buttonEl) {
-							throw Error("Button element not found! #refresh-interval-change");
+							throw Error("Button element not found! #ui-interval-change");
 						}
 						// Value is changed 
-						if (value !== this.plugin.getRefreshInterval()) {
+						if (value !== this.plugin.getUiRefreshInterval()) {
 							buttonEl.toggleVisibility(true);
 						}
 						// Value is same as in file
@@ -170,44 +152,68 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						console.error(e);
 					}
 				})
-				.sliderEl.setAttr('id', 'refresh-interval'))
-			.addToggle(toggle => toggle
-				.setTooltip('Enable/Disable interval')
-				.setValue(this.plugin.getRefreshInterval() > 0)
-				.onChange(value => {
+				.sliderEl.setAttr('id', 'ui-interval'))
+
+		new Setting(containerEl)
+			.setName('Profile update delay')
+			.setDesc('The time in ms that must pass before the profile can be updated again. Only with autoSync on.')
+			.addButton(button => button
+				.setButtonText('Change')
+				.setWarning()
+				.onClick(() => {
 					try {
-						let interval;
-						if (value) {
-							// Get slider component
-							const sliderEl: HTMLInputElement | null = this.containerEl.querySelector('#refresh-interval');
-							if (!sliderEl) {
-								throw Error("Input element not found! #refresh-interval");
-							}
-							// Set profiles path to textbox value
-							interval = sliderEl.valueAsNumber;
-						}
-						else {
-							interval = -1;
+						// Get slider component
+						const sliderEl: HTMLInputElement | null = this.containerEl.querySelector('#update-delay');
+						if (!sliderEl) {
+							throw Error("Input element not found! #update-delay");
 						}
 
-						const button: HTMLButtonElement | null = this.containerEl.querySelector('#refresh-interval-change');
-						if (!button) {
-							throw Error("Button element not found! #refresh-interval-change");
-						}
-						// Value is changed 
-						if (interval !== this.plugin.getRefreshInterval()) {
-							button.toggleVisibility(true);
-						}
-						// Value is same as in file
-						else {
-							button.toggleVisibility(false);
-						}
+						// Backup to possible restore
+						const backupDelay = this.plugin.getProfileUpdateDelay();
+						// Set interval to slider value
+						this.plugin.setProfileUpdateDelay(sliderEl.valueAsNumber);
+
+						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+							// Save Settings
+							this.plugin.saveSettings().then(() => {
+								// @ts-ignore
+								this.app.commands.executeCommandById("app:reload");
+							});
+						}, () => {
+							// Restore old value
+							this.plugin.setProfileUpdateDelay(backupDelay);
+							this.display();
+						}).open();
 					} catch (e) {
 						(e as Error).message = 'Failed to change profile status update interval! ' + (e as Error).message;
 						console.error(e);
 					}
 				})
-				.toggleEl.setAttr('id', 'refresh-interval-toggle'))
+				.buttonEl.setAttrs({ 'id': 'update-delay-change', 'style': 'visibility:hidden' }))
+			.addSlider(slider => slider
+				.setLimits(500, 10000, 250)
+				.setValue(this.plugin.getProfileUpdateDelay())
+				.setDynamicTooltip()
+				.onChange(value => {
+					try {
+						const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#update-delay-change');
+						if (!buttonEl) {
+							throw Error("Button element not found! #update-delay-change");
+						}
+						// Value is changed 
+						if (value !== this.plugin.getProfileUpdateDelay()) {
+							buttonEl.toggleVisibility(true);
+						}
+						// Value is same as in file
+						else {
+							buttonEl.toggleVisibility(false);
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change refresh interval! ' + (e as Error).message;
+						console.error(e);
+					}
+				})
+				.sliderEl.setAttr('id', 'update-delay'))
 
 
 		// Heading for Profiles
