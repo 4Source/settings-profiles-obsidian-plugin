@@ -1,6 +1,6 @@
 {
 	"name": "settings-profiles-obsidian-plugin",
-	"version": "0.5.3-beta.3",
+	"version": "0.5.3",
 	"description": "This plugin is for global setting profiles in Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
