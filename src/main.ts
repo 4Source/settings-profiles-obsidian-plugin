@@ -3,12 +3,12 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
-import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
-import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
+import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
@@ -32,21 +32,31 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
 		// Add settings change listener
-		this.refreshProfilesList();
-		const profile = this.getCurrentProfile();
-		if (profile && profile.autoSync) {
-			/**@todo watch didn't support recursive on Linux */
+		/**@todo watch didn't support recursive on Linux */
+		if (this.getProfileUpdate()) {
 			this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
-				if (eventType !== 'change') return;
-				this.updateProfile();
-			}, this.getProfileUpdateDelay(), false));
+				if (eventType !== 'change' || !filename) return;
+
+				const profile = this.getCurrentProfile();
+				if (profile) {
+					if (profile.autoSync) {
+						this.updateProfile();
+					}
+					else if (!getIgnoreFilesList(profile).contains(filename)) {
+						profile.modifiedAt = new Date();
+						this.updateCurrentProfile(profile);
+					}
+				}
+			}, this.getProfileUpdateDelay(), true));
 		}
 
 		// Update UI at Interval 
-		this.updateUI();
-		this.registerInterval(window.setInterval(() => {
+		if (this.getUiUpdate()) {
 			this.updateUI();
-		}, this.getUiRefreshInterval()));
+			this.registerInterval(window.setInterval(() => {
+				this.updateUI();
+			}, this.getUiRefreshInterval()));
+		}
 
 		// Command to Switch between profiles
 		this.addCommand({
@@ -146,15 +156,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				if (profile.autoSync) {
 					this.saveProfileSettings(profile);
 				}
-				// Update modifiedAt to now
-				else {
-					profile.modifiedAt = new Date()
-					this.updateCurrentProfile(profile);
-					this.saveSettings();
-				}
 			}
 		}
 	}
+
 	/**
 	 * Update status bar
 	 */
@@ -166,11 +171,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// Attach status bar item
 		if (profile) {
-			if (!profile.autoSync) {
-				// Status unknown
-				icon = ICON_PROFILE;
-			}
-			else if (this.isProfileSaved(profile)) {
+			if (this.isProfileSaved(profile)) {
 				if (this.isProfileUpToDate(profile)) {
 					// Profile is up-to-date and saved
 					icon = ICON_CURRENT_PROFILE;
@@ -197,7 +198,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				try {
 					const profile = this.getCurrentProfile();
 					if (!profile || this.isProfileSaved(profile)) {
-						if (!profile || !profile.autoSync || this.isProfileUpToDate(profile)) {
+						if (!profile || this.isProfileUpToDate(profile)) {
 							// Profile is up-to-date and saved
 							new ProfileSwitcherModal(this.app, this).open();
 						}
@@ -670,10 +671,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns 
 	 */
 	getUiRefreshInterval(): number {
-		if (!this.vaultSettings.uiRefreshInterval || this.vaultSettings.uiRefreshInterval <= 0 || this.vaultSettings.uiRefreshInterval >= 900000) {
+		if (!this.vaultSettings.uiUpdateInterval || this.vaultSettings.uiUpdateInterval <= 0 || this.vaultSettings.uiUpdateInterval >= 900000) {
 			this.setUiRefreshInterval(-1);
 		}
-		return this.vaultSettings.uiRefreshInterval;
+		return this.vaultSettings.uiUpdateInterval;
 	}
 
 	/**
@@ -682,11 +683,27 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	setUiRefreshInterval(interval: number) {
 		if (interval > 0 && interval < 900000) {
-			this.vaultSettings.uiRefreshInterval = interval;
+			this.vaultSettings.uiUpdateInterval = interval;
 		}
 		else {
-			this.vaultSettings.uiRefreshInterval = DEFAULT_VAULT_SETTINGS.uiRefreshInterval;
+			this.vaultSettings.uiUpdateInterval = DEFAULT_VAULT_SETTINGS.uiUpdateInterval;
 		}
+	}
+
+	getUiUpdate() {
+		return this.vaultSettings.uiUpdate;
+	}
+
+	setUiUpdate(value: boolean) {
+		this.vaultSettings.uiUpdate = value;
+	}
+
+	getProfileUpdate() {
+		return this.vaultSettings.profileUpdate;
+	}
+
+	setProfileUpdate(value: boolean) {
+		this.vaultSettings.profileUpdate = value;
 	}
 
 	/**
@@ -810,8 +827,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is loaded profile newer/equal than saved profile
 	 */
 	isProfileUpToDate(profile: ProfileOptions): boolean {
-		const list = loadProfilesOptions(this.getAbsolutProfilesPath());
-		const profileData = list.find((value) => value.name === profile.name);
+		const profileData = loadProfileOptions(profile, this.getAbsolutProfilesPath());
 
 		if (!profileData || !profileData.modifiedAt) {
 			return false;
@@ -829,8 +845,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is saved profile newer/equal than saved profile
 	 */
 	isProfileSaved(profile: ProfileOptions): boolean {
-		const list = loadProfilesOptions(this.getAbsolutProfilesPath());
-		const profileData = list.find((value, index, obj) => value.name === profile.name)
+		const profileData = loadProfileOptions(profile, this.getAbsolutProfilesPath());
 
 		if (!profileData || !profileData.modifiedAt) {
 			return false;

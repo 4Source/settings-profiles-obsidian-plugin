@@ -12,15 +12,19 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 export interface VaultSettings {
 	profilesPath: string;
 	activeProfile: Partial<ProfileOptions>;
+	profileUpdate: boolean;
 	profileUpdateDelay: number;
-	uiRefreshInterval: number;
+	uiUpdate: boolean;
+	uiUpdateInterval: number;
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profilesPath: normalize(join(homedir(), 'Documents', 'Obsidian', 'Profiles')),
 	activeProfile: {},
-	profileUpdateDelay: 500,
-	uiRefreshInterval: 1000
+	profileUpdate: true,
+	profileUpdateDelay: 800,
+	uiUpdate: true,
+	uiUpdateInterval: 1000,
 }
 
 export interface ProfileOptions {
