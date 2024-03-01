@@ -32,20 +32,22 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
-		// Add Settings change listener
-		/**@todo watch didn't support recursive on Linux */
-		this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
-			this.refreshProfilesList();
-			const profile = this.getCurrentProfile();
-			if (profile) {
-				this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
-			}
-		}, 500, false));
+		if (this.getRefreshIntervall() >= 0) {
+			// Add Settings change listener
+			/**@todo watch didn't support recursive on Linux */
+			this.settingsListener = watch(join(getVaultPath(), this.app.vault.configDir), { recursive: true }, debounce((eventType, filename) => {
+				this.refreshProfilesList();
+				const profile = this.getCurrentProfile();
+				if (profile) {
+					this.settingsChanged = !getIgnoreFilesList(profile).contains(filename ?? "");
+				}
+			}, 500, false));
 
-		// Update profiles at Intervall 
-		this.registerInterval(window.setInterval(() => {
-			this.update();
-		}, this.vaultSettings.refreshIntervall));
+			// Update profiles at Intervall 
+			this.registerInterval(window.setInterval(() => {
+				this.update();
+			}, this.vaultSettings.refreshIntervall));
+		}
 
 		// Add Command to Switch between profiles
 		this.addCommand({
@@ -603,7 +605,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param intervall To what the invervall should be set to
 	 */
 	setRefreshIntervall(intervall: number) {
-		if (intervall > 0 && intervall < 900000) {
+		if (intervall >= -1 && intervall < 900000) {
 			this.vaultSettings.refreshIntervall = intervall;
 		}
 		else {
