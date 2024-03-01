@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
-import { join, normalize } from "path";
+import { join, normalize, sep as slash } from "path";
 import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterface";
 import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
 
@@ -8,7 +8,7 @@ import { ensurePathExist, getAllFiles, isValidPath } from "./FileSystem";
  * @param profile The profile to save
  * @param profilesPath The path where the profile should be saved 
  */
-export function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
+export async function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
     try {
         // Ensure is valid profile
         if (!profile) {
@@ -36,7 +36,7 @@ export function saveProfileOptions(profile: ProfileOptions, profilesPath: string
  * @param profilesList The profiles to save
  * @param profilesPath The path where the profiles should be saved 
  */
-export function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
+export async function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
     try {
         profilesList.forEach(profile => {
             // Ensure is valid profile
@@ -92,6 +92,9 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
             throw Error(`Failed to read profile from file!`);
         }
 
+        // Convert date string to date
+        profileData.modifiedAt = new Date(profileData.modifiedAt);
+
         return profileData;
     } catch (e) {
         (e as Error).message = 'Failed to load profile data! ' + (e as Error).message;
@@ -106,7 +109,7 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
 export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
     try {
         // Search for all profiles existing
-        const files = getAllFiles([profilesPath, "/*/profile.json"]);
+        const files = getAllFiles([profilesPath, `${slash}*${slash}profile.json`]);
         let profilesList: ProfileOptions[] = [];
 
         // Read profile settings
@@ -124,6 +127,10 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
             if (!profileData) {
                 throw Error(`Failed to read profile from file!`);
             }
+
+            // Convert date string to date
+            profileData.modifiedAt = new Date(profileData.modifiedAt);
+
             profilesList.push(profileData);
         });
         return profilesList;
@@ -170,10 +177,10 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
 export function getFilesWithoutPlaceholder(filesList: string[], path: string[]): string[] {
     const files: string[] = [];
     filesList.forEach(file => {
-        if ((file.includes("\\*\\") || file.includes("\\*"))) {
+        if ((file.includes(`${slash}*${slash}`) || file.includes(`${slash}*`))) {
             const pathVariants = getAllFiles([...path, file])
                 // Trim the start of path
-                .map(value => value.split('\\').slice(-file.split('\\').length))
+                .map(value => value.split(slash).slice(-file.split(slash).length))
 
             pathVariants.forEach(value => {
                 files.push(join(...value))

@@ -1,6 +1,6 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, rmdirSync, statSync, unlinkSync } from "fs";
 import { FileSystemAdapter } from "obsidian";
-import { dirname, join, normalize } from "path";
+import { basename, dirname, join, normalize, sep as slash } from "path";
 
 /**
  * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
@@ -13,10 +13,18 @@ export function getAllFiles(path: string[]): string[] {
 
 	try {
 		// Check path contains path placeholder
-		if (join(...path).includes('\\*\\')) {
-			pathSections = join(...path).split('\\*\\');
+		if (join(...path).includes(`${slash}*${slash}`)) {
+			pathSections = join(...path).split(`${slash}*${slash}`);
 
-			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+			if (pathSections.length > 0) {
+				if (!existsSync(pathSections[0])) {
+					console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					return files;
+				}
+				if (!statSync(pathSections[0]).isDirectory()) {
+					console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+					return files;
+				}
 				// Get existing paths for placeholders
 				let pathContent = readdirSync(pathSections[0]);
 
@@ -28,19 +36,29 @@ export function getAllFiles(path: string[]): string[] {
 			}
 		}
 		// Check path contains file placeholder
-		else if (join(...path).endsWith('\\*')) {
-			pathSections = join(...path).split('\\*');
+		else if (join(...path).endsWith(`${slash}*`)) {
+			pathSections = join(...path).split(`${slash}*`);
 
-			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+			if (pathSections.length > 0) {
+				if (!existsSync(pathSections[0])) {
+					console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					return files;
+				}
+				if (!statSync(pathSections[0]).isDirectory()) {
+					console.debug(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
+					return files;
+				}
 				let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
 				files = files.concat(...pathContent.filter((value) => {
-					return statSync(value).isFile();
+					return statSync(value).isFile() && !FILE_IGNORE_LIST.contains(basename(value));
 				}));
 			}
 		}
 		// Path is file
 		else if (existsSync(join(...path)) && statSync(join(...path)).isFile()) {
-			files.push(...path);
+			if (!FILE_IGNORE_LIST.contains(basename(join(...path)))) {
+				files.push(...path);
+			}
 		}
 		return files;
 	} catch (e) {
@@ -59,10 +77,18 @@ export function getAllSubPaths(path: string[]): string[] {
 
 	try {
 		// Check path contains placeholder
-		if (join(...path).includes('\\*\\')) {
-			pathSections = join(...path).split('\\*\\');
+		if (join(...path).includes(`${slash}*${slash}`)) {
+			pathSections = join(...path).split(`${slash}*${slash}`);
 
-			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+			if (pathSections.length > 0) {
+				if (!existsSync(pathSections[0])) {
+					console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					return paths;
+				}
+				if (!statSync(pathSections[0]).isDirectory()) {
+					console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+					return paths;
+				}
 				// Get existing paths for placeholder
 				let pathContent = readdirSync(pathSections[0]);
 
@@ -133,8 +159,14 @@ export function copyFile(sourcePath: string[], targetPath: string[]) {
 		}
 		// Check target path exist
 		isValidPath([...targetPath])
-		ensurePathExist([targetFile.slice(0, targetFile.lastIndexOf('\\'))]);
+		ensurePathExist([targetFile.slice(0, targetFile.lastIndexOf(slash))]);
 
+		// Check source is on ignore list
+		if (FILE_IGNORE_LIST.contains(basename(sourceFile))) {
+			console.warn(`An attempt was made to copy a file that is on the ignore list. File: ${sourceFile}`);
+			return;
+		}
+		// Copy file
 		copyFileSync(sourceFile, targetFile);
 	} catch (e) {
 		throw e;
@@ -153,11 +185,19 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 
 		// Check source is a valid path and exist
 		if (!isValidPath([source]) || !existsSync(source)) {
-			throw Error(`Source path does not exist! SourcePath: ${source}`);
+			throw Error(`Source path does not exist! Path: ${source}`);
+		}
+		if (!statSync(source).isDirectory()) {
+			throw Error(`Source path is not a path! Path: ${source}`);
 		}
 		// Check target is a valid path and ensure exist 
-		isValidPath([target])
-		ensurePathExist([target])
+		if(!isValidPath([target])) {
+			throw Error(`Target path is not a vaild path! Path: ${target}`);
+		}
+		ensurePathExist([target]);
+		if (!statSync(target).isDirectory()) {
+			throw Error(`Target path is not a path! Path: ${source}`)
+		}
 
 		// Files in source
 		const files = readdirSync(source);
@@ -170,6 +210,11 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 				// Copy files in subpath
 				copyFolderRecursiveSync([sourceFile], [targetFile]);
 			} else {
+				// Check source is on ignore list
+				if (FILE_IGNORE_LIST.contains(basename(sourceFile))) {
+					console.warn(`An attempt was made to copy a file that is on the ignore list. File: ${sourceFile}`);
+					return;
+				}
 				// Copy file
 				copyFileSync(sourceFile, targetFile);
 			}
@@ -223,20 +268,26 @@ export function removeDirectoryRecursiveSync(path: string[]) {
 		const pathS = join(...path);
 
 		if (existsSync(pathS)) {
-			readdirSync(pathS).forEach(file => {
-				const filePath = join(pathS, file);
-
-				if (statSync(filePath).isDirectory()) {
-					// Recursively remove subdirectories
-					removeDirectoryRecursiveSync([filePath]);
-				} else {
-					// Remove files
-					unlinkSync(filePath);
-				}
-			});
-
-			// Remove the empty directory
-			rmdirSync(pathS);
+			if(statSync(pathS).isDirectory()) {
+				readdirSync(pathS).forEach(file => {
+					const filePath = join(pathS, file);
+	
+					if (statSync(filePath).isDirectory()) {
+						// Recursively remove subdirectories
+						removeDirectoryRecursiveSync([filePath]);
+					} else {
+						// Remove files
+						unlinkSync(filePath);
+					}
+				});
+	
+				// Remove the empty directory
+				rmdirSync(pathS);
+			}
+			else {
+				// Remove file if not directory
+				rmSync(pathS);
+			}
 		}
 	} catch (e) {
 		throw e;
@@ -255,3 +306,10 @@ export function getVaultPath() {
 
 	return '';
 }
+
+/**
+ * Files that generally should not be copied
+ */
+export const FILE_IGNORE_LIST = [
+	'.DS_Store'
+];
