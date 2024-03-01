@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync, statSync, unlinkSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, rmdirSync, statSync, unlinkSync } from "fs";
 import { FileSystemAdapter } from "obsidian";
 import { basename, dirname, join, normalize, sep as slash } from "path";
 
@@ -18,11 +18,11 @@ export function getAllFiles(path: string[]): string[] {
 
 			if (pathSections.length > 0) {
 				if (!existsSync(pathSections[0])) {
-					console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
 					return files;
 				}
 				if (!statSync(pathSections[0]).isDirectory()) {
-					console.warn(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+					console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
 					return files;
 				}
 				// Get existing paths for placeholders
@@ -41,11 +41,11 @@ export function getAllFiles(path: string[]): string[] {
 
 			if (pathSections.length > 0) {
 				if (!existsSync(pathSections[0])) {
-					console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
 					return files;
 				}
 				if (!statSync(pathSections[0]).isDirectory()) {
-					console.warn(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
+					console.debug(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
 					return files;
 				}
 				let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
@@ -80,7 +80,15 @@ export function getAllSubPaths(path: string[]): string[] {
 		if (join(...path).includes(`${slash}*${slash}`)) {
 			pathSections = join(...path).split(`${slash}*${slash}`);
 
-			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+			if (pathSections.length > 0) {
+				if (!existsSync(pathSections[0])) {
+					console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					return paths;
+				}
+				if (!statSync(pathSections[0]).isDirectory()) {
+					console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+					return paths;
+				}
 				// Get existing paths for placeholder
 				let pathContent = readdirSync(pathSections[0]);
 
@@ -177,11 +185,19 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 
 		// Check source is a valid path and exist
 		if (!isValidPath([source]) || !existsSync(source)) {
-			throw Error(`Source path does not exist! SourcePath: ${source}`);
+			throw Error(`Source path does not exist! Path: ${source}`);
+		}
+		if (!statSync(source).isDirectory()) {
+			throw Error(`Source path is not a path! Path: ${source}`);
 		}
 		// Check target is a valid path and ensure exist 
-		isValidPath([target])
-		ensurePathExist([target])
+		if(!isValidPath([target])) {
+			throw Error(`Target path is not a vaild path! Path: ${target}`);
+		}
+		ensurePathExist([target]);
+		if (!statSync(target).isDirectory()) {
+			throw Error(`Target path is not a path! Path: ${source}`)
+		}
 
 		// Files in source
 		const files = readdirSync(source);
@@ -252,20 +268,26 @@ export function removeDirectoryRecursiveSync(path: string[]) {
 		const pathS = join(...path);
 
 		if (existsSync(pathS)) {
-			readdirSync(pathS).forEach(file => {
-				const filePath = join(pathS, file);
-
-				if (statSync(filePath).isDirectory()) {
-					// Recursively remove subdirectories
-					removeDirectoryRecursiveSync([filePath]);
-				} else {
-					// Remove files
-					unlinkSync(filePath);
-				}
-			});
-
-			// Remove the empty directory
-			rmdirSync(pathS);
+			if(statSync(pathS).isDirectory()) {
+				readdirSync(pathS).forEach(file => {
+					const filePath = join(pathS, file);
+	
+					if (statSync(filePath).isDirectory()) {
+						// Recursively remove subdirectories
+						removeDirectoryRecursiveSync([filePath]);
+					} else {
+						// Remove files
+						unlinkSync(filePath);
+					}
+				});
+	
+				// Remove the empty directory
+				rmdirSync(pathS);
+			}
+			else {
+				// Remove file if not directory
+				rmSync(pathS);
+			}
 		}
 	} catch (e) {
 		throw e;
