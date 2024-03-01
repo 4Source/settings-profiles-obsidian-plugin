@@ -20,13 +20,32 @@ You can do this in the settings tab. Just click on the "Add new Profile". Give i
 The path to store the global settings profiles. The data for the profiles is stored here. Inside there are folders for each profile there are named like the profile. In order for the profiles to be loaded, this path must point to a folder that contains profiles. This must be configured separately for each vault and device. You can also use a relative path. You must click the Change button for the changes to take effect. This will appear when you change the path.
 
 **Default:** ```\Documents\Obsidian\Profiles```
-## Refresh intervall
-This setting controls how often it checks whether there are changes to the profile and saves them if [Auto-Sync](#Auto-Sync) is activated for the profile. You must click the Change button for the changes to take effect. This will appear when you change the setting. This could affect Obsidian's performance.
+## UI update
+This controls whether the UI elements are activated. You must click the Change button for the changes to take effect. This will appear when you change the setting.
+
+**Default:** ```true```
+## UI update interval
+This controls how often the UI of this plugin should be updated. You must click the Change button for the changes to take effect. This will appear when you change the setting. This could affect Obsidian's performance.
+
+Only visible if [UI update](#UI_update) enabled.
 
 **Min:** ``100ms``
 **Max:** ``5000ms``
 
 **Default:** ``1000ms``
+## Profile update
+This setting controls whether changes in the settings should be monitored. You must click the Change button for the changes to take effect. This will appear when you change the setting.
+
+**Default:** ```true```
+## Profile update delay
+This setting controls how much time must pass after a change before checking whether the changes affect the profile. If changes relevant to the profile have been made and [Auto-Sync](#Auto-Sync) is enabled, the changes are updated. You must click the Change button for the changes to take effect. This will appear when you change the setting. This could affect Obsidian's performance.
+
+Only visible if [Profile update](#Profile_update) enabled.
+
+**Min:** ``500ms``
+**Max:** ``10000ms``
+
+**Default:** ``800ms``
 ## Profiles ![plus](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/ec66911b-69dc-436a-9860-f9cdde4b27ac) *Button*
 Let you create a new profile with the current settings. Pressing on it will open a new window [Profile options](#Profile-options) here you can configure the profile. 
 ## Profiles ![refresh-cw](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/e3a66b68-d30d-4990-8938-20db7b5e7cdd) *Button*
@@ -51,7 +70,7 @@ Indicates that this profile is not selected. By pressing this button you can swi
 ### Name
 Containes the name of the profile.
 ### Auto-Sync
-If activated, changes in the settings are automatically saved as long as the profile is active.
+If activated, changes in the settings are automatically saved as long as the profile is active and [Profile update](#Profile_update) is enabled.
 ### Apperance
 Controls whether the appearance settings should be saved in this profile. This includes CSS snippets and themes.
 ### App
@@ -82,6 +101,12 @@ Will be displayed if profile has unloaded changes. The name of the current profi
 To switch to other settings profile or create a new one.
 ## Settings profiles: Show current profile
 Displays the current settings profile.
+## Settings profiles: Save current profile
+Save the settings of current profile.
+## Settings profiles: Reload current profile
+Load the settings of current profile from files.
+## Settings profiles: Update profile status
+Updates the UI elements.
 
 # Admittance
 ### Access file outside vault
