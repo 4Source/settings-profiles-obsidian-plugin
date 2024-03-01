@@ -16,7 +16,15 @@ export function getAllFiles(path: string[]): string[] {
 		if (join(...path).includes(`${slash}*${slash}`)) {
 			pathSections = join(...path).split(`${slash}*${slash}`);
 
-			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+			if (pathSections.length > 0) {
+				if (!existsSync(pathSections[0])) {
+					console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					return files;
+				}
+				if (!statSync(pathSections[0]).isDirectory()) {
+					console.warn(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+					return files;
+				}
 				// Get existing paths for placeholders
 				let pathContent = readdirSync(pathSections[0]);
 
@@ -31,7 +39,15 @@ export function getAllFiles(path: string[]): string[] {
 		else if (join(...path).endsWith(`${slash}*`)) {
 			pathSections = join(...path).split(`${slash}*`);
 
-			if (pathSections.length > 0 && existsSync(pathSections[0])) {
+			if (pathSections.length > 0) {
+				if (!existsSync(pathSections[0])) {
+					console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
+					return files;
+				}
+				if (!statSync(pathSections[0]).isDirectory()) {
+					console.warn(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
+					return files;
+				}
 				let pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
 				files = files.concat(...pathContent.filter((value) => {
 					return statSync(value).isFile() && !FILE_IGNORE_LIST.contains(basename(value));
