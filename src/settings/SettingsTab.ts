@@ -1,14 +1,13 @@
-import { App, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
 import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
 import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
-import { isAbsolute } from 'path';
-import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES } from 'src/constants';
+import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
+import { isValidPath } from 'src/util/FileSystem';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
-	profilesSettings: Setting[];
 
 	constructor(app: App, plugin: SettingsProfilesPlugin) {
 		super(app, plugin);
@@ -26,9 +25,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Profile save path')
 			.setDesc('The path to store the profile settings')
-			.addButton(button => button
-				.setButtonText('Change')
-				.setWarning()
+			.addExtraButton(button => button
+				.setIcon(ICON_RESET)
+				.setTooltip('Reset')
 				.onClick(() => {
 					try {
 						// Get text component
@@ -37,113 +36,91 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							throw Error("Input element not found! #profile-path");
 						}
 
-						// Textbox empty
-						if (inputEl.value === '') {
-							inputEl.value = DEFAULT_VAULT_SETTINGS.profilesPath;
+						inputEl.value = DEFAULT_VAULT_SETTINGS.profilesPath;
+
+						if (DEFAULT_VAULT_SETTINGS.profilesPath === this.plugin.getProfilesPath()) {
+							this.display();
+							return;
 						}
 
-						// Backup to possible restore
-						const backupPath = this.plugin.getProfilesPath();
 						// Set profiles path to textbox value
 						this.plugin.setProfilePath(inputEl.value);
 
-						new DialogModal(this.app, 'Would you like to change the path to the profiles?', isAbsolute(inputEl.value) ? `Absolut path: ${this.plugin.getAbsolutProfilesPath()}` : `Stores the relative path. Absolut path: ${this.plugin.getAbsolutProfilesPath()} `, () => {
-							// Clean up settings
-							this.plugin.updateCurrentProfile(undefined);
-							this.plugin.setProfilesList([]);
+						// Clean up settings
+						this.plugin.updateCurrentProfile(undefined);
+						this.plugin.setProfilesList([]);
 
-							// Save settins
-							this.plugin.saveSettings()
-								.then(() => {
-									// Reload the profiles at new path
-									this.plugin.refreshProfilesList();
-									this.display();
-								});
-						}, () => {
-							// Restore old value
-							this.plugin.setProfilePath(backupPath);
-							this.display();
-						}).open();
+						// Save settins
+						this.plugin.saveSettings()
+							.then(() => {
+								// Reload the profiles at new path
+								this.plugin.refreshProfilesList();
+								this.display();
+							});
 					} catch (e) {
 						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
 						console.error(e);
 					}
-				})
-				.buttonEl.setAttrs({ 'id': 'profile-path-change', 'style': 'visibility:hidden' }))
+				}))
 			.addText(text => text
 				.setValue(this.plugin.getProfilesPath())
 				.onChange(value => {
-					try {
-						const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#profile-path-change');
-						if (!buttonEl) {
-							throw Error("Button element not found! #profile-path-change");
+					debounce((value: string) => {
+						try {
+							// Value is changed 
+							if (value !== this.plugin.getProfilesPath()) {
+								// Textbox empty
+								if (value === '') {
+									throw Error('Text box is empty!');
+								}
+
+								// Validate entry is path
+								if (!isValidPath([value])) {
+									throw Error('Entry is not a valid path!');
+								}
+
+								// Set profiles path to textbox value
+								this.plugin.setProfilePath(value);
+
+								// Clean up settings
+								this.plugin.updateCurrentProfile(undefined);
+								this.plugin.setProfilesList([]);
+
+								// Save settins
+								this.plugin.saveSettings()
+									.then(() => {
+										// Reload the profiles at new path
+										this.plugin.refreshProfilesList();
+										this.display();
+									});
+							}
+						} catch (e) {
+							(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
+							console.error(e);
 						}
-						// Value is changed 
-						if (value !== this.plugin.getProfilesPath()) {
-							buttonEl.toggleVisibility(true);
-						}
-						// Value is same as in file
-						else {
-							buttonEl.toggleVisibility(false);
-						}
-					} catch (e) {
-						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
-						console.error(e);
-					}
+					}, 2000, true).call(this, value);
 				})
 				.inputEl.id = 'profile-path');
 
 		new Setting(containerEl)
 			.setName('UI update')
-			.setDesc('Controls UI update, when disabled, fewer file reads/writes are performed')
-			.addButton(button => button
-				.setButtonText('Change')
-				.setWarning()
-				.onClick(() => {
-					try {
-						// Get text component
-						const toggleEl: HTMLInputElement | null = this.containerEl.querySelector('#ui-update');
-						if (!toggleEl) {
-							throw Error("Input element not found! #ui-update");
-						}
-
-						// Backup to possible restore
-						const backup = this.plugin.getUiUpdate();
-						// Set profiles path to textbox value
-						this.plugin.setUiUpdate(toggleEl.hasClass('is-enabled'));
-
-						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-							// Save Settings
-							this.plugin.saveSettings().then(() => {
-								// @ts-ignore
-								this.app.commands.executeCommandById("app:reload");
-							});
-						}, () => {
-							// Restore old value
-							this.plugin.setUiUpdate(backup);
-							this.display();
-						}).open();
-					} catch (e) {
-						(e as Error).message = 'Failed to change ui update! ' + (e as Error).message;
-						console.error(e);
-					}
-				})
-				.buttonEl.setAttrs({ 'id': 'ui-update-change', 'style': 'visibility:hidden' }))
+			.setDesc(createFragment((fragment) => {
+				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads/writes are performed' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getUiUpdate())
 				.onChange(value => {
 					try {
-						const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#ui-update-change');
-						if (!buttonEl) {
-							throw Error("Button element not found! #ui-update-change");
-						}
 						// Value is changed 
 						if (value !== this.plugin.getUiUpdate()) {
-							buttonEl.toggleVisibility(true);
-						}
-						// Value is same as in file
-						else {
-							buttonEl.toggleVisibility(false);
+							// Set ui update to value
+							this.plugin.setUiUpdate(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
 						}
 					} catch (e) {
 						(e as Error).message = 'Failed to change ui update! ' + (e as Error).message;
@@ -155,10 +132,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		if (this.plugin.getUiUpdate()) {
 			new Setting(containerEl)
 				.setName('UI update interval')
-				.setDesc('The time in ms in which ui is updated')
-				.addButton(button => button
-					.setButtonText('Change')
-					.setWarning()
+				.setDesc(createFragment((fragment) => {
+					fragment.append(fragment.createEl('div', { text: 'The time in ms in which ui is updated' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+				}))
+				.addExtraButton(button => button
+					.setIcon(ICON_RESET)
+					.setTooltip('Reset')
 					.onClick(() => {
 						try {
 							// Get slider component
@@ -167,105 +146,67 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								throw Error("Input element not found! #ui-interval");
 							}
 
-							// Backup to possible restore
-							const backupInterval = this.plugin.getUiRefreshInterval();
+							sliderEl.valueAsNumber = DEFAULT_VAULT_SETTINGS.uiUpdateInterval;
+
 							// Set interval to slider value
 							this.plugin.setUiRefreshInterval(sliderEl.valueAsNumber);
 
-							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-								// Save Settings
-								this.plugin.saveSettings().then(() => {
-									// @ts-ignore
-									this.app.commands.executeCommandById("app:reload");
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
 								});
-							}, () => {
-								// Restore old value
-								this.plugin.setUiRefreshInterval(backupInterval);
-								this.display();
-							}).open();
 						} catch (e) {
-							(e as Error).message = 'Failed to change profile status update interval! ' + (e as Error).message;
+							(e as Error).message = 'Failed to reset ui update interval! ' + (e as Error).message;
 							console.error(e);
 						}
-					})
-					.buttonEl.setAttrs({ 'id': 'ui-interval-change', 'style': 'visibility:hidden' }))
+					}))
 				.addSlider(slider => slider
 					.setLimits(100, 5000, 100)
 					.setValue(this.plugin.getUiRefreshInterval())
 					.setDynamicTooltip()
 					.onChange(value => {
-						try {
-							const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#ui-interval-change');
-							if (!buttonEl) {
-								throw Error("Button element not found! #ui-interval-change");
+						debounce((value: number) => {
+							try {
+								// Value is changed 
+								if (value !== this.plugin.getUiRefreshInterval()) {
+									// Set interval to slider value
+									this.plugin.setUiRefreshInterval(value);
+
+									// Save settins
+									this.plugin.saveSettings()
+										.then(() => {
+											this.display();
+										});
+								}
+							} catch (e) {
+								(e as Error).message = 'Failed to change ui update interval! ' + (e as Error).message;
+								console.error(e);
 							}
-							// Value is changed 
-							if (value !== this.plugin.getUiRefreshInterval()) {
-								buttonEl.toggleVisibility(true);
-							}
-							// Value is same as in file
-							else {
-								buttonEl.toggleVisibility(false);
-							}
-						} catch (e) {
-							(e as Error).message = 'Failed to change refresh interval! ' + (e as Error).message;
-							console.error(e);
-						}
+						}, 500, true).call(this, value);
 					})
 					.sliderEl.setAttr('id', 'ui-interval'))
 		}
 
 		new Setting(containerEl)
 			.setName('Profile update')
-			.setDesc('Controls profile update, when disabled, fewer file reads/writes are performed')
-			.addButton(button => button
-				.setButtonText('Change')
-				.setWarning()
-				.onClick(() => {
-					try {
-						// Get text component
-						const toggleEl: HTMLInputElement | null = this.containerEl.querySelector('#profile-update');
-						if (!toggleEl) {
-							throw Error("Input element not found! #profile-update");
-						}
-
-						// Backup to possible restore
-						const backup = this.plugin.getProfileUpdate();
-						// Set profiles path to textbox value
-						this.plugin.setProfileUpdate(toggleEl.hasClass('is-enabled'));
-
-						new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-							// Save Settings
-							this.plugin.saveSettings().then(() => {
-								// @ts-ignore
-								this.app.commands.executeCommandById("app:reload");
-							});
-						}, () => {
-							// Restore old value
-							this.plugin.setProfileUpdate(backup);
-							this.display();
-						}).open();
-					} catch (e) {
-						(e as Error).message = 'Failed to change profile update! ' + (e as Error).message;
-						console.error(e);
-					}
-				})
-				.buttonEl.setAttrs({ 'id': 'profile-update-change', 'style': 'visibility:hidden' }))
+			.setDesc(createFragment((fragment) => {
+				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getProfileUpdate())
 				.onChange(value => {
 					try {
-						const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#profile-update-change');
-						if (!buttonEl) {
-							throw Error("Button element not found! #profile-update-change");
-						}
 						// Value is changed 
 						if (value !== this.plugin.getProfileUpdate()) {
-							buttonEl.toggleVisibility(true);
-						}
-						// Value is same as in file
-						else {
-							buttonEl.toggleVisibility(false);
+							// Set profile update to value
+							this.plugin.setProfileUpdate(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
 						}
 					} catch (e) {
 						(e as Error).message = 'Failed to change profile update! ' + (e as Error).message;
@@ -277,10 +218,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		if (this.plugin.getProfileUpdate()) {
 			new Setting(containerEl)
 				.setName('Profile update delay')
-				.setDesc('The time in ms that must pass before the profile can be updated again')
-				.addButton(button => button
-					.setButtonText('Change')
-					.setWarning()
+				.setDesc(createFragment((fragment) => {
+					fragment.append(fragment.createEl('div', { text: 'The time in ms that must pass before the profile can be updated again' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+				}))
+				.addExtraButton(button => button
+					.setIcon(ICON_RESET)
+					.setTooltip('Reset')
 					.onClick(() => {
 						try {
 							// Get slider component
@@ -289,50 +232,44 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								throw Error("Input element not found! #update-delay");
 							}
 
-							// Backup to possible restore
-							const backupDelay = this.plugin.getProfileUpdateDelay();
+							sliderEl.valueAsNumber = DEFAULT_VAULT_SETTINGS.profileUpdateDelay;
+
 							// Set interval to slider value
 							this.plugin.setProfileUpdateDelay(sliderEl.valueAsNumber);
 
-							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-								// Save Settings
-								this.plugin.saveSettings().then(() => {
-									// @ts-ignore
-									this.app.commands.executeCommandById("app:reload");
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
 								});
-							}, () => {
-								// Restore old value
-								this.plugin.setProfileUpdateDelay(backupDelay);
-								this.display();
-							}).open();
 						} catch (e) {
-							(e as Error).message = 'Failed to change profile status update interval! ' + (e as Error).message;
+							(e as Error).message = 'Failed to reset profile update interval! ' + (e as Error).message;
 							console.error(e);
 						}
-					})
-					.buttonEl.setAttrs({ 'id': 'update-delay-change', 'style': 'visibility:hidden' }))
+					}))
 				.addSlider(slider => slider
-					.setLimits(500, 10000, 250)
+					.setLimits(100, 5000, 100)
 					.setValue(this.plugin.getProfileUpdateDelay())
 					.setDynamicTooltip()
 					.onChange(value => {
-						try {
-							const buttonEl: HTMLButtonElement | null = this.containerEl.querySelector('#update-delay-change');
-							if (!buttonEl) {
-								throw Error("Button element not found! #update-delay-change");
+						debounce((value: number) => {
+							try {
+								// Value is changed 
+								if (value !== this.plugin.getProfileUpdateDelay()) {
+									// Set interval to slider value
+									this.plugin.setProfileUpdateDelay(value);
+
+									// Save settins
+									this.plugin.saveSettings()
+										.then(() => {
+											this.display();
+										});
+								}
+							} catch (e) {
+								(e as Error).message = 'Failed to change profile update interval! ' + (e as Error).message;
+								console.error(e);
 							}
-							// Value is changed 
-							if (value !== this.plugin.getProfileUpdateDelay()) {
-								buttonEl.toggleVisibility(true);
-							}
-							// Value is same as in file
-							else {
-								buttonEl.toggleVisibility(false);
-							}
-						} catch (e) {
-							(e as Error).message = 'Failed to change refresh interval! ' + (e as Error).message;
-							console.error(e);
-						}
+						}, 500, true).call(this, value);
 					})
 					.sliderEl.setAttr('id', 'update-delay'))
 		}

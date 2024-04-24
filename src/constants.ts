@@ -1,4 +1,5 @@
-export const ICON_OPEN_FOLDER = 'folder-open'
+export const ICON_OPEN_FOLDER = 'folder-open';
+export const ICON_RESET = 'lucide-rotate-ccw';
 
 export const ICON_ADD_PROFILE = 'plus';
 export const ICON_RELOAD_PROFILES = 'refresh-cw';
