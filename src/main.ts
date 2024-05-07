@@ -19,15 +19,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async onload() {
 		await this.loadSettings();
 
-		// Make sure Profile path exists
-		try {
-			ensurePathExist([this.getAbsolutProfilesPath()]);
-		} catch (e) {
-			new Notice("Profile save path is not valid!");
-			(e as Error).message = 'Profile path is not valid! ' + (e as Error).message;
-			console.error(e);
-		}
-
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
