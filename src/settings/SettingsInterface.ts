@@ -1,5 +1,5 @@
-import { homedir } from 'os';
 import { join, normalize, sep as slash } from 'path';
+const xdg = require('@folder/xdg');
 
 export interface GlobalSettings {
 	profilesList: ProfileOptions[];
@@ -19,7 +19,7 @@ export interface VaultSettings {
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
-	profilesPath: normalize(join(homedir(), 'Documents', 'Obsidian', 'Profiles')),
+	profilesPath: normalize(join(xdg({ subdir: 'ObsidianPlugins' }).data, 'Profiles')),
 	activeProfile: {},
 	profileUpdate: true,
 	profileUpdateDelay: 800,
