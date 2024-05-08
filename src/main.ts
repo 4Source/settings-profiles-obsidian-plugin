@@ -19,15 +19,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async onload() {
 		await this.loadSettings();
 
-		// Make sure Profile path exists
-		try {
-			ensurePathExist([this.getAbsolutProfilesPath()]);
-		} catch (e) {
-			new Notice("Profile save path is not valid!");
-			(e as Error).message = 'Profile path is not valid! ' + (e as Error).message;
-			console.error(e);
-		}
-
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
 
@@ -170,25 +161,32 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		let label = 'Switch profile';
 
 		// Attach status bar item
-		if (profile) {
-			if (this.isProfileSaved(profile)) {
-				if (this.isProfileUpToDate(profile)) {
-					// Profile is up-to-date and saved
-					icon = ICON_CURRENT_PROFILE;
-					label = 'Profile up-to-date';
+		try {
+			if (profile) {
+				if (this.isProfileSaved(profile)) {
+					if (this.isProfileUpToDate(profile)) {
+						// Profile is up-to-date and saved
+						icon = ICON_CURRENT_PROFILE;
+						label = 'Profile up-to-date';
+					}
+					else {
+						// Profile is not up to date
+						icon = ICON_UNSAVED_PROFILE;
+						label = 'Unloaded changes for this profile';
+					}
 				}
 				else {
-					// Profile is not up to date
-					icon = ICON_UNSAVED_PROFILE;
-					label = 'Unloaded changes for this profile';
+					// Profile is not saved
+					icon = ICON_UNLOADED_PROFILE;
+					label = 'Unsaved changes for this profile';
 				}
 			}
-			else {
-				// Profile is not saved
-				icon = ICON_UNLOADED_PROFILE;
-				label = 'Unsaved changes for this profile';
-			}
+		} catch (e) {
+			(e as Error).message = 'Failed to check profile state! ' + (e as Error).message;
+			console.error(e);
+			this.updateCurrentProfile(undefined);
 		}
+
 		// Update status bar
 		if (this.statusBarItem) {
 			this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
