@@ -19,7 +19,7 @@ You can do this in the settings tab. Just click on the "Add new Profile". Give i
 ## Profile save path <!-- ![folder-open](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/3f5dbec0-2cd9-405e-80f2-8282b4b52690) -->
 The path to store the global settings profiles. The data for the profiles is stored here. Inside there are folders for each profile there are named like the profile. In order for the profiles to be loaded, this path must point to a folder that contains profiles. This must be configured separately for each vault and device. You can also use a relative path. You must click the Change button for the changes to take effect. This will appear when you change the path.
 
-**Default:** ```\Documents\Obsidian\Profiles```
+**Default:** Based on [XDG specification](https://xdgbasedirectoryspecification.com/) ``$XDG_DATA_HOME/ObsidianPlugins/Profiles``
 ## UI update
 This controls whether the UI elements are activated. You must click the Change button for the changes to take effect. This will appear when you change the setting.
 
