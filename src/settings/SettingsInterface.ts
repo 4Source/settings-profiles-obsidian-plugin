@@ -34,7 +34,7 @@ export interface ProfileOptions {
 	app: boolean;
 	bookmarks: boolean;
 	communityPlugins: boolean;
-	communityPluginsAdvanced: {}
+	// communityPluginsAdvanced: {}
 	corePlugins: boolean;
 	graph: boolean;
 	hotkeys: boolean;
@@ -48,7 +48,7 @@ export const DEFAULT_PROFILE_OPTIONS: ProfileOptions = {
 	app: true,
 	bookmarks: true,
 	communityPlugins: true,
-	communityPluginsAdvanced: {},
+	// communityPluginsAdvanced: {},
 	corePlugins: true,
 	graph: true,
 	hotkeys: true,
@@ -101,11 +101,11 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 		file: ['community-plugins.json', `plugins${slash}*${slash}*`],
 		ignore: `plugins${slash}settings-profiles${slash}data.json`
 	},
-	communityPluginsAdvanced: {
-		name: 'Community plugins advanced',
-		description: 'Advanced settings for the community plugins.',
-		advanced: 'communityPlugins'
-	},
+	// communityPluginsAdvanced: {
+	// 	name: 'Community plugins advanced',
+	// 	description: 'Advanced settings for the community plugins.',
+	// 	advanced: 'communityPlugins'
+	// },
 	corePlugins: {
 		name: 'Core plugins',
 		description: 'Says whether the obsidian core plugin settings will sync.',

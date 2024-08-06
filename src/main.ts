@@ -3,7 +3,7 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
-import { filterIgnoreFilesList, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { filterIgnoreFilesList, filterNewerFiles, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -142,7 +142,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		const profile = this.getCurrentProfile();
 
 		if (profile) {
-			if (this.areSettingsChanged(profile)) {
+			if (!this.areSettingsSaved(profile)) {
 				// Save settings to profile
 				if (profile.autoSync) {
 					this.saveProfileSettings(profile);
@@ -273,8 +273,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Check relevant files for current profile are changed
-	 * @returns `ture` if at least one file has changed
+	 * Check relevant files for profile are changed
+	 * @param profile The profile to check
+	 * @returns `ture` if at least one file has changed and is newer than the saved profile
 	 */
 	areSettingsChanged(profile: ProfileOptions): boolean {
 		try {
@@ -296,12 +297,48 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
 			filesList = filterIgnoreFilesList(filesList, profile);
 			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
+			filesList = filterNewerFiles(filesList, sourcePath, targetPath);
 
 			return filesList.length > 0
 		} catch (e) {
 			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)}`;
 			console.error(e);
 			return true;
+		}
+	}
+
+	/**
+	 * Check relevant files for profile are saved
+	 * @param profile The profile to check
+	 * @returns `ture` if at no file has changed or all are older than the saved profile
+	 */
+	areSettingsSaved(profile: ProfileOptions): boolean {
+		try {
+			const sourcePath = [getVaultPath(), this.app.vault.configDir];
+			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
+
+			// Check target dir exist
+			if (!existsSync(join(...sourcePath))) {
+				throw Error(`Source path do not exist! SourcePath: ${join(...sourcePath)}`);
+			}
+
+			// Target does not exist 
+			if (!existsSync(join(...targetPath))) {
+				return false;
+			}
+			
+			let filesList = getConfigFilesList(profile);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
+			filesList = filterNewerFiles(filesList, sourcePath, targetPath);
+
+			return filesList.length <= 0
+		} catch (e) {
+			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)}`;
+			console.error(e);
+			return false;
 		}
 	}
 
@@ -362,7 +399,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					new DialogModal(this.app, 'Save befor deselect profile?', 'Otherwise, unsaved changes will be lost.', async () => {
 						// Save current profile 
 						await this.saveProfileSettings(currentProfile);
-					}, async () => { }, 'Save', 'Do not Save')
+					}, async () => { }, 'Save', false, 'Do not Save')
 						.open();
 				}
 				this.updateCurrentProfile(undefined);
@@ -825,13 +862,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is loaded profile newer/equal than saved profile
 	 */
 	isProfileUpToDate(profile: ProfileOptions): boolean {
-		const profileData = loadProfileOptions(profile, this.getAbsolutProfilesPath());
+		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
 
-		if (!profileData || !profileData.modifiedAt) {
+		if (!profileOptions || !profileOptions.modifiedAt) {
 			return false;
 		}
 
-		const profileDataDate = new Date(profileData.modifiedAt);
+		if(this.areSettingsChanged(profile)) {
+			return false;
+		}
+
+		const profileDataDate = new Date(profileOptions.modifiedAt);
 		const profileDate = new Date(profile.modifiedAt);
 
 		return profileDate.getTime() >= profileDataDate.getTime();
@@ -843,13 +884,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is saved profile newer/equal than saved profile
 	 */
 	isProfileSaved(profile: ProfileOptions): boolean {
-		const profileData = loadProfileOptions(profile, this.getAbsolutProfilesPath());
+		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
 
-		if (!profileData || !profileData.modifiedAt) {
+		if (!profileOptions || !profileOptions.modifiedAt) {
 			return false;
 		}
 
-		const profileDataDate = new Date(profileData.modifiedAt);
+		if(!this.areSettingsSaved(profile)) {
+			return false;
+		}
+
+		const profileDataDate = new Date(profileOptions.modifiedAt);
 		const profileDate = new Date(profile.modifiedAt);
 
 		return profileDate.getTime() <= profileDataDate.getTime();

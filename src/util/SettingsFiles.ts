@@ -239,9 +239,11 @@ export function filterIgnoreFilesList(filesList: string[], profile: ProfileOptio
  * @param sourcePath The path to the source file 
  * @param targetPath The path to the target file
  * @returns The filtered files list
+ * @todo Improve performance
  */
 export function filterUnchangedFiles(filesList: string[], sourcePath: string[], targetPath: string[]): string[] {
-    return filesList.filter((file) => {
+    return filesList.filter(async (file) => {
+		
         const sourceFile = join(...sourcePath, file);
         const targetFile = join(...targetPath, file);
 
@@ -257,10 +259,43 @@ export function filterUnchangedFiles(filesList: string[], sourcePath: string[], 
         if (!statSync(targetFile).isFile()) {
             return false;
         }
-
-        const sourceData = readFileSync(sourceFile, "utf-8");
-        const targetData = readFileSync(targetFile, "utf-8");
+		// Check file size
+		if(statSync(sourceFile).size !== statSync(targetFile).size) {
+			return false;
+		}
+		
+		/** @todo Improve performance */
+        const sourceData = readFileSync(sourceFile, {encoding: "utf-8"});
+        const targetData = readFileSync(targetFile, {encoding: "utf-8"});
 
         return sourceData !== targetData;
     })
+}
+
+/**
+ * Filter the file list to only include the files there are newer in source than in target
+ * @param filesList Files list to compare
+ * @param sourcePath The path to the source file 
+ * @param targetPath The path to the target file
+ * @returns The filterd files list
+ */
+export function filterNewerFiles(filesList: string[], sourcePath: string[], targetPath: string[]): string[] {
+	return filesList.filter((file) => {
+		const sourceFile = join(...sourcePath, file);
+        const targetFile = join(...targetPath, file);
+
+		// Check source exist and is file
+        if (!existsSync(sourceFile) || !statSync(sourceFile).isFile()) {
+            return false;
+        }
+        // Check target don't exist  
+        if (!existsSync(targetFile)) {
+            return true;
+        }
+
+		const sourceDate = statSync(sourceFile).mtime;
+		const targetDate = statSync(targetFile).mtime;
+
+		return sourceDate.getTime() > targetDate.getTime();
+	})
 }
