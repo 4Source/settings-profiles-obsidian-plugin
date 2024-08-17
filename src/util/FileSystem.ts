@@ -1,6 +1,7 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, rmdirSync, statSync, unlinkSync } from "fs";
+import { copyFileSync, createReadStream, existsSync, mkdirSync, readdirSync, rmSync, rmdirSync, statSync, unlinkSync } from "fs";
 import { FileSystemAdapter } from "obsidian";
 import { basename, dirname, join, normalize, sep as slash } from "path";
+import { PassThrough, Readable } from "stream";
 
 /**
  * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
@@ -191,7 +192,7 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 			throw Error(`Source path is not a path! Path: ${source}`);
 		}
 		// Check target is a valid path and ensure exist 
-		if(!isValidPath([target])) {
+		if (!isValidPath([target])) {
 			throw Error(`Target path is not a vaild path! Path: ${target}`);
 		}
 		ensurePathExist([target]);
@@ -268,10 +269,10 @@ export function removeDirectoryRecursiveSync(path: string[]) {
 		const pathS = join(...path);
 
 		if (existsSync(pathS)) {
-			if(statSync(pathS).isDirectory()) {
+			if (statSync(pathS).isDirectory()) {
 				readdirSync(pathS).forEach(file => {
 					const filePath = join(pathS, file);
-	
+
 					if (statSync(filePath).isDirectory()) {
 						// Recursively remove subdirectories
 						removeDirectoryRecursiveSync([filePath]);
@@ -280,7 +281,7 @@ export function removeDirectoryRecursiveSync(path: string[]) {
 						unlinkSync(filePath);
 					}
 				});
-	
+
 				// Remove the empty directory
 				rmdirSync(pathS);
 			}
@@ -313,3 +314,153 @@ export function getVaultPath() {
 export const FILE_IGNORE_LIST = [
 	'.DS_Store'
 ];
+
+//----------------------------------------------------//
+// Credits: https://github.com/fent/node-stream-equal //
+//----------------------------------------------------//
+/**
+ * Checks the file content of the file is equal 
+ * @param file1 File path of first file
+ * @param file2 File path of seccond file
+ * @returns Are the files equal
+ */
+export function filesEqual(file1: string, file2: string): Promise<boolean> {
+	const stream1 = createReadStream(file1);
+	const stream2 = createReadStream(file2);
+
+	return new Promise<boolean>((resolve, reject) => {
+		let readStream1 = stream1.pipe(new PassThrough({ objectMode: true }));
+		let readStream2 = stream2.pipe(new PassThrough({ objectMode: true }));
+
+		const cleanup = (equal: boolean) => {
+			stream1.removeListener('error', reject);
+			readStream1.removeListener('end', onend1);
+			readStream1.removeListener('readable', streamState1.read);
+
+			stream2.removeListener('error', reject);
+			readStream2.removeListener('end', onend2);
+			readStream1.removeListener('readable', streamState2.read);
+
+			resolve(equal);
+		};
+
+		const streamState1: StreamState = {
+			id: 1,
+			stream: readStream1,
+			data: null,
+			pos: 0,
+			ended: false,
+			read: () => { },
+		};
+		const streamState2: StreamState = {
+			id: 2,
+			stream: readStream2,
+			data: null,
+			pos: 0,
+			ended: false,
+			read: () => { },
+		};
+		streamState1.read = createReadFn(streamState1, streamState2, cleanup);
+		streamState2.read = createReadFn(streamState2, streamState1, cleanup);
+		const onend1 = createOnEndFn(streamState1, streamState2, cleanup);
+		const onend2 = createOnEndFn(streamState2, streamState1, cleanup);
+
+		stream1.on('error', reject);
+		readStream1.on('end', onend1);
+
+		stream2.on('error', reject);
+		readStream2.on('end', onend2);
+
+		// Start by reading from the first stream.
+		streamState1.stream.once('readable', streamState1.read);
+	})
+}
+
+interface StreamState {
+	id: number;
+	stream: Readable;
+	data: Buffer | null;
+	pos: number;
+	ended: boolean;
+	read: () => void;
+}
+
+const createReadFn = (streamState: StreamState, otherStreamState: StreamState, resolve: (equal: boolean) => void) => {
+	return () => {
+		let data = streamState.stream.read();
+		if (!data) {
+			return streamState.stream.once('readable', streamState.read);
+		}
+
+		// Make sure `data` is a buffer.
+		if (!Buffer.isBuffer(data)) {
+			if (typeof data === 'object') {
+				data = JSON.stringify(data);
+			} else {
+				data = data.toString();
+			}
+			data = Buffer.from(data);
+		}
+
+		const newPos = streamState.pos + data.length;
+
+		if (streamState.pos < otherStreamState.pos) {
+			if (!otherStreamState.data) {
+				return resolve(false);
+			}
+			let minLength = Math.min(data.length, otherStreamState.data.length);
+
+			let streamData = data.slice(0, minLength);
+			streamState.data = data.slice(minLength);
+
+			let otherStreamData = otherStreamState.data.slice(0, minLength);
+			otherStreamState.data = otherStreamState.data.slice(minLength);
+
+			// Compare.
+			for (let i = 0; i < minLength; i++) {
+				if (streamData[i] !== otherStreamData[i]) {
+					return resolve(false);
+				}
+			}
+
+		} else {
+			streamState.data = data;
+		}
+
+
+		streamState.pos = newPos;
+		if (newPos > otherStreamState.pos) {
+			if (otherStreamState.ended) {
+				// If this stream is still emitting `data` events but the other has
+				// ended, then this is longer than the other one.
+				return resolve(false);
+			}
+
+			// If this stream has caught up to the other,
+			// read from other one.
+			otherStreamState.read();
+
+		} else {
+			streamState.read();
+		}
+	};
+};
+
+
+/**
+ * Creates a function that gets called when a stream ends.
+ *
+ * @param {StreamState} streamState
+ * @param {StreamState} otherStreamState
+ * @param {Function(boolean)} resolve
+ */
+const createOnEndFn = (streamState: StreamState, otherStreamState: StreamState, resolve: (equal: boolean) => void) => {
+	return () => {
+		streamState.ended = true;
+		if (otherStreamState.ended) {
+			resolve(streamState.pos === otherStreamState.pos);
+		} else {
+			otherStreamState.read();
+		}
+	};
+};

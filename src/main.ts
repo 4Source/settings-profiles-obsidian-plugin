@@ -3,7 +3,7 @@ import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
 import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
-import { filterIgnoreFilesList, filterNewerFiles, filterUnchangedFiles, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
@@ -43,7 +43,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// Update UI at Interval 
 		if (this.getUiUpdate()) {
-			this.updateUI();
 			this.registerInterval(window.setInterval(() => {
 				this.updateUI();
 			}, this.getUiRefreshInterval()));
@@ -119,13 +118,15 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		});
 
 		// Command to update profile status 
-		this.addCommand({
-			id: "update-profile-status",
-			name: "Update profile status",
-			callback: () => {
-				this.updateUI();
-			}
-		});
+		if (this.getUiUpdate()) {
+			this.addCommand({
+				id: "update-profile-status",
+				name: "Update profile status",
+				callback: () => {
+					this.updateUI();
+				}
+			});
+		}
 	}
 
 	onunload() {
@@ -293,13 +294,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 
 			let filesList = getConfigFilesList(profile);
-			filesList = filterIgnoreFilesList(filesList, profile);
 			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
 			filesList = filterIgnoreFilesList(filesList, profile);
-			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
-			filesList = filterNewerFiles(filesList, sourcePath, targetPath);
-
-			return filesList.length > 0
+			return containsChangedFiles(filesList, targetPath, sourcePath);
 		} catch (e) {
 			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)}`;
 			console.error(e);
@@ -326,15 +323,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (!existsSync(join(...targetPath))) {
 				return false;
 			}
-			
+
 			let filesList = getConfigFilesList(profile);
-			filesList = filterIgnoreFilesList(filesList, profile);
 			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
 			filesList = filterIgnoreFilesList(filesList, profile);
-			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
-			filesList = filterNewerFiles(filesList, sourcePath, targetPath);
-
-			return filesList.length <= 0
+			return !containsChangedFiles(filesList, sourcePath, targetPath);
 		} catch (e) {
 			(e as Error).message = 'Failed to check settings changed! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)}`;
 			console.error(e);
@@ -563,7 +556,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			filesList = filterIgnoreFilesList(filesList, profile);
 			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
 			filesList = filterIgnoreFilesList(filesList, profile);
-			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
+			filesList = filterChangedFiles(filesList, sourcePath, targetPath);
 
 			filesList.forEach(file => {
 				if (existsSync(join(...sourcePath, file))) {
@@ -607,7 +600,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			filesList = filterIgnoreFilesList(filesList, profile);
 			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
 			filesList = filterIgnoreFilesList(filesList, profile);
-			filesList = filterUnchangedFiles(filesList, sourcePath, targetPath);
+			filesList = filterChangedFiles(filesList, sourcePath, targetPath);
 
 			filesList.forEach(file => {
 				if (existsSync(join(...sourcePath, file))) {
@@ -865,17 +858,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
 
 		if (!profileOptions || !profileOptions.modifiedAt) {
-			return false;
+			return true;
 		}
 
-		if(this.areSettingsChanged(profile)) {
-			return false;
+		if (new Date(profile.modifiedAt).getTime() >= new Date(profileOptions.modifiedAt).getTime()) {
+			return true;
 		}
 
-		const profileDataDate = new Date(profileOptions.modifiedAt);
-		const profileDate = new Date(profile.modifiedAt);
-
-		return profileDate.getTime() >= profileDataDate.getTime();
+		return !this.areSettingsChanged(profile);
 	}
 
 	/**
@@ -890,14 +880,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			return false;
 		}
 
-		if(!this.areSettingsSaved(profile)) {
-			return false;
+		if (new Date(profile.modifiedAt).getTime() <= new Date(profileOptions.modifiedAt).getTime()) {
+			return true;
 		}
 
-		const profileDataDate = new Date(profileOptions.modifiedAt);
-		const profileDate = new Date(profile.modifiedAt);
-
-		return profileDate.getTime() <= profileDataDate.getTime();
+		return this.areSettingsSaved(profile);
 	}
 }
 
