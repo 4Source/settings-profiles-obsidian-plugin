@@ -360,8 +360,8 @@ export function filesEqual(file1: string, file2: string): Promise<boolean> {
 			ended: false,
 			read: () => { },
 		};
-		streamState1.read = createReadFn(streamState1, streamState2, cleanup);
-		streamState2.read = createReadFn(streamState2, streamState1, cleanup);
+		streamState1.read = createOnRead(streamState1, streamState2, cleanup);
+		streamState2.read = createOnRead(streamState2, streamState1, cleanup);
 		const onend1 = createOnEndFn(streamState1, streamState2, cleanup);
 		const onend2 = createOnEndFn(streamState2, streamState1, cleanup);
 
@@ -385,11 +385,22 @@ interface StreamState {
 	read: () => void;
 }
 
-const createReadFn = (streamState: StreamState, otherStreamState: StreamState, resolve: (equal: boolean) => void) => {
+//----------------------------------------------------//
+// Credits: https://github.com/fent/node-stream-equal //
+//----------------------------------------------------//
+/**
+ * Creates a function that gets when a stream read 
+ * 
+ * @param streamState1 
+ * @param streamState2 
+ * @param resolve 
+ * @returns 
+ */
+function createOnRead(streamState1: StreamState, streamState2: StreamState, resolve: (equal: boolean) => void): () => void {
 	return () => {
-		let data = streamState.stream.read();
+		let data = streamState1.stream.read();
 		if (!data) {
-			return streamState.stream.once('readable', streamState.read);
+			return streamState1.stream.once('readable', streamState1.read);
 		}
 
 		// Make sure `data` is a buffer.
@@ -402,19 +413,19 @@ const createReadFn = (streamState: StreamState, otherStreamState: StreamState, r
 			data = Buffer.from(data);
 		}
 
-		const newPos = streamState.pos + data.length;
+		const newPos = streamState1.pos + data.length;
 
-		if (streamState.pos < otherStreamState.pos) {
-			if (!otherStreamState.data) {
+		if (streamState1.pos < streamState2.pos) {
+			if (!streamState2.data) {
 				return resolve(false);
 			}
-			let minLength = Math.min(data.length, otherStreamState.data.length);
+			let minLength = Math.min(data.length, streamState2.data.length);
 
 			let streamData = data.slice(0, minLength);
-			streamState.data = data.slice(minLength);
+			streamState1.data = data.slice(minLength);
 
-			let otherStreamData = otherStreamState.data.slice(0, minLength);
-			otherStreamState.data = otherStreamState.data.slice(minLength);
+			let otherStreamData = streamState2.data.slice(0, minLength);
+			streamState2.data = streamState2.data.slice(minLength);
 
 			// Compare.
 			for (let i = 0; i < minLength; i++) {
@@ -424,13 +435,13 @@ const createReadFn = (streamState: StreamState, otherStreamState: StreamState, r
 			}
 
 		} else {
-			streamState.data = data;
+			streamState1.data = data;
 		}
 
 
-		streamState.pos = newPos;
-		if (newPos > otherStreamState.pos) {
-			if (otherStreamState.ended) {
+		streamState1.pos = newPos;
+		if (newPos > streamState2.pos) {
+			if (streamState2.ended) {
 				// If this stream is still emitting `data` events but the other has
 				// ended, then this is longer than the other one.
 				return resolve(false);
@@ -438,29 +449,31 @@ const createReadFn = (streamState: StreamState, otherStreamState: StreamState, r
 
 			// If this stream has caught up to the other,
 			// read from other one.
-			otherStreamState.read();
+			streamState2.read();
 
 		} else {
-			streamState.read();
+			streamState1.read();
 		}
 	};
 };
 
-
+//----------------------------------------------------//
+// Credits: https://github.com/fent/node-stream-equal //
+//----------------------------------------------------//
 /**
  * Creates a function that gets called when a stream ends.
  *
- * @param {StreamState} streamState
- * @param {StreamState} otherStreamState
- * @param {Function(boolean)} resolve
+ * @param streamState1
+ * @param streamState2
+ * @param resolve
  */
-const createOnEndFn = (streamState: StreamState, otherStreamState: StreamState, resolve: (equal: boolean) => void) => {
+function createOnEndFn(streamState1: StreamState, streamState2: StreamState, resolve: (equal: boolean) => void): () => void {
 	return () => {
-		streamState.ended = true;
-		if (otherStreamState.ended) {
-			resolve(streamState.pos === otherStreamState.pos);
+		streamState1.ended = true;
+		if (streamState2.ended) {
+			resolve(streamState1.pos === streamState2.pos);
 		} else {
-			otherStreamState.read();
+			streamState2.read();
 		}
 	};
 };
