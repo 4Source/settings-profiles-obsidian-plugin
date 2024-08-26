@@ -109,7 +109,7 @@ export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
 	corePlugins: {
 		name: 'Core plugins',
 		description: 'Says whether the obsidian core plugin settings will sync.',
-		file: ['core-plugins.json', 'core-plugins-migration.json']
+		file: ['core-plugins.json', 'core-plugins-migration.json', 'backlink.json', 'canvas.json', 'command-palette.json', 'daily-notes.json', 'file-recovery.json', 'note-composer.json', 'page-preview.json', 'switcher.json', 'templates.json', 'workspace.json', 'workspaces.json', 'zk-prefixer.json']
 	},
 	graph: {
 		name: 'Graph',
