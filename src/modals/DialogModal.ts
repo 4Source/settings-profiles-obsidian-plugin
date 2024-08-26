@@ -3,11 +3,13 @@ import { App, Modal, Setting } from "obsidian";
 export class DialogModal extends Modal {
     message: string;
     submit: string;
+	submitWarning: boolean;
     deny: string;
+	denyWarning: boolean;
     onSubmit: () => void;
     onDeny: () => void;
 
-    constructor(app: App, title: string, message: string, onSubmit: () => void, onDeny: () => void, submit = 'Agree', deny = 'Cancel') {
+    constructor(app: App, title: string, message: string, onSubmit: () => void, onDeny: () => void, submit = 'Agree', submitWarning = false, deny = 'Cancel', denyWarning = true) {
         super(app);
 
         this.titleEl.setText(title);
@@ -16,7 +18,9 @@ export class DialogModal extends Modal {
         this.onSubmit = onSubmit;
         this.onDeny = onDeny;
         this.submit = submit;
+		this.submitWarning = submitWarning;
         this.deny = deny;
+		this.denyWarning = denyWarning;
     }
 
     onOpen(): void {
@@ -24,21 +28,44 @@ export class DialogModal extends Modal {
 
         contentEl.createEl('span', { text: this.message });
 
-        new Setting(contentEl)
-            .addButton(button => button
+        const setting = new Setting(contentEl);
+		if(this.submitWarning) {
+			setting.addButton(button => button
+                .setButtonText(this.submit)
+				.setWarning()
+                .onClick(() => {
+                    this.close();
+                    this.onSubmit();
+                }))
+		}
+		else {
+			setting.addButton(button => button
                 .setButtonText(this.submit)
                 .onClick(() => {
                     this.close();
                     this.onSubmit();
                 }))
-            .addButton(button => button
+		}
+
+		if(this.denyWarning) {
+			setting.addButton(button => button
                 .setButtonText(this.deny)
                 .setWarning()
                 .onClick(() => {
                     this.close();
                     this.onDeny();
                 }))
-            .setClass('modal-buttons');
+		}
+		else {
+			setting.addButton(button => button
+                .setButtonText(this.deny)
+                .onClick(() => {
+                    this.close();
+                    this.onDeny();
+                }))
+		}
+            
+        setting.setClass('modal-buttons');
     }
 
     onClose(): void {

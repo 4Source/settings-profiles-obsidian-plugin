@@ -105,7 +105,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('UI update')
 			.setDesc(createFragment((fragment) => {
-				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads/writes are performed' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads are performed. The status bar icon is deactivated.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
 			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getUiUpdate())
@@ -191,7 +191,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Profile update')
 			.setDesc(createFragment((fragment) => {
-				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed. Changed settings are not saved automatically.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
 			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getProfileUpdate())
@@ -333,7 +333,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.addExtraButton(button => button
 					.setIcon(ICON_PROFILE_SAVE)
 					.setTooltip('Save settings to profile')
-					.setDisabled(!this.plugin.areSettingsChanged(profile))
+					// .setDisabled(!this.plugin.areSettingsChanged(profile) || this.plugin.areSettingsSaved(profile))
 					.onClick(() => {
 						new DialogModal(this.app, 'Save current settings to profile?', 'You are about to overwrite the current settings of this profile. This cannot be undone.', async () => {
 							this.plugin.saveProfileSettings(profile)
@@ -341,7 +341,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									new Notice('Saved profile successfully.');
 									this.display();
 								});
-						}, async () => { }, 'Override')
+						}, async () => { }, "Override", true, "Cancel", false)
 							.open();
 					}))
 				.addExtraButton(button => button
