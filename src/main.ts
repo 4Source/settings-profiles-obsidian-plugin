@@ -9,6 +9,7 @@ import { FSWatcher, existsSync, watch } from 'fs';
 import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
 import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
+import { registerCommands } from './Commands';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
@@ -48,85 +49,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}, this.getUiRefreshInterval()));
 		}
 
-		// Command to Switch between profiles
-		this.addCommand({
-			id: "open-profile-switcher",
-			name: "Open profile switcher",
-			callback: () => {
-				// Open new profile switcher modal to switch or create a new profile
-				new ProfileSwitcherModal(this.app, this).open();
-			}
-		});
-
-		// Command to Show current profile
-		this.addCommand({
-			id: "current-profile",
-			name: "Show current profile",
-			callback: () => {
-				new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
-			}
-		});
-
-		// Command to save current profile
-		this.addCommand({
-			id: "save-current-profile",
-			name: "Save current profile",
-			callback: () => {
-				this.refreshProfilesList();
-				const profile = this.getCurrentProfile();
-				if (profile) {
-					this.saveProfileSettings(profile)
-						.then(() => {
-							new Notice('Saved profile successfully.');
-						})
-						.catch((e) => {
-							new Notice('Failed to save profile!');
-							(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
-							console.error(e);
-						})
-				}
-			}
-		});
-
-		// Command to load current profile
-		this.addCommand({
-			id: "load-current-profile",
-			name: "Reload current profile",
-			callback: () => {
-				this.refreshProfilesList();
-				const profile = this.getCurrentProfile();
-				if (profile) {
-					this.loadProfileSettings(profile)
-						.then((profile) => {
-							this.updateCurrentProfile(profile);
-							// Reload obsidian so changed settings can take effect
-							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-								// Save Settings
-								this.saveSettings().then(() => {
-									// @ts-ignore
-									this.app.commands.executeCommandById("app:reload");
-								});
-							}, () => {
-								this.saveSettings();
-								new Notice('Need to reload obsidian!', 5000);
-							}, 'Reload')
-								.open();
-						});
-
-				}
-			}
-		});
-
-		// Command to update profile status 
-		if (this.getUiUpdate()) {
-			this.addCommand({
-				id: "update-profile-status",
-				name: "Update profile status",
-				callback: () => {
-					this.updateUI();
-				}
-			});
-		}
+		registerCommands(this);
 	}
 
 	onunload() {
@@ -363,7 +286,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	async saveProfileSettings(profile: ProfileSettings) {
 		try {
 			// Save profile settings
-			await this.saveProfile(profile.name);
+			await this.saveProfile(profile);
 			// Save profile data
 			await saveProfileSettings(profile, this.getAbsolutProfilesPath())
 			// Reload profiles list from files
@@ -538,15 +461,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	/**
 	 * Save the profile settings
-	 * @param profileName The name of the profile to load.
+	 * @param profileName The profile to save.
 	 * @todo Update profile data/settings only when changed 
 	 */
-	private async saveProfile(profileName: string) {
+	private async saveProfile(profile: ProfileSettings) {
 		try {
-			let profile = this.getProfile(profileName);
-
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getAbsolutProfilesPath(), profileName];
+			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
 			let changed = false;
 
 			// Check target dir exist
@@ -574,8 +495,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		}
 		catch (e) {
-			new Notice(`Failed to save ${profileName} profile!`);
-			(e as Error).message = 'Failed to save profile! ' + (e as Error).message + ` ProfileName: ${profileName}`;
+			new Notice(`Failed to save ${profile.name} profile!`);
+			(e as Error).message = 'Failed to save profile! ' + (e as Error).message + ` ProfileName: ${profile.name}`;
 			console.error(e);
 		}
 	}
