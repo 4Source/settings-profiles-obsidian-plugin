@@ -1,20 +1,20 @@
 import { App, SuggestModal } from "obsidian";
 import SettingsProfilesPlugin from "../main";
-import { DEFAULT_PROFILE_OPTIONS, ProfileOptions } from "../settings/SettingsInterface";
-import { ProfileOptionsModal } from "./ProfileOptionsModal";
+import { DEFAULT_PROFILE_SETTINGS, ProfileSettings } from "../settings/SettingsInterface";
+import { ProfileSettingsModal } from "./ProfileSettingsModal";
 
 enum ProfileState {
     EXIST,
     CURRENT,
     NEW,
-    NEW_OPTIONS
+    NEW_OPTIONS,
 }
 
-interface SettingsProfileSuggestion extends ProfileOptions {
+interface ProfileSettingsSuggestion extends ProfileSettings {
     state: ProfileState;
 }
 
-export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion> {
+export class ProfileSwitcherModal extends SuggestModal<ProfileSettingsSuggestion> {
     plugin: SettingsProfilesPlugin;
 
     constructor(app: App, plugin: SettingsProfilesPlugin) {
@@ -41,7 +41,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
         },
         {
             command: "shift ↵",
-            purpose: "to create with options"
+            purpose: "to create with settings"
         },
         {
             command: "esc",
@@ -51,17 +51,17 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     }
 
     // Returns all available suggestions.
-    getSuggestions(query: string): SettingsProfileSuggestion[] {
+    getSuggestions(query: string): ProfileSettingsSuggestion[] {
         // Get all matching SettingsProfiles
         const profiles = this.plugin.getProfilesList().filter((profile) =>
             profile.name.toLowerCase().includes(query.toLowerCase())
         );
         // Expand SettingsProfile to SettingsProfileSuggestion
-        const suggestions: SettingsProfileSuggestion[] = [];
+        const suggestions: ProfileSettingsSuggestion[] = [];
         // Attach query string to suggestion
         if (profiles.every((value) => value.name.toLowerCase() !== query.toLowerCase()) && query.length > 0) {
             suggestions.push({
-                ...DEFAULT_PROFILE_OPTIONS,
+                ...DEFAULT_PROFILE_SETTINGS,
                 name: query,
                 state: ProfileState.NEW
             });
@@ -73,11 +73,11 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
                 state: this.plugin.isEnabled(profile) ? ProfileState.CURRENT : ProfileState.EXIST
             });
         });
-        return suggestions
+        return suggestions;
     }
 
     // Renders each suggestion item.
-    renderSuggestion(suggestion: SettingsProfileSuggestion, el: HTMLElement) {
+    renderSuggestion(suggestion: ProfileSettingsSuggestion, el: HTMLElement) {
         // Create Item
         el.addClass("mod-complex");
         const content = el.createEl("div", { cls: "suggestion-content" });
@@ -96,10 +96,10 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
     }
 
     // Perform action on the selected suggestion.
-    onChooseSuggestion(suggestion: SettingsProfileSuggestion, evt: MouseEvent | KeyboardEvent) {
+    onChooseSuggestion(suggestion: ProfileSettingsSuggestion, evt: MouseEvent | KeyboardEvent) {
         // Trim SettingsProfileSuggestion to SettingsProfile
         let { state, ...rest } = suggestion;
-        const profile: ProfileOptions = { ...rest };
+        const profile: ProfileSettings = { ...rest };
 
         if (evt.shiftKey && state !== ProfileState.EXIST && state !== ProfileState.CURRENT) {
             state = ProfileState.NEW_OPTIONS;
@@ -114,7 +114,7 @@ export class ProfileSwitcherModal extends SuggestModal<SettingsProfileSuggestion
                 });
                 break;
             case ProfileState.NEW_OPTIONS:
-                new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
+                new ProfileSettingsModal(this.plugin, profile, async (result) => {
                     this.plugin.createProfile(result)
                         .then(() => {
                             this.plugin.switchProfile(result.name);

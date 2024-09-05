@@ -4,7 +4,7 @@ export const ICON_RESET = 'lucide-rotate-ccw';
 export const ICON_ADD_PROFILE = 'plus';
 export const ICON_RELOAD_PROFILES = 'refresh-cw';
 
-export const ICON_PROFILE_OPTIONS = 'settings';
+export const ICON_PROFILE_SETTINGS = 'settings';
 export const ICON_PROFILE_REMOVE = 'trash-2';
 export const ICON_PROFILE_ADD_HOTKEY = 'plus-circle';
 export const ICON_PROFILE_SAVE = 'save';

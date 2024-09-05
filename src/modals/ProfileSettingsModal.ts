@@ -1,16 +1,16 @@
-import { App, Modal, Notice, Setting } from "obsidian";
+import { Modal, Notice, Setting } from "obsidian";
 import SettingsProfilesPlugin from "../main";
-import { ProfileOptions, PROFILE_OPTIONS_MAP } from "../settings/SettingsInterface";
+import { ProfileSettings, PROFILE_SETTINGS_MAP } from "../settings/SettingsInterface";
 
-export class ProfileOptionsModal extends Modal {
+export class ProfileSettingsModal extends Modal {
     plugin: SettingsProfilesPlugin;
-    profile: ProfileOptions;
-    initialProfile: ProfileOptions;
-    onSubmit: (result: ProfileOptions) => void;
+    profile: ProfileSettings;
+    initialProfile: ProfileSettings;
+    onSubmit: (result: ProfileSettings) => void;
 
 
-    constructor(app: App, plugin: SettingsProfilesPlugin, profile: ProfileOptions, onSubmit: (result: ProfileOptions) => void) {
-        super(app);
+    constructor(plugin: SettingsProfilesPlugin, profile: ProfileSettings, onSubmit: (result: ProfileSettings) => void) {
+        super(plugin.app);
 
         this.plugin = plugin;
         this.profile = structuredClone(profile);
@@ -22,12 +22,12 @@ export class ProfileOptionsModal extends Modal {
         const { contentEl } = this;
 
         // Heading for Edit profile
-        contentEl.createEl('h1', { text: `Profile options` });
+        contentEl.createEl('h1', { text: `Profile settings` });
 
-        // Add All existing options
+        // Add All existing settings
         for (const key in this.profile) {
             if (this.profile.hasOwnProperty(key)) {
-                const value = this.profile[key as keyof ProfileOptions];
+                const value = this.profile[key as keyof ProfileSettings];
 
                 if (key === 'modifiedAt') {
                     break;
@@ -35,25 +35,25 @@ export class ProfileOptionsModal extends Modal {
                 // Only toggle exclude enabled
                 if (typeof value === 'boolean' && key !== 'enabled') {
                     new Setting(contentEl)
-                        .setName(PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].name)
-                        .setDesc(PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].description)
+                        .setName(PROFILE_SETTINGS_MAP[key as keyof ProfileSettings].name)
+                        .setDesc(PROFILE_SETTINGS_MAP[key as keyof ProfileSettings].description)
                         .addToggle(toggle => toggle
                             .setValue(value)
                             .onChange(async (value) => {
                                 // Assign value of this Setting an save it
-                                (this.profile[key as keyof ProfileOptions] as boolean) = value;
+                                (this.profile[key as keyof ProfileSettings] as boolean) = value;
                             }));
                 }
                 if (typeof value === 'string') {
                     new Setting(contentEl)
-                        .setName(PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].name)
-                        .setDesc(PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].description)
+                        .setName(PROFILE_SETTINGS_MAP[key as keyof ProfileSettings].name)
+                        .setDesc(PROFILE_SETTINGS_MAP[key as keyof ProfileSettings].description)
                         .addText(text => text
-                            .setPlaceholder(PROFILE_OPTIONS_MAP[key as keyof ProfileOptions].name)
+                            .setPlaceholder(PROFILE_SETTINGS_MAP[key as keyof ProfileSettings].name)
                             .setValue(value)
                             .onChange(value => {
                                 // Assign value of this Setting an save it
-                                (this.profile[key as keyof ProfileOptions] as string) = value;
+                                (this.profile[key as keyof ProfileSettings] as string) = value;
                             }));
                 }
             }

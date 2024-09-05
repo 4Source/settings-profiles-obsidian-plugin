@@ -1,9 +1,9 @@
 import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
-import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
+import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
+import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 import { DialogModal } from 'src/modals/DialogModal';
-import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
+import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
 import { isValidPath } from 'src/util/FileSystem';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
@@ -282,7 +282,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon(ICON_ADD_PROFILE)
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileOptionsModal(this.app, this.plugin, DEFAULT_PROFILE_OPTIONS, async (result) => {
+					new ProfileSettingsModal(this.plugin, DEFAULT_PROFILE_SETTINGS, async (result) => {
 						this.plugin.createProfile(result)
 							.then(() => {
 								this.display();
@@ -303,12 +303,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
 				.addExtraButton(button => button
-					.setIcon(ICON_PROFILE_OPTIONS)
-					.setTooltip('Options')
+					.setIcon(ICON_PROFILE_SETTINGS)
+					.setTooltip('Profile settings')
 					.onClick(() => {
 						this.plugin.refreshProfilesList();
 						const prevName = profile.name;
-						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
+						new ProfileSettingsModal(this.plugin, profile, async (result) => {
 							this.plugin.editProfile(prevName, result)
 								.then(() => {
 									this.display();
