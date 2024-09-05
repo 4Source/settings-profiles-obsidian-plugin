@@ -109,8 +109,6 @@ Save only a part of the settings to the current profile. Lets you select the opt
 Save only a part of the settings to a selected profile. Lets you select the options you would like to save.
 ## Settings profiles: Reload current profile
 Load the settings of current profile from files.
-## Settings profiles: Load from profile partially
-Load settings from a selected profile to the current, it could be the same ore different profile than current.
 ## Settings profiles: Update profile status
 Updates the UI elements.
 

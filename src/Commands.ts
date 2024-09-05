@@ -71,7 +71,8 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 			name: "Save to profile partially",
 			callback: () => {
 				new ProfileSuggestModal(plugin, "Select profile to save to...", (result: ProfileSettings) => {
-					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS };
+					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS};
+					profile.name = plugin.getCurrentProfile()?.name || "";
 					if (profile) {
 						new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
 							result.forEach(key => {
@@ -116,38 +117,6 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 						});
 
 				}
-			}
-		},
-		{
-			id: "load-from-profile-partially",
-			name: "Load from profile partially",
-			callback: () => {
-				new ProfileSuggestModal(plugin, "Select the profile to load from...", (result: ProfileSettings) => {
-					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS };
-					if (profile) {
-						new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to load...", (result: (keyof ProfileOptions)[]) => {
-							result.forEach(key => {
-								(profile[key as keyof ProfileSettings] as boolean) = true;
-							});
-							plugin.loadProfileSettings(profile)
-								.then((profile) => {
-									plugin.updateCurrentProfile(profile);
-									// Reload obsidian so changed settings can take effect
-									new DialogModal(plugin.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-										// Save Settings
-										plugin.saveSettings().then(() => {
-											// @ts-ignore
-											plugin.app.commands.executeCommandById("app:reload");
-										});
-									}, () => {
-										plugin.saveSettings();
-										new Notice('Need to reload obsidian!', 5000);
-									}, 'Reload')
-										.open();
-								});
-						}).open();
-					}
-				}).open();
 			}
 		},
 		{
