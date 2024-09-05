@@ -4,9 +4,10 @@ import { DEFAULT_PROFILE_OPTIONS, ProfileOptions } from "src/settings/SettingsIn
 export class FuzzySuggestModalProfileOptions extends FuzzySuggestModal<keyof ProfileOptions> {
   	onSubmit: (result: (keyof ProfileOptions)[]) => void;
 
-	constructor(app: App, onSubmit: (result: (keyof ProfileOptions)[]) => void) {
+	constructor(app: App, placeholder: string, onSubmit: (result: (keyof ProfileOptions)[]) => void) {
 		super(app);
 		this.onSubmit = onSubmit;
+		this.inputEl.placeholder = placeholder;
 	}
 
 	getItems(): (keyof ProfileOptions)[] {

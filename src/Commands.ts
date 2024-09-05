@@ -49,7 +49,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 				plugin.refreshProfilesList();
 				const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...plugin.getCurrentProfile(), ...NONE_PROFILE_OPTIONS };
 				if (profile) {
-					new FuzzySuggestModalProfileOptions(plugin.app, (result: (keyof ProfileOptions)[]) => {
+					new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
 						result.forEach(key => {
 							(profile[key as keyof ProfileSettings] as boolean) = true;
 						});
@@ -70,10 +70,10 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 			id: "save-to-profile-partially",
 			name: "Save to profile partially",
 			callback: () => {
-				new ProfileSuggestModal(plugin, (result: ProfileSettings) => {
+				new ProfileSuggestModal(plugin, "Select profile to save to...", (result: ProfileSettings) => {
 					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS };
 					if (profile) {
-						new FuzzySuggestModalProfileOptions(plugin.app, (result: (keyof ProfileOptions)[]) => {
+						new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
 							result.forEach(key => {
 								(profile[key as keyof ProfileSettings] as boolean) = true;
 							});
@@ -122,10 +122,10 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 			id: "load-from-profile-partially",
 			name: "Load from profile partially",
 			callback: () => {
-				new ProfileSuggestModal(plugin, (result: ProfileSettings) => {
+				new ProfileSuggestModal(plugin, "Select the profile to load from...", (result: ProfileSettings) => {
 					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS };
 					if (profile) {
-						new FuzzySuggestModalProfileOptions(plugin.app, (result: (keyof ProfileOptions)[]) => {
+						new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to load...", (result: (keyof ProfileOptions)[]) => {
 							result.forEach(key => {
 								(profile[key as keyof ProfileSettings] as boolean) = true;
 							});

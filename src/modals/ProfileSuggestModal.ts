@@ -6,10 +6,11 @@ export class ProfileSuggestModal extends SuggestModal<ProfileSettings> {
     plugin: SettingsProfilesPlugin;
 	onSubmit: (result: ProfileSettings) => void;
 
-    constructor(plugin: SettingsProfilesPlugin, onSubmit: (result: ProfileSettings) => void) {
+    constructor(plugin: SettingsProfilesPlugin, placeholder: string, onSubmit: (result: ProfileSettings) => void) {
         super(plugin.app);
         this.plugin = plugin;
 		this.onSubmit = onSubmit;
+		this.inputEl.placeholder = placeholder;
     }
 
     // Returns all available suggestions.
