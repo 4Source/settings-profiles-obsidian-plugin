@@ -103,8 +103,14 @@ To switch to other settings profile or create a new one.
 Displays the current settings profile.
 ## Settings profiles: Save current profile
 Save the settings of current profile.
+## Settings profiles: Save current profile partially
+Save only a part of the settings to the current profile. Lets you select the options you would like to save.
+## Settings profiles: Save to profile partially
+Save only a part of the settings to a selected profile. Lets you select the options you would like to save.
 ## Settings profiles: Reload current profile
 Load the settings of current profile from files.
+## Settings profiles: Load from profile partially
+Load settings from a selected profile to the current, it could be the same ore different profile than current.
 ## Settings profiles: Update profile status
 Updates the UI elements.
 
