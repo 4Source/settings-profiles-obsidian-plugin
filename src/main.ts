@@ -6,10 +6,11 @@ import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSettings, GlobalSettings,
 import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileSettings, loadProfilesSettings, saveProfileSettings } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
-import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
 import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
 import { registerCommands } from './Commands';
+import { ReloadDialogModal } from './modals/ReloadDialogModal';
+import { ProfileSaveBeforeDialogModal } from './modals/ProfileSaveBeforeDialogModal';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
@@ -130,16 +131,12 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 								.then((profile) => {
 									this.updateCurrentProfile(profile);
 									// Reload obsidian so changed settings can take effect
-									new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-										// Save Settings
-										this.saveSettings().then(() => {
-											// @ts-ignore
-											this.app.commands.executeCommandById("app:reload");
-										});
-									}, () => {
-										new Notice('Need to reload obsidian!', 5000);
-									}, 'Reload')
-										.open();
+									new ReloadDialogModal(this, {
+										onSubmit: async () => {
+											// Save Settings
+											await this.saveSettings();
+										},
+									}).open();
 								});
 						}
 					}
@@ -328,11 +325,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (profileName === "") {
 				// Open dialog save current profile
 				if (currentProfile) {
-					new DialogModal(this.app, 'Save befor deselect profile?', 'Otherwise, unsaved changes will be lost.', async () => {
-						// Save current profile 
-						await this.saveProfileSettings(currentProfile);
-					}, async () => { }, 'Save', false, 'Do not Save')
-						.open();
+					new ProfileSaveBeforeDialogModal(this, currentProfile).open();
 				}
 				this.updateCurrentProfile(undefined);
 				await this.saveSettings();
@@ -363,17 +356,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.updateCurrentProfile(profile);
 				});
 
-			// Open dialog obsidain should be reloaded
-			new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-				// Save Settings
-				this.saveSettings().then(() => {
-					// @ts-ignore
-					this.app.commands.executeCommandById("app:reload");
-				});
-			}, async () => {
-				new Notice('Need to reload obsidian!', 5000);
-			}, 'Reload')
-				.open();
+			// Reload obsidian so changed settings can take effect
+			new ReloadDialogModal(this, {
+				onSubmit: async () => {
+					// Save Settings
+					await this.saveSettings();
+				},
+			}).open();
 		} catch (e) {
 			this.updateCurrentProfile(undefined);
 			new Notice(`Failed to switch to ${profileName} profile!`);
@@ -437,7 +426,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Profile renamed
 			if (renamed) {
 				await this.createProfile(profileSettings);
-				await this.switchProfile(profileSettings.name);
+				if (this.getCurrentProfile()?.name === profileName) {
+					await this.switchProfile(profileSettings.name);
+				}
 				await this.removeProfile(profileName);
 			}
 			else {
@@ -729,6 +720,25 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		else {
 			this.vaultSettings.profileUpdateDelay = DEFAULT_VAULT_SETTINGS.profileUpdateDelay;
 		}
+	}
+
+	getHideProfileOverrideDialog(): boolean {
+		return this.vaultSettings.hideProfileOverrideDialog;
+	}
+	setHideProfileOverrideDialog(value: boolean) {
+		this.vaultSettings.hideProfileOverrideDialog = value;
+	}
+	getHideProfileRemoveDialog(): boolean {
+		return this.vaultSettings.hideProfileRemoveDialog;
+	}
+	setHideProfileRemoveDialog(value: boolean) {
+		this.vaultSettings.hideProfileRemoveDialog = value;
+	}
+	getHideReloadDialog(): boolean {
+		return this.vaultSettings.hideReloadDialog;
+	}
+	setHideReloadDialog(value: boolean) {
+		this.vaultSettings.hideReloadDialog = value;
 	}
 
 	/**

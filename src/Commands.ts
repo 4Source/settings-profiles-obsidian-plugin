@@ -1,11 +1,11 @@
 import { Command, Notice } from "obsidian";
 import SettingsProfilesPlugin from "./main";
 import { ProfileSwitcherModal } from "./modals/ProfileSwitcherModal";
-import { DialogModal } from "./modals/DialogModal";
 import { ProfileOptionsFuzzySuggestModal } from "./modals/ProfileOptionsFuzzySuggestModal";
 import { DEFAULT_PROFILE_SETTINGS, NONE_PROFILE_OPTIONS, ProfileOptions, ProfileSettings } from "./settings/SettingsInterface";
 import { ProfileSuggestModal } from "./modals/ProfileSuggestModal";
 import { ProfileOverrideDialogModal } from "./modals/ProfileOverrideDialogModal";
+import { ReloadDialogModal } from "./modals/ReloadDialogModal";
 
 export function registerCommands(plugin: SettingsProfilesPlugin) {
 	const commands: Command[] = [
@@ -116,16 +116,12 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 						.then((profile) => {
 							plugin.updateCurrentProfile(profile);
 							// Reload obsidian so changed settings can take effect
-							new DialogModal(plugin.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+							new ReloadDialogModal(plugin, {
+								onSubmit: async () => {
 								// Save Settings
-								plugin.saveSettings().then(() => {
-									// @ts-ignore
-									plugin.app.commands.executeCommandById("app:reload");
-								});
-							}, () => {
-								new Notice('Need to reload obsidian!', 5000);
-							}, 'Reload')
-								.open();
+									await plugin.saveSettings();
+								},
+							}).open();
 						});
 
 				}
@@ -142,16 +138,12 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 							plugin.loadPartiallyProfileSettings(profile, result)
 								.then((profile) => {
 									// Reload obsidian so changed settings can take effect
-									new DialogModal(plugin.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+									new ReloadDialogModal(plugin, {
+										onSubmit: async () => {
 										// Save Settings
-										plugin.saveSettings().then(() => {
-											// @ts-ignore
-											plugin.app.commands.executeCommandById("app:reload");
-										});
-									}, () => {
-										new Notice('Need to reload obsidian!', 5000);
-									}, 'Reload')
-										.open();
+											await plugin.saveSettings();
+										},
+									}).open();
 								});
 						}).open();
 					}

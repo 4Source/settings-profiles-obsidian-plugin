@@ -5,6 +5,7 @@ import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
 import { isValidPath } from 'src/util/FileSystem';
 import { ProfileOverrideDialogModal } from 'src/modals/ProfileOverrideDialogModal';
+import { ProfileRemoveDialogModal } from 'src/modals/ProfileRemoveDialogModal';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
@@ -274,6 +275,75 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.sliderEl.setAttr('id', 'update-delay'))
 		}
 
+		new Setting(containerEl)
+			.setName('Profile override dialog')
+			.setDesc('Hides the dialog message if enabeled')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.getHideProfileOverrideDialog())
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.getHideProfileOverrideDialog()) {
+							this.plugin.setHideProfileOverrideDialog(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change profile override dialog! ' + (e as Error).message;
+						console.error(e);
+					}
+				}));
+
+		new Setting(containerEl)
+			.setName('Profile remove dialog')
+			.setDesc('Hides the dialog message if enabeled')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.getHideProfileRemoveDialog())
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.getHideProfileRemoveDialog()) {
+							this.plugin.setHideProfileRemoveDialog(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change profile remove dialog! ' + (e as Error).message;
+						console.error(e);
+					}
+				}));
+
+		new Setting(containerEl)
+			.setName('Reload dialog')
+			.setDesc('Hides the dialog message if enabeled')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.getHideReloadDialog())
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.getHideReloadDialog()) {
+							this.plugin.setHideReloadDialog(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change reload dialog! ' + (e as Error).message;
+						console.error(e);
+					}
+				}));
+
 		// Heading for Profiles
 		new Setting(containerEl)
 			.setHeading()
@@ -325,18 +395,21 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon(ICON_PROFILE_REMOVE)
 					.setTooltip('Remove')
 					.onClick(async () => {
-						this.plugin.removeProfile(profile.name)
-							.then(() => {
+						new ProfileRemoveDialogModal(this.plugin, profile, {
+							onRemoved: () => {
 								this.display();
-							});
+							}
+						}).open();
 					}))
 				.addExtraButton(button => button
 					.setIcon(ICON_PROFILE_SAVE)
 					.setTooltip('Save settings to profile')
 					// .setDisabled(!this.plugin.areSettingsChanged(profile) || this.plugin.areSettingsSaved(profile))
 					.onClick(() => {
-						new ProfileOverrideDialogModal(this.plugin, profile, () => { }, () => { }, () => {
-							this.display();
+						new ProfileOverrideDialogModal(this.plugin, profile, {
+							onSaved: () => {
+								this.display();
+							}
 						}).open();
 					}))
 				.addExtraButton(button => button
