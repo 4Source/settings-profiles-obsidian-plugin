@@ -1,10 +1,10 @@
-import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
+import { App, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
 import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
-import { DialogModal } from 'src/modals/DialogModal';
 import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
 import { isValidPath } from 'src/util/FileSystem';
+import { ProfileOverrideDialogModal } from 'src/modals/ProfileOverrideDialogModal';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
@@ -335,14 +335,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip('Save settings to profile')
 					// .setDisabled(!this.plugin.areSettingsChanged(profile) || this.plugin.areSettingsSaved(profile))
 					.onClick(() => {
-						new DialogModal(this.app, 'Save current settings to profile?', 'You are about to overwrite the current settings of this profile. This cannot be undone.', async () => {
-							this.plugin.saveProfileSettings(profile)
-								.then(() => {
-									new Notice('Saved profile successfully.');
-									this.display();
-								});
-						}, async () => { }, "Override", true, "Cancel", false)
-							.open();
+						new ProfileOverrideDialogModal(this.plugin, profile, () => { }, () => { }, () => {
+							this.display();
+						}).open();
 					}))
 				.addExtraButton(button => button
 					.setIcon(this.plugin.isEnabled(profile) ? ICON_CURRENT_PROFILE : ICON_NOT_CURRENT_PROFILE)

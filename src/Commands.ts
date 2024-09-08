@@ -2,7 +2,7 @@ import { Command, Notice } from "obsidian";
 import SettingsProfilesPlugin from "./main";
 import { ProfileSwitcherModal } from "./modals/ProfileSwitcherModal";
 import { DialogModal } from "./modals/DialogModal";
-import { FuzzySuggestModalProfileOptions } from "./modals/FuzzySuggestProfileOptionsModal";
+import { ProfileOptionsFuzzySuggestModal } from "./modals/ProfileOptionsFuzzySuggestModal";
 import { DEFAULT_PROFILE_SETTINGS, NONE_PROFILE_OPTIONS, ProfileOptions, ProfileSettings } from "./settings/SettingsInterface";
 import { ProfileSuggestModal } from "./modals/ProfileSuggestModal";
 
@@ -49,7 +49,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 				plugin.refreshProfilesList();
 				const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...plugin.getCurrentProfile(), ...NONE_PROFILE_OPTIONS };
 				if (profile) {
-					new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
+					new ProfileOptionsFuzzySuggestModal(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
 						result.forEach(key => {
 							(profile[key as keyof ProfileSettings] as boolean) = true;
 						});
@@ -74,7 +74,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS };
 					profile.name = plugin.getCurrentProfile()?.name || "";
 					if (profile) {
-						new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
+						new ProfileOptionsFuzzySuggestModal(plugin.app, "Select which option to save...", (result: (keyof ProfileOptions)[]) => {
 							result.forEach(key => {
 								(profile[key as keyof ProfileSettings] as boolean) = true;
 							});
@@ -125,7 +125,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 				new ProfileSuggestModal(plugin, "Select the profile to load from...", (result: ProfileSettings) => {
 					const profile: ProfileSettings = { ...DEFAULT_PROFILE_SETTINGS, ...result, ...NONE_PROFILE_OPTIONS };
 					if (profile) {
-						new FuzzySuggestModalProfileOptions(plugin.app, "Select which option to load...", (result: (keyof ProfileOptions)[]) => {
+						new ProfileOptionsFuzzySuggestModal(plugin.app, "Select which option to load...", (result: (keyof ProfileOptions)[]) => {
 							plugin.loadPartiallyProfileSettings(profile, result)
 								.then((profile) => {
 									// Reload obsidian so changed settings can take effect
