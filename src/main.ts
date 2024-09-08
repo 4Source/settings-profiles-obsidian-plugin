@@ -2,7 +2,7 @@ import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSettings, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_SETTINGS } from './settings/SettingsInterface';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSettings, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_SETTINGS, ProfileOptions, NONE_PROFILE_OPTIONS } from './settings/SettingsInterface';
 import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileSettings, loadProfilesSettings, saveProfileSettings } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
@@ -137,7 +137,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 											this.app.commands.executeCommandById("app:reload");
 										});
 									}, () => {
-										this.saveSettings();
 										new Notice('Need to reload obsidian!', 5000);
 									}, 'Reload')
 										.open();
@@ -262,7 +261,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Load settings and data for the given profile
 	 * @param profile The profile 
 	 */
-	async loadProfileSettings(profile: ProfileSettings) {
+	async loadProfileSettings(profile: ProfileSettings): Promise<ProfileSettings | undefined> {
 		try {
 			// Load profile settings
 			await this.loadProfile(profile.name);
@@ -275,6 +274,23 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			return this.getProfile(profile.name);
 		} catch (e) {
 			(e as Error).message = 'Failed to load profile settings! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
+			console.error(e);
+		}
+	}
+
+	async loadPartiallyProfileSettings(profile: ProfileSettings, selection: (keyof ProfileOptions)[]): Promise<ProfileSettings | undefined> {
+		try {
+			// Load profile settings
+			await this.loadProfilePartially(profile.name, selection);
+			// Load profile data
+			this.getProfilesList().forEach((value, index, array) => {
+				if (value.name === profile.name) {
+					array[index] = loadProfileSettings(profile, this.getAbsolutProfilesPath()) || value;
+				}
+			});
+			return this.getProfile(profile.name);
+		} catch (e) {
+			(e as Error).message = 'Failed to load partially profile settings! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)} GlobalSettings: ${JSON.stringify(this.globalSettings)} ProfileOptions: ${selection}`;
 			console.error(e);
 		}
 	}
@@ -355,7 +371,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.app.commands.executeCommandById("app:reload");
 				});
 			}, async () => {
-				await this.saveSettings();
 				new Notice('Need to reload obsidian!', 5000);
 			}, 'Reload')
 				.open();
@@ -502,10 +517,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Load the profile settings
+	 * Load the settings stored in the profile
 	 * @param profileName The name of the profile to load.
 	 */
-	private async loadProfile(profileName: string) {
+	private async loadProfile(profileName: string): Promise<void> {
 		try {
 			const profile = this.getProfile(profileName);
 
@@ -528,12 +543,49 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					copyFile([...sourcePath, file], [...targetPath, file])
 				}
 			});
-
-			// Change active profile
-			this.updateCurrentProfile(profile);
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
 			(e as Error).message = 'Failed to load profile! ' + (e as Error).message + ` ProfileName: ${profileName}`;
+			console.error(e);
+		}
+	}
+
+	/**
+	 * Load the settings stored in the profile 
+	 * @param profileName The name of the profile to load from
+	 * @param selection The options of the profile to load
+	 */
+	private async loadProfilePartially(profileName: string, selection: (keyof ProfileOptions)[]): Promise<void> {
+		try {
+			const profile: ProfileSettings = { ...this.getProfile(profileName), ...NONE_PROFILE_OPTIONS };
+
+			// Only enable selection
+			selection.forEach(option => {
+				profile[option] = true;
+			});
+
+			const sourcePath = [this.getAbsolutProfilesPath(), profileName];
+			const targetPath = [getVaultPath(), this.app.vault.configDir];
+
+			// Check target dir exist
+			if (!existsSync(join(...sourcePath))) {
+				throw Error(`Source path do not exist! SourcePath: ${join(...sourcePath)}`);
+			}
+
+			let filesList = getConfigFilesList(profile);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = filterChangedFiles(filesList, sourcePath, targetPath);
+
+			filesList.forEach(file => {
+				if (existsSync(join(...sourcePath, file))) {
+					copyFile([...sourcePath, file], [...targetPath, file])
+				}
+			});
+		} catch (e) {
+			new Notice(`Failed to partially load ${profileName} profile!`);
+			(e as Error).message = 'Failed to partially load profile! ' + (e as Error).message + ` ProfileName: ${profileName} ProfileOptions: ${selection}`;
 			console.error(e);
 		}
 	}
