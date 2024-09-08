@@ -107,6 +107,8 @@ Save the settings of current profile.
 Save only a part of the settings to the current profile. Lets you select the options you would like to save.
 ## Settings profiles: Save to profile partially
 Save only a part of the settings to a selected profile. Lets you select the options you would like to save.
+## Settings profiles: Save to profile
+Save the current settings to a selected profile. This will override the settings in the profile.
 ## Settings profiles: Reload current profile
 Load the settings of current profile from files.
 ## Settings profiles: Load from profile partially

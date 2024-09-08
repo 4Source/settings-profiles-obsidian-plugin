@@ -5,6 +5,7 @@ import { DialogModal } from "./modals/DialogModal";
 import { ProfileOptionsFuzzySuggestModal } from "./modals/ProfileOptionsFuzzySuggestModal";
 import { DEFAULT_PROFILE_SETTINGS, NONE_PROFILE_OPTIONS, ProfileOptions, ProfileSettings } from "./settings/SettingsInterface";
 import { ProfileSuggestModal } from "./modals/ProfileSuggestModal";
+import { ProfileOverrideDialogModal } from "./modals/ProfileOverrideDialogModal";
 
 export function registerCommands(plugin: SettingsProfilesPlugin) {
 	const commands: Command[] = [
@@ -88,6 +89,18 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 									console.error(e);
 								});
 						}).open();
+					}
+				}).open();
+			}
+		},
+		{
+			id: "save-to-profile",
+			name: "Save to profile",
+			callback: () => {
+				new ProfileSuggestModal(plugin, "Select profile to save to...", (result: ProfileSettings) => {
+					const profile: ProfileSettings = plugin.getProfile(result.name);
+					if (profile) {
+						new ProfileOverrideDialogModal(plugin, profile).open();
 					}
 				}).open();
 			}
