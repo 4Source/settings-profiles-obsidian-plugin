@@ -29,8 +29,7 @@ jobs:
         run: |
           mkdir settings-profiles
           cp main.js manifest.json styles.css ./settings-profiles
-          zip -r settings-profiles-${GITHUB_REF#refs/tags/} settings-profiles
-          ls
+          zip -r settings-profiles-${GITHUB_REF#refs/tags/}.zip settings-profiles
       
       - name: Create release
         env:
