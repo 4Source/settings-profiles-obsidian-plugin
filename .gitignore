@@ -8,9 +8,10 @@
 # npm
 node_modules
 
-# Don't include the compiled main.js file in the repo.
-# They should be uploaded to GitHub releases instead.
+# Release files
 main.js
+settings-profiles/
+settings-profiles-*.zip
 
 # Exclude sourcemaps
 *.map
