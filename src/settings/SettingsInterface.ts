@@ -16,7 +16,7 @@ export interface VaultSettings {
 	profileUpdateDelay: number;
 	uiUpdate: boolean;
 	uiUpdateInterval: number;
-	hideProfileOverrideDialog: boolean;
+	hideProfileSaveDialog: boolean;
 	hideProfileRemoveDialog: boolean;
 	hideReloadDialog: boolean;
 }
@@ -28,7 +28,7 @@ export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profileUpdateDelay: 800,
 	uiUpdate: true,
 	uiUpdateInterval: 1000,
-	hideProfileOverrideDialog: false,
+	hideProfileSaveDialog: false,
 	hideProfileRemoveDialog: false,
 	hideReloadDialog: false,
 }

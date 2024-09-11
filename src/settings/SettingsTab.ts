@@ -4,7 +4,7 @@ import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInte
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
 import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
 import { isValidPath } from 'src/util/FileSystem';
-import { ProfileOverrideDialogModal } from 'src/modals/ProfileOverrideDialogModal';
+import { ProfileSaveDialogModal } from 'src/modals/ProfileSaveDialogModal';
 import { ProfileRemoveDialogModal } from 'src/modals/ProfileRemoveDialogModal';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
@@ -276,15 +276,15 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		}
 
 		new Setting(containerEl)
-			.setName('Profile override dialog')
+			.setName('Profile save dialog')
 			.setDesc('Hides the dialog message if enabeled')
 			.addToggle(toggle => toggle
-				.setValue(this.plugin.getHideProfileOverrideDialog())
+				.setValue(this.plugin.getHideProfileSaveDialog())
 				.onChange(value => {
 					try {
 						// Value is changed 
-						if (value !== this.plugin.getHideProfileOverrideDialog()) {
-							this.plugin.setHideProfileOverrideDialog(value);
+						if (value !== this.plugin.getHideProfileSaveDialog()) {
+							this.plugin.setHideProfileSaveDialog(value);
 
 							// Save settins
 							this.plugin.saveSettings()
@@ -293,7 +293,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								});
 						}
 					} catch (e) {
-						(e as Error).message = 'Failed to change profile override dialog! ' + (e as Error).message;
+						(e as Error).message = 'Failed to change profile save dialog! ' + (e as Error).message;
 						console.error(e);
 					}
 				}));
@@ -406,7 +406,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setTooltip('Save settings to profile')
 					// .setDisabled(!this.plugin.areSettingsChanged(profile) || this.plugin.areSettingsSaved(profile))
 					.onClick(() => {
-						new ProfileOverrideDialogModal(this.plugin, profile, {
+						new ProfileSaveDialogModal(this.plugin, profile, {
 							onSaved: () => {
 								this.display();
 							}

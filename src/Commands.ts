@@ -4,7 +4,7 @@ import { ProfileSwitcherModal } from "./modals/ProfileSwitcherModal";
 import { ProfileOptionsFuzzySuggestModal } from "./modals/ProfileOptionsFuzzySuggestModal";
 import { DEFAULT_PROFILE_SETTINGS, NONE_PROFILE_OPTIONS, ProfileOptions, ProfileSettings } from "./settings/SettingsInterface";
 import { ProfileSuggestModal } from "./modals/ProfileSuggestModal";
-import { ProfileOverrideDialogModal } from "./modals/ProfileOverrideDialogModal";
+import { ProfileSaveDialogModal } from "./modals/ProfileSaveDialogModal";
 import { ReloadDialogModal } from "./modals/ReloadDialogModal";
 
 export function registerCommands(plugin: SettingsProfilesPlugin) {
@@ -31,15 +31,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 				plugin.refreshProfilesList();
 				const profile = plugin.getCurrentProfile();
 				if (profile) {
-					plugin.saveProfileSettings(profile)
-						.then(() => {
-							new Notice('Saved profile successfully.');
-						})
-						.catch((e) => {
-							new Notice('Failed to save profile!');
-							(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
-							console.error(e);
-						});
+					new ProfileSaveDialogModal(plugin, profile).open();
 				}
 			}
 		},
@@ -54,15 +46,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 						result.forEach(key => {
 							(profile[key as keyof ProfileSettings] as boolean) = true;
 						});
-						plugin.saveProfileSettings(profile)
-							.then(() => {
-								new Notice('Saved profile successfully.');
-							})
-							.catch((e) => {
-								new Notice('Failed to save profile!');
-								(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
-								console.error(e);
-							});
+						new ProfileSaveDialogModal(plugin, profile).open();
 					}).open();
 				}
 			}
@@ -79,15 +63,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 							result.forEach(key => {
 								(profile[key as keyof ProfileSettings] as boolean) = true;
 							});
-							plugin.saveProfileSettings(profile)
-								.then(() => {
-									new Notice('Saved profile successfully.');
-								})
-								.catch((e) => {
-									new Notice('Failed to save profile!');
-									(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
-									console.error(e);
-								});
+							new ProfileSaveDialogModal(plugin, profile).open();
 						}).open();
 					}
 				}).open();
@@ -100,7 +76,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 				new ProfileSuggestModal(plugin, "Select profile to save to...", (result: ProfileSettings) => {
 					const profile: ProfileSettings = plugin.getProfile(result.name);
 					if (profile) {
-						new ProfileOverrideDialogModal(plugin, profile).open();
+						new ProfileSaveDialogModal(plugin, profile).open();
 					}
 				}).open();
 			}
@@ -118,7 +94,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 							// Reload obsidian so changed settings can take effect
 							new ReloadDialogModal(plugin, {
 								onSubmit: async () => {
-								// Save Settings
+									// Save Settings
 									await plugin.saveSettings();
 								},
 							}).open();
@@ -140,7 +116,7 @@ export function registerCommands(plugin: SettingsProfilesPlugin) {
 									// Reload obsidian so changed settings can take effect
 									new ReloadDialogModal(plugin, {
 										onSubmit: async () => {
-										// Save Settings
+											// Save Settings
 											await plugin.saveSettings();
 										},
 									}).open();

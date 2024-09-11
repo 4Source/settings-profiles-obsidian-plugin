@@ -1,6 +1,7 @@
-import { App, Modal, Setting } from 'obsidian';
+import { App, Setting } from 'obsidian';
+import { AsyncModal } from './AsyncModal';
 
-export abstract class DialogModal extends Modal {
+export abstract class DialogModal extends AsyncModal {
 	message: string;
 	submit: string;
 	submitWarning: boolean;

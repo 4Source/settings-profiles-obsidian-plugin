@@ -11,6 +11,7 @@ import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, I
 import { registerCommands } from './Commands';
 import { ReloadDialogModal } from './modals/ReloadDialogModal';
 import { ProfileSaveBeforeDialogModal } from './modals/ProfileSaveBeforeDialogModal';
+import { ProfileSaveDialogModal } from './modals/ProfileSaveDialogModal';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
@@ -70,7 +71,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (!this.areSettingsSaved(profile)) {
 				// Save settings to profile
 				if (profile.autoSync) {
-					this.saveProfileSettings(profile);
+					new ProfileSaveDialogModal(this, profile).open();
 				}
 			}
 		}
@@ -142,10 +143,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					}
 					else {
 						// Profile is not saved
-						this.saveProfileSettings(profile)
-							.then(() => {
-								new Notice('Saved profile successfully.');
-							});
+						new ProfileSaveDialogModal(this, profile).open();
 					}
 				} catch (e) {
 					(e as Error).message = 'Failed to handle status bar callback! ' + (e as Error).message;
@@ -347,7 +345,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Save current profile 
 			if (currentProfile?.autoSync) {
-				await this.saveProfileSettings(currentProfile);
+				await new ProfileSaveBeforeDialogModal(this, currentProfile).open();
 			}
 
 			// Load new profile
@@ -722,11 +720,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 	}
 
-	getHideProfileOverrideDialog(): boolean {
-		return this.vaultSettings.hideProfileOverrideDialog;
+	getHideProfileSaveDialog(): boolean {
+		return this.vaultSettings.hideProfileSaveDialog;
 	}
-	setHideProfileOverrideDialog(value: boolean) {
-		this.vaultSettings.hideProfileOverrideDialog = value;
+	setHideProfileSaveDialog(value: boolean) {
+		this.vaultSettings.hideProfileSaveDialog = value;
 	}
 	getHideProfileRemoveDialog(): boolean {
 		return this.vaultSettings.hideProfileRemoveDialog;
