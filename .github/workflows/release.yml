@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -25,6 +26,12 @@ jobs:
           npm install
           npm run build
 
+      - name: Zip release files
+        run: |
+          mkdir settings-profiles
+          cp main.js manifest.json styles.css ./settings-profiles
+          zip -r settings-profiles-${GITHUB_REF#refs/tags/} settings-profiles
+      
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,4 +41,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            main.js manifest.json styles.css
+            main.js manifest.json styles.css settings-profiles-$tag.zip
