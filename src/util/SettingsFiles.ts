@@ -1,14 +1,14 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join, normalize, sep as slash } from "path";
-import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterface";
+import { PROFILE_SETTINGS_MAP, ProfileSettings } from "src/settings/SettingsInterface";
 import { ensurePathExist, filesEqual, getAllFiles, isValidPath } from "./FileSystem";
 
 /**
- * Saves the profile options data to the path.
+ * Saves the profile settings data to the path.
  * @param profile The profile to save
  * @param profilesPath The path where the profile should be saved 
  */
-export async function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
+export async function saveProfileSettings(profile: ProfileSettings, profilesPath: string) {
 	try {
 		// Ensure is valid profile
 		if (!profile) {
@@ -32,11 +32,11 @@ export async function saveProfileOptions(profile: ProfileOptions, profilesPath: 
 }
 
 /**
- * Saves the profiles options data to the path.
+ * Saves the profiles settings data to the path.
  * @param profilesList The profiles to save
  * @param profilesPath The path where the profiles should be saved 
  */
-export async function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
+export async function saveProfilesSettings(profilesList: ProfileSettings[], profilesPath: string) {
 	try {
 		profilesList.forEach(profile => {
 			// Ensure is valid profile
@@ -62,19 +62,19 @@ export async function saveProfilesOptions(profilesList: ProfileOptions[], profil
 }
 
 /**
- * Loads the profile options data form the path
+ * Loads the profile settings data form the path
  * @param profile The profile to load name is requierd
  * @param profilesPath The path where the profiles are saved
  * @param
  */
-export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPath: string): ProfileOptions {
+export function loadProfileSettings(profile: Partial<ProfileSettings>, profilesPath: string): ProfileSettings {
 	try {
 		if (!profile.name) {
 			throw Error(`Name is requierd! Profile: ${JSON.stringify(profile)}`);
 		}
 		// Search for all profiles existing
 		const file = join(profilesPath, profile.name, 'profile.json');
-		let profileData: ProfileOptions | undefined = undefined;
+		let profileData: ProfileSettings | undefined = undefined;
 
 		if (!existsSync(file)) {
 			throw Error(`Path does not exist! Path: ${file}`);
@@ -103,14 +103,14 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
 }
 
 /**
- * Loads the profiles options data form the path
+ * Loads the profiles settings data form the path
  * @param profilesPath The path where the profiles are saved
  */
-export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
+export function loadProfilesSettings(profilesPath: string): ProfileSettings[] {
 	try {
 		// Search for all profiles existing
 		const files = getAllFiles([profilesPath, `${slash}*${slash}profile.json`]);
-		let profilesList: ProfileOptions[] = [];
+		let profilesList: ProfileSettings[] = [];
 
 		// Read profile settings
 		files.forEach(file => {
@@ -146,13 +146,13 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
  */
-export function getConfigFilesList(profile: ProfileOptions): string[] {
+export function getConfigFilesList(profile: ProfileSettings): string[] {
 	const files = [];
 	for (const key in profile) {
 		if (profile.hasOwnProperty(key)) {
-			const value = profile[key as keyof ProfileOptions];
+			const value = profile[key as keyof ProfileSettings];
 			if (typeof value === 'boolean' && key !== 'enabled' && value) {
-				const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.file;
+				const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSettings]?.file;
 				if (file && typeof file === 'string') {
 					files.push(normalize(file));
 				}
@@ -200,13 +200,13 @@ export function getFilesWithoutPlaceholder(filesList: string[], path: string[]):
  * @returns an array of file names
  * @todo return {add: string[], remove: string[]}
  */
-export function getIgnoreFilesList(profile: ProfileOptions): string[] {
+export function getIgnoreFilesList(profile: ProfileSettings): string[] {
 	const files = [];
 	for (const key in profile) {
 		if (profile.hasOwnProperty(key)) {
-			const value = profile[key as keyof ProfileOptions];
+			const value = profile[key as keyof ProfileSettings];
 			if (value && typeof value === 'boolean') {
-				const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.ignore;
+				const file = PROFILE_SETTINGS_MAP[key as keyof ProfileSettings]?.ignore;
 				if (file && typeof file === 'string') {
 					files.push(normalize(file));
 				}
@@ -228,7 +228,7 @@ export function getIgnoreFilesList(profile: ProfileOptions): string[] {
  * @param profile The profile for which the ignore files 
  * @returns The filtered files list
  */
-export function filterIgnoreFilesList(filesList: string[], profile: ProfileOptions): string[] {
+export function filterIgnoreFilesList(filesList: string[], profile: ProfileSettings): string[] {
 	const ignoreFiles = getIgnoreFilesList(profile);
 	return filesList.filter((file) => !ignoreFiles.contains((file)));
 }
