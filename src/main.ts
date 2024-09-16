@@ -12,6 +12,7 @@ import { registerCommands } from './Commands';
 import { ReloadDialogModal } from './modals/ReloadDialogModal';
 import { ProfileSaveBeforeDialogModal } from './modals/ProfileSaveBeforeDialogModal';
 import { ProfileSaveDialogModal } from './modals/ProfileSaveDialogModal';
+import { registerCustomIcons } from './Icons';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
@@ -24,6 +25,22 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
+
+		// Select default profile if no profile selected
+		const currentProfile = this.getCurrentProfile();
+		const defaultProfile = this.getDefaultProfile();
+		if (!currentProfile && defaultProfile) {
+			// Load default profile
+			await this.loadProfileSettings(defaultProfile);
+			this.updateCurrentProfile(defaultProfile);
+			await this.saveSettings();
+			new ReloadDialogModal(this, {
+				onSubmit: async () => {
+					// Save Settings
+					await this.saveSettings();
+				},
+			}).open();
+		}
 
 		// Add settings change listener
 		/**@todo watch didn't support recursive on Linux */
@@ -50,6 +67,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 				this.updateUI();
 			}, this.getUiRefreshInterval()));
 		}
+
+		registerCustomIcons();
 
 		registerCommands(this);
 	}
@@ -161,9 +180,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Load vault settings from file if exist or create default
 			this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
 
-			// Load global settings from profiles path
-			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
-			this.refreshProfilesList();
+			// Load global settings 
+			this.globalSettings = Object.assign({}, DEFAULT_GLOBAL_SETTINGS, JSON.parse(localStorage.getItem("settings-profiles:globalSettings") || "{}"), { profilesList: loadProfilesSettings(this.getAbsolutProfilesPath()) });
 		} catch (e) {
 			(e as Error).message = 'Failed to load settings! ' + (e as Error).message + ` VaultSettings: ${JSON.stringify(this.vaultSettings)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
@@ -184,6 +202,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
+
+			// Save global settings 
+			localStorage.setItem("settings-profiles:globalSettings", JSON.stringify({ defaultProfile: this.globalSettings.defaultProfile }));
 		} catch (e) {
 			(e as Error).message = 'Failed to save settings! ' + (e as Error).message + ` VaultSettings: ${JSON.stringify(this.vaultSettings)}`;
 			console.error(e);
@@ -737,6 +758,22 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 	setHideReloadDialog(value: boolean) {
 		this.vaultSettings.hideReloadDialog = value;
+	}
+
+	getDefaultProfile(): ProfileSettings | undefined {
+		const defaultProfile = this.globalSettings.defaultProfile;
+		if (!defaultProfile || defaultProfile === "") {
+			return undefined;
+		}
+		return this.getProfile(defaultProfile);
+	}
+	setDefaultProfile(profile: ProfileSettings | undefined) {
+		if (profile) {
+			this.globalSettings.defaultProfile = profile.name;
+		}
+		else {
+			this.globalSettings.defaultProfile = "";
+		}
 	}
 
 	/**

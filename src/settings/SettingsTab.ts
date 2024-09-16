@@ -2,7 +2,7 @@ import { App, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
 import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
 import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
-import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
+import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET, ICON_PROFILE_DEFAULT, ICON_PROFILE_DEFAULT_SELECTED } from 'src/constants';
 import { isValidPath } from 'src/util/FileSystem';
 import { ProfileSaveDialogModal } from 'src/modals/ProfileSaveDialogModal';
 import { ProfileRemoveDialogModal } from 'src/modals/ProfileRemoveDialogModal';
@@ -385,6 +385,24 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								});
 						}).open();
 					}))
+				.addExtraButton(button => button
+					.setIcon(this.plugin.getDefaultProfile()?.name === profile.name ? ICON_PROFILE_DEFAULT_SELECTED : ICON_PROFILE_DEFAULT)
+					.setTooltip(this.plugin.getDefaultProfile()?.name === profile.name ? 'Unselect profile as default' : 'Select profile as default')
+					.onClick(() => {
+						if (this.plugin.getDefaultProfile()?.name !== profile.name) {
+							this.plugin.setDefaultProfile(profile);
+						}
+						else {
+							this.plugin.setDefaultProfile(undefined);
+						}
+
+						// Save settins
+						this.plugin.saveSettings()
+							.then(() => {
+								this.display();
+							});
+					})
+				)
 				// .addExtraButton(button => button
 				// 	.setIcon(ICON_PROFILE_ADD_HOTKEY)
 				// 	.setTooltip('Hotkeys')

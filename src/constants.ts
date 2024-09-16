@@ -9,6 +9,8 @@ export const ICON_PROFILE_REMOVE = 'trash-2';
 export const ICON_PROFILE_ADD_HOTKEY = 'plus-circle';
 export const ICON_PROFILE_SAVE = 'save';
 export const ICON_PROFILE_LOAD = 'download';
+export const ICON_PROFILE_DEFAULT = 'crown';
+export const ICON_PROFILE_DEFAULT_SELECTED = 'crown-filled';
 
 export const ICON_CURRENT_PROFILE = 'user-check';
 export const ICON_PROFILE = 'user';

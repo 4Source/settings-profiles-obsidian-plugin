@@ -3,10 +3,12 @@ const xdg = require('@folder/xdg');
 
 export interface GlobalSettings {
 	profilesList: ProfileSettings[];
+	defaultProfile: string;
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
-	profilesList: []
+	profilesList: [],
+	defaultProfile: "",
 }
 
 export interface VaultSettings {
