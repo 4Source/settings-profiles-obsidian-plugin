@@ -2,20 +2,25 @@ import { join, normalize, sep as slash } from 'path';
 const xdg = require('@folder/xdg');
 
 export interface GlobalSettings {
-	profilesList: ProfileOptions[];
+	profilesList: ProfileSettings[];
+	defaultProfile: string;
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
-	profilesList: []
+	profilesList: [],
+	defaultProfile: "",
 }
 
 export interface VaultSettings {
 	profilesPath: string;
-	activeProfile: Partial<ProfileOptions>;
+	activeProfile: Partial<ProfileSettings>;
 	profileUpdate: boolean;
 	profileUpdateDelay: number;
 	uiUpdate: boolean;
 	uiUpdateInterval: number;
+	hideProfileSaveDialog: boolean;
+	hideProfileRemoveDialog: boolean;
+	hideReloadDialog: boolean;
 }
 
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
@@ -25,11 +30,12 @@ export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profileUpdateDelay: 800,
 	uiUpdate: true,
 	uiUpdateInterval: 1000,
+	hideProfileSaveDialog: false,
+	hideProfileRemoveDialog: false,
+	hideReloadDialog: false,
 }
 
 export interface ProfileOptions {
-	name: string;
-	autoSync: boolean;
 	appearance: boolean;
 	app: boolean;
 	bookmarks: boolean;
@@ -38,12 +44,9 @@ export interface ProfileOptions {
 	corePlugins: boolean;
 	graph: boolean;
 	hotkeys: boolean;
-	modifiedAt: Date;
 }
 
 export const DEFAULT_PROFILE_OPTIONS: ProfileOptions = {
-	name: '',
-	autoSync: true,
 	appearance: true,
 	app: true,
 	bookmarks: true,
@@ -52,17 +55,41 @@ export const DEFAULT_PROFILE_OPTIONS: ProfileOptions = {
 	corePlugins: true,
 	graph: true,
 	hotkeys: true,
+}
+
+export const NONE_PROFILE_OPTIONS: ProfileOptions = {
+	appearance: false,
+	app: false,
+	bookmarks: false,
+	communityPlugins: false,
+	corePlugins: false,
+	graph: false,
+	hotkeys: false,
+}
+
+export interface ProfileSettings extends ProfileOptions {
+	name: string;
+	autoSync: boolean;
+	modifiedAt: Date;
+}
+
+export const DEFAULT_PROFILE_SETTINGS: ProfileSettings = {
+	...DEFAULT_PROFILE_OPTIONS,
+	name: '',
+	autoSync: true,
 	modifiedAt: new Date(),
 }
 
-type ProfileOptionsMap = {
-	[key in keyof ProfileOptions]: {
+
+
+type ProfileSettingsMap = {
+	[key in keyof ProfileSettings]: {
 		// Display name of the setting
 		name: string;
 		// Description text of the setting
 		description: string;
 		// The setting this is the Advanced option.
-		advanced?: keyof ProfileOptions;
+		advanced?: keyof ProfileSettings;
 		// Files/Paths there get synced with this option. 
 		file?: string | string[];
 		// Files/Paths there are ignored for sync
@@ -71,7 +98,7 @@ type ProfileOptionsMap = {
 };
 
 
-export const PROFILE_OPTIONS_MAP: ProfileOptionsMap = {
+export const PROFILE_SETTINGS_MAP: ProfileSettingsMap = {
 	name: {
 		name: 'Name',
 		description: 'Name of this profile.',

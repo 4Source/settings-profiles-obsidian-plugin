@@ -103,8 +103,16 @@ To switch to other settings profile or create a new one.
 Displays the current settings profile.
 ## Settings profiles: Save current profile
 Save the settings of current profile.
+## Settings profiles: Save current profile partially
+Save only a part of the settings to the current profile. Lets you select the options you would like to save.
+## Settings profiles: Save to profile partially
+Save only a part of the settings to a selected profile. Lets you select the options you would like to save.
+## Settings profiles: Save to profile
+Save the current settings to a selected profile. This will override the settings in the profile.
 ## Settings profiles: Reload current profile
 Load the settings of current profile from files.
+## Settings profiles: Load from profile partially
+Load settings from a selected profile to the current, it could be the same ore different profile than current.
 ## Settings profiles: Update profile status
 Updates the UI elements.
 
@@ -119,7 +127,7 @@ You can create an [issue](https://github.com/4Source/SettingsProfiles-Obsidian-P
 
 Or instead create a [pull request](https://github.com/4Source/SettingsProfiles-Obsidian-Plugin/pulls) to contribute a bug fix or improvement for this plugin.
 
-*Not a developer* but still want to help? You can help with testing. Either you test the current version for possible problems or, if there are currently any, you can also test [pre-releases (alpha/beta)](https://github.com/4Source/settings-profiles-obsidian-plugin/releases). This can be easily accomplished if you install [VARE](https://obsidian.md/plugins?id=vare). Any version of this plugin must be installed. Then simply go to VARE's Settings tab and select the version you want to test from the drop-down menu. You could also add this plugin manually just ![plus](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/663a0bd6-53f9-4da3-b0ab-33e30eae3029)``Add unlisted plugin`` and enter ``4Source`` and ``settings-profiles-obsidian-plugin``. If you found a bug or unexpected behavior create an [issue](https://github.com/4Source/SettingsProfiles-Obsidian-Plugin/issues) with the version you have tested. Before creating an issue, make sure you know how to reproduce the bug. If there is already an issue for the bug you found that is still open but you have additional information, add it to the issue.
+*Not a developer* but still want to help? You can help with testing. Either you test the current version for possible problems or, if there are currently any, you can also test [pre-releases (alpha/beta)](https://github.com/4Source/settings-profiles-obsidian-plugin/releases). This can be easily accomplished if you install [VARE](https://obsidian.md/plugins?id=vare). Any version of this plugin must be installed. Then simply go to VARE's Settings tab and select the version you want to test from the drop-down menu. You could also add this plugin manually just ![plus](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/663a0bd6-53f9-4da3-b0ab-33e30eae3029)``Add unlisted plugin`` and enter ``4Source`` and ``settings-profiles-obsidian-plugin``. If you found a bug or unexpected behavior create an [issue](https://github.com/4Source/settings-profiles-obsidian-plugin/issues) with the version you have tested. Before creating an issue, make sure you know how to reproduce the bug. If there is already an issue for the bug you found that is still open but you have additional information, add it to the issue.
 
 For more info see [CONTRIBUTING](https://github.com/4Source/settings-profiles-obsidian-plugin/blob/master/.github/CONTRIBUTING.md)
 

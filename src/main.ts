@@ -2,13 +2,17 @@ import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
-import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileSettings, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_SETTINGS, ProfileOptions, NONE_PROFILE_OPTIONS } from './settings/SettingsInterface';
+import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileSettings, loadProfilesSettings, saveProfileSettings } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
-import { DialogModal } from './modals/DialogModal';
 import PluginExtended from './core/PluginExtended';
 import { ICON_CURRENT_PROFILE, ICON_NO_CURRENT_PROFILE, ICON_UNLOADED_PROFILE, ICON_UNSAVED_PROFILE } from './constants';
+import { registerCommands } from './Commands';
+import { ReloadDialogModal } from './modals/ReloadDialogModal';
+import { ProfileSaveBeforeDialogModal } from './modals/ProfileSaveBeforeDialogModal';
+import { ProfileSaveDialogModal } from './modals/ProfileSaveDialogModal';
+import { registerCustomIcons } from './Icons';
 
 export default class SettingsProfilesPlugin extends PluginExtended {
 	private vaultSettings: VaultSettings;
@@ -21,6 +25,22 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
+
+		// Select default profile if no profile selected
+		const currentProfile = this.getCurrentProfile();
+		const defaultProfile = this.getDefaultProfile();
+		if (!currentProfile && defaultProfile) {
+			// Load default profile
+			await this.loadProfileSettings(defaultProfile);
+			this.updateCurrentProfile(defaultProfile);
+			await this.saveSettings();
+			new ReloadDialogModal(this, {
+				onSubmit: async () => {
+					// Save Settings
+					await this.saveSettings();
+				},
+			}).open();
+		}
 
 		// Add settings change listener
 		/**@todo watch didn't support recursive on Linux */
@@ -48,85 +68,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}, this.getUiRefreshInterval()));
 		}
 
-		// Command to Switch between profiles
-		this.addCommand({
-			id: "open-profile-switcher",
-			name: "Open profile switcher",
-			callback: () => {
-				// Open new profile switcher modal to switch or create a new profile
-				new ProfileSwitcherModal(this.app, this).open();
-			}
-		});
+		registerCustomIcons();
 
-		// Command to Show current profile
-		this.addCommand({
-			id: "current-profile",
-			name: "Show current profile",
-			callback: () => {
-				new Notice(`Current profile: ${this.getCurrentProfile()?.name}`);
-			}
-		});
-
-		// Command to save current profile
-		this.addCommand({
-			id: "save-current-profile",
-			name: "Save current profile",
-			callback: () => {
-				this.refreshProfilesList();
-				const profile = this.getCurrentProfile();
-				if (profile) {
-					this.saveProfileSettings(profile)
-						.then(() => {
-							new Notice('Saved profile successfully.');
-						})
-						.catch((e) => {
-							new Notice('Failed to save profile!');
-							(e as Error).message = `Failed to handle command! CommandId: save-current-profile Profile: ${profile}` + (e as Error).message;
-							console.error(e);
-						})
-				}
-			}
-		});
-
-		// Command to load current profile
-		this.addCommand({
-			id: "load-current-profile",
-			name: "Reload current profile",
-			callback: () => {
-				this.refreshProfilesList();
-				const profile = this.getCurrentProfile();
-				if (profile) {
-					this.loadProfileSettings(profile)
-						.then((profile) => {
-							this.updateCurrentProfile(profile);
-							// Reload obsidian so changed settings can take effect
-							new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-								// Save Settings
-								this.saveSettings().then(() => {
-									// @ts-ignore
-									this.app.commands.executeCommandById("app:reload");
-								});
-							}, () => {
-								this.saveSettings();
-								new Notice('Need to reload obsidian!', 5000);
-							}, 'Reload')
-								.open();
-						});
-
-				}
-			}
-		});
-
-		// Command to update profile status 
-		if (this.getUiUpdate()) {
-			this.addCommand({
-				id: "update-profile-status",
-				name: "Update profile status",
-				callback: () => {
-					this.updateUI();
-				}
-			});
-		}
+		registerCommands(this);
 	}
 
 	onunload() {
@@ -146,7 +90,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (!this.areSettingsSaved(profile)) {
 				// Save settings to profile
 				if (profile.autoSync) {
-					this.saveProfileSettings(profile);
+					new ProfileSaveDialogModal(this, profile).open();
 				}
 			}
 		}
@@ -207,26 +151,18 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 								.then((profile) => {
 									this.updateCurrentProfile(profile);
 									// Reload obsidian so changed settings can take effect
-									new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-										// Save Settings
-										this.saveSettings().then(() => {
-											// @ts-ignore
-											this.app.commands.executeCommandById("app:reload");
-										});
-									}, () => {
-										this.saveSettings();
-										new Notice('Need to reload obsidian!', 5000);
-									}, 'Reload')
-										.open();
+									new ReloadDialogModal(this, {
+										onSubmit: async () => {
+											// Save Settings
+											await this.saveSettings();
+										},
+									}).open();
 								});
 						}
 					}
 					else {
 						// Profile is not saved
-						this.saveProfileSettings(profile)
-							.then(() => {
-								new Notice('Saved profile successfully.');
-							});
+						new ProfileSaveDialogModal(this, profile).open();
 					}
 				} catch (e) {
 					(e as Error).message = 'Failed to handle status bar callback! ' + (e as Error).message;
@@ -244,9 +180,8 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Load vault settings from file if exist or create default
 			this.vaultSettings = Object.assign({}, DEFAULT_VAULT_SETTINGS, await this.loadData());
 
-			// Load global settings from profiles path
-			this.globalSettings = DEFAULT_GLOBAL_SETTINGS;
-			this.refreshProfilesList();
+			// Load global settings 
+			this.globalSettings = Object.assign({}, DEFAULT_GLOBAL_SETTINGS, JSON.parse(localStorage.getItem("settings-profiles:globalSettings") || "{}"), { profilesList: loadProfilesSettings(this.getAbsolutProfilesPath()) });
 		} catch (e) {
 			(e as Error).message = 'Failed to load settings! ' + (e as Error).message + ` VaultSettings: ${JSON.stringify(this.vaultSettings)} GlobalSettings: ${JSON.stringify(this.globalSettings)}`;
 			console.error(e);
@@ -267,6 +202,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Save vault settings
 			await this.saveData(this.vaultSettings);
+
+			// Save global settings 
+			localStorage.setItem("settings-profiles:globalSettings", JSON.stringify({ defaultProfile: this.globalSettings.defaultProfile }));
 		} catch (e) {
 			(e as Error).message = 'Failed to save settings! ' + (e as Error).message + ` VaultSettings: ${JSON.stringify(this.vaultSettings)}`;
 			console.error(e);
@@ -278,7 +216,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check
 	 * @returns `ture` if at least one file has changed and is newer than the saved profile
 	 */
-	areSettingsChanged(profile: ProfileOptions): boolean {
+	areSettingsChanged(profile: ProfileSettings): boolean {
 		try {
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
 			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
@@ -309,7 +247,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check
 	 * @returns `ture` if at no file has changed or all are older than the saved profile
 	 */
-	areSettingsSaved(profile: ProfileOptions): boolean {
+	areSettingsSaved(profile: ProfileSettings): boolean {
 		try {
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
 			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
@@ -339,14 +277,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Load settings and data for the given profile
 	 * @param profile The profile 
 	 */
-	async loadProfileSettings(profile: ProfileOptions) {
+	async loadProfileSettings(profile: ProfileSettings): Promise<ProfileSettings | undefined> {
 		try {
 			// Load profile settings
 			await this.loadProfile(profile.name);
 			// Load profile data
 			this.getProfilesList().forEach((value, index, array) => {
 				if (value.name === profile.name) {
-					array[index] = loadProfileOptions(profile, this.getAbsolutProfilesPath()) || value;
+					array[index] = loadProfileSettings(profile, this.getAbsolutProfilesPath()) || value;
 				}
 			});
 			return this.getProfile(profile.name);
@@ -356,16 +294,33 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 	}
 
+	async loadPartiallyProfileSettings(profile: ProfileSettings, selection: (keyof ProfileOptions)[]): Promise<ProfileSettings | undefined> {
+		try {
+			// Load profile settings
+			await this.loadProfilePartially(profile.name, selection);
+			// Load profile data
+			this.getProfilesList().forEach((value, index, array) => {
+				if (value.name === profile.name) {
+					array[index] = loadProfileSettings(profile, this.getAbsolutProfilesPath()) || value;
+				}
+			});
+			return this.getProfile(profile.name);
+		} catch (e) {
+			(e as Error).message = 'Failed to load partially profile settings! ' + (e as Error).message + ` Profile: ${JSON.stringify(profile)} GlobalSettings: ${JSON.stringify(this.globalSettings)} ProfileOptions: ${selection}`;
+			console.error(e);
+		}
+	}
+
 	/**
 	 * Save settings and data for the given profile
 	 * @param profile The profile 
 	 */
-	async saveProfileSettings(profile: ProfileOptions) {
+	async saveProfileSettings(profile: ProfileSettings) {
 		try {
 			// Save profile settings
-			await this.saveProfile(profile.name);
+			await this.saveProfile(profile);
 			// Save profile data
-			await saveProfileOptions(profile, this.getAbsolutProfilesPath())
+			await saveProfileSettings(profile, this.getAbsolutProfilesPath())
 			// Reload profiles list from files
 			this.refreshProfilesList();
 
@@ -389,11 +344,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (profileName === "") {
 				// Open dialog save current profile
 				if (currentProfile) {
-					new DialogModal(this.app, 'Save befor deselect profile?', 'Otherwise, unsaved changes will be lost.', async () => {
-						// Save current profile 
-						await this.saveProfileSettings(currentProfile);
-					}, async () => { }, 'Save', false, 'Do not Save')
-						.open();
+					new ProfileSaveBeforeDialogModal(this, currentProfile).open();
 				}
 				this.updateCurrentProfile(undefined);
 				await this.saveSettings();
@@ -415,7 +366,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Save current profile 
 			if (currentProfile?.autoSync) {
-				await this.saveProfileSettings(currentProfile);
+				await new ProfileSaveBeforeDialogModal(this, currentProfile).open();
 			}
 
 			// Load new profile
@@ -424,18 +375,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.updateCurrentProfile(profile);
 				});
 
-			// Open dialog obsidain should be reloaded
-			new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-				// Save Settings
-				this.saveSettings().then(() => {
-					// @ts-ignore
-					this.app.commands.executeCommandById("app:reload");
-				});
-			}, async () => {
-				await this.saveSettings();
-				new Notice('Need to reload obsidian!', 5000);
-			}, 'Reload')
-				.open();
+			// Reload obsidian so changed settings can take effect
+			new ReloadDialogModal(this, {
+				onSubmit: async () => {
+					// Save Settings
+					await this.saveSettings();
+				},
+			}).open();
 		} catch (e) {
 			this.updateCurrentProfile(undefined);
 			new Notice(`Failed to switch to ${profileName} profile!`);
@@ -446,9 +392,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	/**
 	 * Create a new profile with the current settings 
-	 * @param profile The profile options the profile should be created with
+	 * @param profile The profile settings the profile should be created with
 	 */
-	async createProfile(profile: ProfileOptions) {
+	async createProfile(profile: ProfileSettings) {
 		try {
 			// Add profile to profileList
 			this.appendProfilesList(profile);
@@ -473,24 +419,24 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	/**
 	 * Edit the profile with the given profile name to be profileSettings
 	 * @param profileName The profile name to edit
-	 * @param profileOptions The new profile options
+	 * @param profileSettings The new profile settings
 	 */
-	async editProfile(profileName: string, profileOptions: ProfileOptions) {
+	async editProfile(profileName: string, profileSettings: ProfileSettings) {
 		try {
 			const profile = this.getProfile(profileName);
 
 			let renamed = false;
 
-			Object.keys(profileOptions).forEach(key => {
-				const objKey = key as keyof ProfileOptions;
+			Object.keys(profileSettings).forEach(key => {
+				const objKey = key as keyof ProfileSettings;
 
 				// Name changed
-				if (objKey === 'name' && profileOptions.name !== profileName) {
+				if (objKey === 'name' && profileSettings.name !== profileName) {
 					renamed = true;
 				}
 
 				// Values changed
-				const value = profileOptions[objKey];
+				const value = profileSettings[objKey];
 				if (typeof value === 'boolean') {
 					(profile[objKey] as boolean) = value;
 				}
@@ -498,8 +444,10 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Profile renamed
 			if (renamed) {
-				await this.createProfile(profileOptions);
-				await this.switchProfile(profileOptions.name);
+				await this.createProfile(profileSettings);
+				if (this.getCurrentProfile()?.name === profileName) {
+					await this.switchProfile(profileSettings.name);
+				}
 				await this.removeProfile(profileName);
 			}
 			else {
@@ -507,7 +455,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		} catch (e) {
 			new Notice(`Failed to edit ${profileName} profile!`);
-			(e as Error).message = 'Failed to edit profile! ' + (e as Error).message + ` ProfileName: ${profileName} ProfileOptions: ${JSON.stringify(profileOptions)}`;
+			(e as Error).message = 'Failed to edit profile! ' + (e as Error).message + ` ProfileName: ${profileName} ProfileSettings: ${JSON.stringify(profileSettings)}`;
 			console.error(e);
 		}
 	}
@@ -538,15 +486,13 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	/**
 	 * Save the profile settings
-	 * @param profileName The name of the profile to load.
+	 * @param profileName The profile to save.
 	 * @todo Update profile data/settings only when changed 
 	 */
-	private async saveProfile(profileName: string) {
+	private async saveProfile(profile: ProfileSettings) {
 		try {
-			let profile = this.getProfile(profileName);
-
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getAbsolutProfilesPath(), profileName];
+			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
 			let changed = false;
 
 			// Check target dir exist
@@ -574,17 +520,17 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 		}
 		catch (e) {
-			new Notice(`Failed to save ${profileName} profile!`);
-			(e as Error).message = 'Failed to save profile! ' + (e as Error).message + ` ProfileName: ${profileName}`;
+			new Notice(`Failed to save ${profile.name} profile!`);
+			(e as Error).message = 'Failed to save profile! ' + (e as Error).message + ` ProfileName: ${profile.name}`;
 			console.error(e);
 		}
 	}
 
 	/**
-	 * Load the profile settings
+	 * Load the settings stored in the profile
 	 * @param profileName The name of the profile to load.
 	 */
-	private async loadProfile(profileName: string) {
+	private async loadProfile(profileName: string): Promise<void> {
 		try {
 			const profile = this.getProfile(profileName);
 
@@ -607,12 +553,49 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					copyFile([...sourcePath, file], [...targetPath, file])
 				}
 			});
-
-			// Change active profile
-			this.updateCurrentProfile(profile);
 		} catch (e) {
 			new Notice(`Failed to load ${profileName} profile!`);
 			(e as Error).message = 'Failed to load profile! ' + (e as Error).message + ` ProfileName: ${profileName}`;
+			console.error(e);
+		}
+	}
+
+	/**
+	 * Load the settings stored in the profile 
+	 * @param profileName The name of the profile to load from
+	 * @param selection The options of the profile to load
+	 */
+	private async loadProfilePartially(profileName: string, selection: (keyof ProfileOptions)[]): Promise<void> {
+		try {
+			const profile: ProfileSettings = { ...this.getProfile(profileName), ...NONE_PROFILE_OPTIONS };
+
+			// Only enable selection
+			selection.forEach(option => {
+				profile[option] = true;
+			});
+
+			const sourcePath = [this.getAbsolutProfilesPath(), profileName];
+			const targetPath = [getVaultPath(), this.app.vault.configDir];
+
+			// Check target dir exist
+			if (!existsSync(join(...sourcePath))) {
+				throw Error(`Source path do not exist! SourcePath: ${join(...sourcePath)}`);
+			}
+
+			let filesList = getConfigFilesList(profile);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = getFilesWithoutPlaceholder(filesList, sourcePath);
+			filesList = filterIgnoreFilesList(filesList, profile);
+			filesList = filterChangedFiles(filesList, sourcePath, targetPath);
+
+			filesList.forEach(file => {
+				if (existsSync(join(...sourcePath, file))) {
+					copyFile([...sourcePath, file], [...targetPath, file])
+				}
+			});
+		} catch (e) {
+			new Notice(`Failed to partially load ${profileName} profile!`);
+			(e as Error).message = 'Failed to partially load profile! ' + (e as Error).message + ` ProfileName: ${profileName} ProfileOptions: ${selection}`;
 			console.error(e);
 		}
 	}
@@ -659,14 +642,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Reloads the profiles list from files.
 	 */
 	refreshProfilesList() {
-		this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
+		this.globalSettings.profilesList = loadProfilesSettings(this.getAbsolutProfilesPath());
 	}
 
 	/**
 	 * Appends the profile list with new profile
 	 * @param profile The profile to add to the profiles list
 	 */
-	appendProfilesList(profile: ProfileOptions) {
+	appendProfilesList(profile: ProfileSettings) {
 		if (!this.isValidProfile(profile)) {
 			throw Error(`No valid profile received! Profile: ${JSON.stringify(profile)}`);
 		}
@@ -682,7 +665,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	/**
 	 * Returns the profiles list currently in the settings
 	 */
-	getProfilesList(): ProfileOptions[] {
+	getProfilesList(): ProfileSettings[] {
 		return this.globalSettings.profilesList;
 	}
 
@@ -690,7 +673,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Set the profiles list in current settings
 	 * @param profilesList What the profiles list should be set to
 	 */
-	setProfilesList(profilesList: ProfileOptions[]) {
+	setProfilesList(profilesList: ProfileSettings[]) {
 		this.globalSettings.profilesList = profilesList;
 	}
 
@@ -758,12 +741,47 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 	}
 
+	getHideProfileSaveDialog(): boolean {
+		return this.vaultSettings.hideProfileSaveDialog;
+	}
+	setHideProfileSaveDialog(value: boolean) {
+		this.vaultSettings.hideProfileSaveDialog = value;
+	}
+	getHideProfileRemoveDialog(): boolean {
+		return this.vaultSettings.hideProfileRemoveDialog;
+	}
+	setHideProfileRemoveDialog(value: boolean) {
+		this.vaultSettings.hideProfileRemoveDialog = value;
+	}
+	getHideReloadDialog(): boolean {
+		return this.vaultSettings.hideReloadDialog;
+	}
+	setHideReloadDialog(value: boolean) {
+		this.vaultSettings.hideReloadDialog = value;
+	}
+
+	getDefaultProfile(): ProfileSettings | undefined {
+		const defaultProfile = this.globalSettings.defaultProfile;
+		if (!defaultProfile || defaultProfile === "") {
+			return undefined;
+		}
+		return this.getProfile(defaultProfile);
+	}
+	setDefaultProfile(profile: ProfileSettings | undefined) {
+		if (profile) {
+			this.globalSettings.defaultProfile = profile.name;
+		}
+		else {
+			this.globalSettings.defaultProfile = "";
+		}
+	}
+
 	/**
 	 * Gets the profile object
 	 * @param name The name of the profile
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getProfile(name: string): ProfileOptions {
+	getProfile(name: string): ProfileSettings {
 		const profile = this.getProfilesList().find(profile => profile.name === name);
 		if (!profile) {
 			throw Error(`Profile does not exist! ProfileName: ${name} ProfilesList: ${JSON.stringify(this.getProfilesList())}`);
@@ -779,7 +797,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Gets the currently enabeled profile.
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
-	getCurrentProfile(): ProfileOptions | undefined {
+	getCurrentProfile(): ProfileSettings | undefined {
 		const name = this.vaultSettings.activeProfile?.name;
 		if (!name) {
 			return;
@@ -805,7 +823,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * Updates the current profile to passed profile
 	 * @param profile The profile to update to 
 	 */
-	updateCurrentProfile(profile: ProfileOptions | undefined) {
+	updateCurrentProfile(profile: ProfileSettings | undefined) {
 		if (!profile) {
 			this.vaultSettings.activeProfile = {};
 			return;
@@ -818,7 +836,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check 
 	 * @returns Is enabled profile
 	 */
-	isEnabled(profile: ProfileOptions): boolean {
+	isEnabled(profile: ProfileSettings): boolean {
 		return this.vaultSettings.activeProfile?.name === profile.name;
 	}
 
@@ -827,20 +845,20 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check
 	 * @returns True if profile contains all requiered properties
 	 */
-	isValidProfile(profile: ProfileOptions): boolean {
+	isValidProfile(profile: ProfileSettings): boolean {
 		let result = true;
-		for (const key in DEFAULT_PROFILE_OPTIONS) {
+		for (const key in DEFAULT_PROFILE_SETTINGS) {
 			if (!profile.hasOwnProperty(key)) {
 				console.warn(`Missing property in profile! Property: ${key} Profile: ${JSON.stringify(profile)}`);
 				result = false;
 				break;
 			}
-			else if (typeof profile[key as keyof ProfileOptions] !== typeof DEFAULT_PROFILE_OPTIONS[key as keyof ProfileOptions]) {
-				console.warn(`Wrong type of property in profile! Property: ${key} Type: ${typeof DEFAULT_PROFILE_OPTIONS[key as keyof ProfileOptions]} Profile: ${JSON.stringify(profile)}`);
+			else if (typeof profile[key as keyof ProfileSettings] !== typeof DEFAULT_PROFILE_SETTINGS[key as keyof ProfileSettings]) {
+				console.warn(`Wrong type of property in profile! Property: ${key} Type: ${typeof DEFAULT_PROFILE_SETTINGS[key as keyof ProfileSettings]} Profile: ${JSON.stringify(profile)}`);
 				result = false;
 				break;
 			}
-			else if (profile[key as keyof ProfileOptions] === undefined || profile[key as keyof ProfileOptions] === null) {
+			else if (profile[key as keyof ProfileSettings] === undefined || profile[key as keyof ProfileSettings] === null) {
 				console.warn(`Undefined property in profile! Property: ${key} Profile: ${JSON.stringify(profile)}`)
 				result = false;
 				break;
@@ -854,14 +872,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check 
 	 * @returns Is loaded profile newer/equal than saved profile
 	 */
-	isProfileUpToDate(profile: ProfileOptions): boolean {
-		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
+	isProfileUpToDate(profile: ProfileSettings): boolean {
+		const profileSettings = loadProfileSettings(profile, this.getAbsolutProfilesPath());
 
-		if (!profileOptions || !profileOptions.modifiedAt) {
+		if (!profileSettings || !profileSettings.modifiedAt) {
 			return true;
 		}
 
-		if (new Date(profile.modifiedAt).getTime() >= new Date(profileOptions.modifiedAt).getTime()) {
+		if (new Date(profile.modifiedAt).getTime() >= new Date(profileSettings.modifiedAt).getTime()) {
 			return true;
 		}
 
@@ -873,14 +891,14 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @param profile The profile to check 
 	 * @returns Is saved profile newer/equal than saved profile
 	 */
-	isProfileSaved(profile: ProfileOptions): boolean {
-		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
+	isProfileSaved(profile: ProfileSettings): boolean {
+		const profileSettings = loadProfileSettings(profile, this.getAbsolutProfilesPath());
 
-		if (!profileOptions || !profileOptions.modifiedAt) {
+		if (!profileSettings || !profileSettings.modifiedAt) {
 			return false;
 		}
 
-		if (new Date(profile.modifiedAt).getTime() <= new Date(profileOptions.modifiedAt).getTime()) {
+		if (new Date(profile.modifiedAt).getTime() <= new Date(profileSettings.modifiedAt).getTime()) {
 			return true;
 		}
 

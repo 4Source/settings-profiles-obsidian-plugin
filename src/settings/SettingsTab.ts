@@ -1,10 +1,11 @@
-import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
+import { App, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
-import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
-import { DialogModal } from 'src/modals/DialogModal';
-import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
+import { DEFAULT_PROFILE_SETTINGS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
+import { ProfileSettingsModal } from '../modals/ProfileSettingsModal';
+import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_SETTINGS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET, ICON_PROFILE_DEFAULT, ICON_PROFILE_DEFAULT_SELECTED } from 'src/constants';
 import { isValidPath } from 'src/util/FileSystem';
+import { ProfileSaveDialogModal } from 'src/modals/ProfileSaveDialogModal';
+import { ProfileRemoveDialogModal } from 'src/modals/ProfileRemoveDialogModal';
 
 export class SettingsProfilesSettingTab extends PluginSettingTab {
 	plugin: SettingsProfilesPlugin;
@@ -274,6 +275,75 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.sliderEl.setAttr('id', 'update-delay'))
 		}
 
+		new Setting(containerEl)
+			.setName('Profile save dialog')
+			.setDesc('Hides the dialog message if enabeled')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.getHideProfileSaveDialog())
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.getHideProfileSaveDialog()) {
+							this.plugin.setHideProfileSaveDialog(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change profile save dialog! ' + (e as Error).message;
+						console.error(e);
+					}
+				}));
+
+		new Setting(containerEl)
+			.setName('Profile remove dialog')
+			.setDesc('Hides the dialog message if enabeled')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.getHideProfileRemoveDialog())
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.getHideProfileRemoveDialog()) {
+							this.plugin.setHideProfileRemoveDialog(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change profile remove dialog! ' + (e as Error).message;
+						console.error(e);
+					}
+				}));
+
+		new Setting(containerEl)
+			.setName('Reload dialog')
+			.setDesc('Hides the dialog message if enabeled')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.getHideReloadDialog())
+				.onChange(value => {
+					try {
+						// Value is changed 
+						if (value !== this.plugin.getHideReloadDialog()) {
+							this.plugin.setHideReloadDialog(value);
+
+							// Save settins
+							this.plugin.saveSettings()
+								.then(() => {
+									this.display();
+								});
+						}
+					} catch (e) {
+						(e as Error).message = 'Failed to change reload dialog! ' + (e as Error).message;
+						console.error(e);
+					}
+				}));
+
 		// Heading for Profiles
 		new Setting(containerEl)
 			.setHeading()
@@ -282,7 +352,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setIcon(ICON_ADD_PROFILE)
 				.setTooltip('Add new profile')
 				.onClick(() => {
-					new ProfileOptionsModal(this.app, this.plugin, DEFAULT_PROFILE_OPTIONS, async (result) => {
+					new ProfileSettingsModal(this.plugin, DEFAULT_PROFILE_SETTINGS, async (result) => {
 						this.plugin.createProfile(result)
 							.then(() => {
 								this.display();
@@ -303,18 +373,36 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
 				.addExtraButton(button => button
-					.setIcon(ICON_PROFILE_OPTIONS)
-					.setTooltip('Options')
+					.setIcon(ICON_PROFILE_SETTINGS)
+					.setTooltip('Profile settings')
 					.onClick(() => {
 						this.plugin.refreshProfilesList();
 						const prevName = profile.name;
-						new ProfileOptionsModal(this.app, this.plugin, profile, async (result) => {
+						new ProfileSettingsModal(this.plugin, profile, async (result) => {
 							this.plugin.editProfile(prevName, result)
 								.then(() => {
 									this.display();
 								});
 						}).open();
 					}))
+				.addExtraButton(button => button
+					.setIcon(this.plugin.getDefaultProfile()?.name === profile.name ? ICON_PROFILE_DEFAULT_SELECTED : ICON_PROFILE_DEFAULT)
+					.setTooltip(this.plugin.getDefaultProfile()?.name === profile.name ? 'Unselect profile as default' : 'Select profile as default')
+					.onClick(() => {
+						if (this.plugin.getDefaultProfile()?.name !== profile.name) {
+							this.plugin.setDefaultProfile(profile);
+						}
+						else {
+							this.plugin.setDefaultProfile(undefined);
+						}
+
+						// Save settins
+						this.plugin.saveSettings()
+							.then(() => {
+								this.display();
+							});
+					})
+				)
 				// .addExtraButton(button => button
 				// 	.setIcon(ICON_PROFILE_ADD_HOTKEY)
 				// 	.setTooltip('Hotkeys')
@@ -325,24 +413,22 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.setIcon(ICON_PROFILE_REMOVE)
 					.setTooltip('Remove')
 					.onClick(async () => {
-						this.plugin.removeProfile(profile.name)
-							.then(() => {
+						new ProfileRemoveDialogModal(this.plugin, profile, {
+							onRemoved: () => {
 								this.display();
-							});
+							}
+						}).open();
 					}))
 				.addExtraButton(button => button
 					.setIcon(ICON_PROFILE_SAVE)
 					.setTooltip('Save settings to profile')
 					// .setDisabled(!this.plugin.areSettingsChanged(profile) || this.plugin.areSettingsSaved(profile))
 					.onClick(() => {
-						new DialogModal(this.app, 'Save current settings to profile?', 'You are about to overwrite the current settings of this profile. This cannot be undone.', async () => {
-							this.plugin.saveProfileSettings(profile)
-								.then(() => {
-									new Notice('Saved profile successfully.');
-									this.display();
-								});
-						}, async () => { }, "Override", true, "Cancel", false)
-							.open();
+						new ProfileSaveDialogModal(this.plugin, profile, {
+							onSaved: () => {
+								this.display();
+							}
+						}).open();
 					}))
 				.addExtraButton(button => button
 					.setIcon(this.plugin.isEnabled(profile) ? ICON_CURRENT_PROFILE : ICON_NOT_CURRENT_PROFILE)
