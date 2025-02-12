@@ -1,33 +1,40 @@
 .profiles-container {
-    padding-top: var(--size-4-4);
-    border-top: 1px solid var(--background-modifier-border);
+	padding-top: var(--size-4-4);
+	border-top: 1px solid var(--background-modifier-border);
 }
 
 .profile-enabled {
-    font-weight: bolder;
+	font-weight: bolder;
 }
 
 .setting-editor-extra-setting-button .is-disabled {
-    opacity: 0.5;
+	opacity: 0.5;
 }
 
-
 .clickable-icon.setting-editor-extra-setting-button.is-disabled:hover {
-    box-shadow: none;
-    background-color: transparent;
-    opacity: var(--icon-opacity);
+	box-shadow: none;
+	background-color: transparent;
+	opacity: var(--icon-opacity);
 }
 
 .clickable-icon.setting-editor-extra-setting-button.is-disabled:active {
-    box-shadow: none;
-    background-color: transparent;
-    color: var(--icon-color);
+	box-shadow: none;
+	background-color: transparent;
+	color: var(--icon-color);
 }
 
 .modal-buttons {
-    border-top: none;
+	border-top: none;
 }
 
 .status-bar-item.plugin-settings-profiles {
-    padding: 0 var(--size-2-2);
+	padding: 0 var(--size-2-2);
+}
+
+.mod-bad-input {
+	border-color: var(--text-error) !important;
+}
+
+.mod-bad-input:focus {
+	box-shadow: 0 0 0 2px var(--text-error) !important;
 }

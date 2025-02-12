@@ -10,20 +10,22 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 	profilesList: []
 }
 
-export type DeviceIds = Record<string, string>
+export type Device = Record<string, string>
 
 export interface VaultSettings {
-	profilesPath: string;
+	/** @deprecated since v0.6.0 now stored in devices with unique ID*/
+	profilesPath?: string;
 	activeProfile: Partial<ProfileOptions>;
 	profileUpdate: boolean;
 	profileUpdateDelay: number;
 	uiUpdate: boolean;
 	uiUpdateInterval: number;
-	devices?: DeviceIds;
+	devices: Device;
 }
 
+export const DEFAULT_PROFILE_PATH = normalize(join(xdg({ subdir: 'ObsidianPlugins' }).data, 'Profiles'));
+
 export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
-	profilesPath: normalize(join(xdg({ subdir: 'ObsidianPlugins' }).data, 'Profiles')),
 	activeProfile: {},
 	profileUpdate: true,
 	profileUpdateDelay: 800,

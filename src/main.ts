@@ -2,7 +2,7 @@ import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS } from './settings/SettingsInterface';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS, DEFAULT_PROFILE_PATH } from './settings/SettingsInterface';
 import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
@@ -20,7 +20,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	async onload() {
 		await this.loadSettings();
-		await this.loadDeviceId();
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingsProfilesSettingTab(this.app, this));
@@ -621,51 +620,111 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Returns the path how its saved in settings to profiles. 
-	 * @returns 
+	 * Retrieves the profile path for the current device.
+	 * 
+	 * This function uses the machine ID to look up the associated profile path from the vault settings. 
+	 * If the profile path is missing, it attempts to use a deprecated path and updates the vault settings accordingly.
+	 * If neither the current nor deprecated paths are available, it creates a entry for current device with default profiles path.
+	 * 
+	 * @returns {string} The normalized profile path for the current device.
+	 * @throws {Error} If the device ID cannot be determined.
 	 */
 	getProfilesPath(): string {
-		return normalize(this.vaultSettings.profilesPath);
+		const deviceID = machineIdSync(false);
+		if (!deviceID || deviceID === "") {
+			throw Error("Failed to load device ID!");
+		}
+
+		const devicePath = this.vaultSettings.devices[deviceID];
+		if (!devicePath || devicePath === "") {
+			const deprecatedPath = this.vaultSettings.profilesPath;
+			if (deprecatedPath && deprecatedPath !== "") {
+				// Use deprecated path if available
+				this.vaultSettings.devices[deviceID] = deprecatedPath;
+				this.saveSettings();
+
+				return normalize(deprecatedPath);
+			}
+			else {
+				// No path found, using default profile path
+				console.warn(`No profile path stored for this device: ${deviceID} create entry with default!`);
+				this.vaultSettings.devices[deviceID] = DEFAULT_PROFILE_PATH;
+				this.saveSettings();
+
+				return normalize(DEFAULT_PROFILE_PATH);
+			}
+		}
+
+		return normalize(devicePath);
 	}
 
 	/**
-	 * Returns an absolut path to profiles.
+	 * Retrieves the absolute profile path for the current device.
+	 * 
+	 * This function ensures that the profile path returned is an absolute path. 
+	 * If the path is relative, it joins it with the vault path to convert it into an absolute path. 
+	 * It validates the resulting path is an valid path. 
+	 * 
+	 * @returns {string} The normalized absolute profile path for the current device.
+	 * @throws {Error} If the device ID cannot be determined.
+	 * @throws {Error} If no valid profiles path can be found.
 	 */
 	getAbsolutProfilesPath(): string {
-		let path = this.vaultSettings.profilesPath;
+		const relativePath = this.getProfilesPath();
+		let path = relativePath;
 
 		if (!isAbsolute(path)) {
 			path = join(getVaultPath(), path);
 		}
 
 		if (!isValidPath([path])) {
-			throw Error(`No valid profiles path could be found! Path: ${path} ProfilesPath: ${this.vaultSettings.profilesPath}`);
+			throw Error(`No valid profiles path could be found! Path: ${path} ProfilesPath: ${relativePath}`);
 		}
+
 		return normalize(path);
 	}
 
 	/**
-	 * Sets the profiles path in the settings
-	 * @param path Path the profiles path should be set to
+	 * Sets the profile path in the vault settings for the current device ID.
+	 * 
+	 * This function retrieves the device ID and updates its associated profile 
+	 * path in the vault settings. If the provided path is invalid (empty after normalization), 
+	 * an error is thrown, and the path is not updated.
+	 * 
+	 * @param {string} path - The new profile path to be set for the current device.
+	 * 
+	 * @throws {Error} If the device ID cannot be determined.
+	 * @throws {Error} If the provided path is invalid (empty after normalization).
 	 */
 	setProfilePath(path: string) {
+		const deviceID = machineIdSync(false);
+		if (!deviceID || deviceID === "") {
+			throw Error("Failed to load device ID!");
+		}
+
 		path = path.trim();
 		if (path !== '') {
-			this.vaultSettings.profilesPath = normalize(path)
-			this.saveDeviceId(path).then();
+			this.vaultSettings.devices[deviceID] = normalize(path);
+		} else {
+			throw Error("Profile path failed to update. The provided path is invalid!");
 		}
-		else {
-			this.vaultSettings.profilesPath = DEFAULT_VAULT_SETTINGS.profilesPath;
-			this.saveDeviceId(DEFAULT_VAULT_SETTINGS.profilesPath).then();
-		}
-		
 	}
 
 	/**
 	 * Reloads the profiles list from files.
 	 */
 	refreshProfilesList() {
-		this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
+		try {
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
+			return;
+		} catch (e) {
+			console.warn(`Refresh profiles list failed with stored values because of: ${e.message}`);
+		}
+		try {
+			this.globalSettings.profilesList = loadProfilesOptions(DEFAULT_PROFILE_PATH);
+		} catch (e) {
+			console.error(`Refresh profiles list failed with default path because of: ${e.message}`);
+		}
 	}
 
 	/**
@@ -891,35 +950,6 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 
 		return this.areSettingsSaved(profile);
-	}
-	
-	/**
-	 * Identify strictly the device using the machine id by node-machine-id
-	 * Load the saved path into the profilePath if exists, else create it and save it
-	 */
-	async loadDeviceId() {
-		const deviceId = machineIdSync(true);
-		if (!deviceId) {
-			throw Error('Failed to load device id!');
-		}
-		const saved = this.vaultSettings.devices?.[deviceId];
-		if (saved) this.vaultSettings.profilesPath = saved;
-		 else this.vaultSettings.devices = { [deviceId]: this.vaultSettings.profilesPath };
-		await this.saveSettings();
-	}
-	
-	/**
-	 * Update the devicePath when the profilePath is changed
-	 * @param newPath {string} The new path to be saved
-	 */
-	async saveDeviceId(newPath: string) {
-		const deviceId = machineIdSync(true);
-		if (!deviceId) {
-			throw Error('Failed to load device id!');
-		}
-		if (this.vaultSettings.devices) this.vaultSettings.devices[deviceId] = newPath;
-		else this.vaultSettings.devices = { [deviceId]: newPath };
-		await this.saveSettings();
 	}
 }
 
