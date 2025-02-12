@@ -1,6 +1,6 @@
 import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_OPTIONS, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
+import { DEFAULT_PROFILE_OPTIONS, DEFAULT_PROFILE_PATH, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
 import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
@@ -36,9 +36,9 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							throw Error("Input element not found! #profile-path");
 						}
 
-						inputEl.value = DEFAULT_VAULT_SETTINGS.profilesPath;
+						inputEl.value = DEFAULT_PROFILE_PATH;
 
-						if (DEFAULT_VAULT_SETTINGS.profilesPath === this.plugin.getProfilesPath()) {
+						if (DEFAULT_PROFILE_PATH === this.plugin.getProfilesPath()) {
 							this.display();
 							return;
 						}
