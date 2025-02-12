@@ -632,7 +632,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	getProfilesPath(): string {
 		const deviceID = machineIdSync(false);
 		if (!deviceID || deviceID === "") {
-			throw new Error("Failed to load device ID!");
+			throw Error("Failed to load device ID!");
 		}
 
 		const devicePath = this.vaultSettings.devices[deviceID];
@@ -667,8 +667,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * 
 	 * @returns {string} The normalized absolute profile path for the current device.
 	 * @throws {Error} If the device ID cannot be determined.
-	 * @throws {Error} If no profile path is stored for the device.
-	 * @throws {Error} If no valid profiles path can be found after resolving.
+	 * @throws {Error} If no valid profiles path can be found.
 	 */
 	getAbsolutProfilesPath(): string {
 		const relativePath = this.getProfilesPath();
@@ -679,15 +678,23 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		}
 
 		if (!isValidPath([path])) {
-			throw new Error(`No valid profiles path could be found! Path: ${path} ProfilesPath: ${relativePath}`);
+			throw Error(`No valid profiles path could be found! Path: ${path} ProfilesPath: ${relativePath}`);
 		}
 
 		return normalize(path);
 	}
 
 	/**
-	 * Sets the profiles path in the settings for the current device ID 
-	 * @param path Path the profiles path should be set to
+	 * Sets the profile path in the vault settings for the current device ID.
+	 * 
+	 * This function retrieves the device ID and updates its associated profile 
+	 * path in the vault settings. If the provided path is invalid (empty after normalization), 
+	 * an error is thrown, and the path is not updated.
+	 * 
+	 * @param {string} path - The new profile path to be set for the current device.
+	 * 
+	 * @throws {Error} If the device ID cannot be determined.
+	 * @throws {Error} If the provided path is invalid (empty after normalization).
 	 */
 	setProfilePath(path: string) {
 		const deviceID = machineIdSync(false);
@@ -695,12 +702,11 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			throw Error("Failed to load device ID!");
 		}
 
-		path = normalize(path.trim()).trim();
+		path = path.trim();
 		if (path !== '') {
 			this.vaultSettings.devices[deviceID] = normalize(path);
-		}
-		else {
-			console.error(`Profile path failed to update path is invalid!`)
+		} else {
+			throw Error("Profile path failed to update. The provided path is invalid!");
 		}
 	}
 

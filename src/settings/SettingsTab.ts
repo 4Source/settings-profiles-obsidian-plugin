@@ -70,15 +70,18 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Value is changed 
 							if (value !== this.plugin.getProfilesPath()) {
 								// Textbox empty
-								if (value === '') {
-									throw Error('Text box is empty!');
+								if (value === '' || value.trim() === '') {
+									console.debug('Text box is empty!');
+									text.inputEl.addClass('mod-bad-input');
+									return;
 								}
-
 								// Validate entry is path
-								if (!isValidPath([value])) {
-									throw Error('Entry is not a valid path!');
+								else if (!isValidPath([value])) {
+									console.debug('Entry is not a valid path!');
+									text.inputEl.addClass('mod-bad-input');
+									return;
 								}
-
+								
 								// Set profiles path to textbox value
 								this.plugin.setProfilePath(value);
 
@@ -98,7 +101,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
 							console.error(e);
 						}
-					}, 2000, true).call(this, value);
+					}, 500, true).call(this, value);
 				})
 				.inputEl.id = 'profile-path');
 
