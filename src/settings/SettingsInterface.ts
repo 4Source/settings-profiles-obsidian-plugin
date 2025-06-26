@@ -12,6 +12,15 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 
 export type Device = Record<string, string>
 
+export type StatusbarClickAction = 'auto' | 'load' | 'switch' | 'save' | 'none';
+export const STATUSBAR_CLICK_ACTIONS: Record<StatusbarClickAction, string> = {
+	'auto': 'Automatically selects the most suitable',
+	'load': 'Always load from the current profile',
+	'switch': 'Open profile switcher',
+	'save': 'Always save to the current profile',
+	'none': 'Disabled'
+};
+
 export interface VaultSettings {
 	/** @deprecated since v0.6.0 now stored in devices with unique ID*/
 	profilesPath?: string;
@@ -21,6 +30,12 @@ export interface VaultSettings {
 	uiUpdate: boolean;
 	uiUpdateInterval: number;
 	devices: Device;
+	statusbarInteraction: {
+		click: StatusbarClickAction,
+		ctrl_click: StatusbarClickAction,
+		shift_click: StatusbarClickAction,
+		alt_click: StatusbarClickAction,
+	}
 }
 
 export const DEFAULT_PROFILE_PATH = normalize(join(xdg({ subdir: 'ObsidianPlugins' }).data, 'Profiles'));
@@ -31,7 +46,13 @@ export const DEFAULT_VAULT_SETTINGS: VaultSettings = {
 	profileUpdateDelay: 800,
 	uiUpdate: true,
 	uiUpdateInterval: 1000,
-	devices: {}
+	devices: {},
+	statusbarInteraction: {
+		click: 'auto',
+		ctrl_click: 'none',
+		shift_click: 'none',
+		alt_click: 'none',
+	}
 }
 
 export interface ProfileOptions {

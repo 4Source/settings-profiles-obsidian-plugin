@@ -10,10 +10,10 @@ export default class PluginExtended extends Plugin {
      * @param icon The icon name to be used.
      * @param label The label to be displayed in status bar.
      */
-    addStatusBarItem(icon?: string, label?: string, ariaLabel?: string, onClickCallback?: () => void): HTMLElement;
+    addStatusBarItem(icon?: string, label?: string, ariaLabel?: string, onClickCallback?: (ev: MouseEvent) => void): HTMLElement;
 
 
-    addStatusBarItem(icon?: string, label?: string, ariaLabel?: string, onClickCallback?: () => void): HTMLElement {
+    addStatusBarItem(icon?: string, label?: string, ariaLabel?: string, onClickCallback?: (ev: MouseEvent) => void): HTMLElement {
         const item = super.addStatusBarItem();
         if (icon) {
             const iconWrapper = item.createEl('span', { cls: ['status-bar-item-icon', 'status-bar-item-segment'] });
@@ -28,8 +28,8 @@ export default class PluginExtended extends Plugin {
         }
         if (onClickCallback) {
             item.addClass('mod-clickable');
-            item.onClickEvent(() => {
-                onClickCallback();
+            item.onClickEvent((ev: MouseEvent) => {
+                onClickCallback(ev);
             })
         }
 

@@ -2,7 +2,7 @@ import { Notice, debounce } from 'obsidian';
 import { SettingsProfilesSettingTab } from "src/settings/SettingsTab";
 import { ProfileSwitcherModal } from './modals/ProfileSwitcherModal';
 import { copyFile, ensurePathExist, getVaultPath, isValidPath, removeDirectoryRecursiveSync } from './util/FileSystem';
-import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS, DEFAULT_PROFILE_PATH } from './settings/SettingsInterface';
+import { DEFAULT_VAULT_SETTINGS, VaultSettings, ProfileOptions, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROFILE_OPTIONS, DEFAULT_PROFILE_PATH, StatusbarClickAction } from './settings/SettingsInterface';
 import { containsChangedFiles, filterChangedFiles, filterIgnoreFilesList, getConfigFilesList, getFilesWithoutPlaceholder, getIgnoreFilesList, loadProfileOptions, loadProfilesOptions, saveProfileOptions } from './util/SettingsFiles';
 import { isAbsolute, join, normalize } from 'path';
 import { FSWatcher, existsSync, watch } from 'fs';
@@ -195,44 +195,83 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			this.updateStatusBarItem(this.statusBarItem, icon, profile?.name, label);
 		}
 		else {
-			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label, () => {
+			this.statusBarItem = this.addStatusBarItem(icon, profile?.name, label, (ev: MouseEvent) => {
 				try {
-					const profile = this.getCurrentProfile();
-					if (!profile || this.isProfileSaved(profile)) {
-						if (!profile || this.isProfileUpToDate(profile)) {
-							// Profile is up-to-date and saved
-							new ProfileSwitcherModal(this.app, this).open();
-						}
-						else {
-							// Profile is not up to date
-							this.loadProfileSettings(profile)
-								.then((profile) => {
-									this.updateCurrentProfile(profile);
-									// Reload obsidian so changed settings can take effect
-									new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
-										// Save Settings
-										this.saveSettings().then(() => {
-											// @ts-ignore
-											this.app.commands.executeCommandById("app:reload");
-										});
-									}, () => {
-										this.saveSettings();
-										new Notice('Need to reload obsidian!', 5000);
-									}, 'Reload')
-										.open();
-								});
-						}
-					}
-					else {
-						// Profile is not saved
+					const loadCallback = (profile: ProfileOptions) => {
+						this.loadProfileSettings(profile)
+							.then((profile) => {
+								this.updateCurrentProfile(profile);
+								// Reload obsidian so changed settings can take effect
+								new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
+									// Save Settings
+									this.saveSettings().then(() => {
+										// @ts-ignore
+										this.app.commands.executeCommandById("app:reload");
+									});
+								}, () => {
+									this.saveSettings();
+									new Notice('Need to reload obsidian!', 5000);
+								}, 'Reload')
+									.open();
+							});
+					};
+					const saveCallback = (profile: ProfileOptions) => {
 						this.saveProfileSettings(profile)
 							.then(() => {
 								new Notice('Saved profile successfully.');
 							});
+					};
+
+					const profile = this.getCurrentProfile();
+
+					const click_action = this.getStatusbarInteraction();
+					const ctrl_action = this.getStatusbarInteraction('ctrl');
+					const shift_action = this.getStatusbarInteraction('shift');
+					const alt_action = this.getStatusbarInteraction('alt');
+
+					const modifiers = [ev.ctrlKey, ev.shiftKey, ev.altKey].filter(Boolean).length;
+					if (modifiers > 1) {
+						throw Error('Can not handle more than one modifier key!');
+					}
+					else if ((modifiers === 0 && click_action == 'auto') || (ev.ctrlKey && ctrl_action == 'auto') || (ev.shiftKey && shift_action == 'auto') || (ev.altKey && alt_action == 'auto')) {
+						if (!profile || this.isProfileSaved(profile)) {
+							if (!profile || this.isProfileUpToDate(profile)) {
+								// Profile is up-to-date and saved
+								new ProfileSwitcherModal(this.app, this).open();
+							}
+							else {
+								// Profile is not up to date
+								loadCallback(profile);
+							}
+						}
+						else {
+							// Profile is not saved
+							saveCallback(profile);
+						}
+					}
+					else if ((modifiers === 0 && click_action == 'switch') || (ev.ctrlKey && ctrl_action == 'switch') || (ev.shiftKey && shift_action == 'switch') || (ev.altKey && alt_action == 'switch')) {
+						new ProfileSwitcherModal(this.app, this).open();
+					}
+					else if ((modifiers === 0 && click_action == 'none') || (ev.ctrlKey && ctrl_action == 'none') || (ev.shiftKey && shift_action == 'none') || (ev.altKey && alt_action == 'none')) {
+						new Notice(`This setting is disabled! Go to 'Settings profiles>Statusbar Interaction' to change this.`, 3000);
+						return;
+					}
+					else if (!profile) {
+						throw Error('No current profile! But is required for save or load.');
+					}
+					else if ((modifiers === 0 && click_action == 'load') || (ev.ctrlKey && ctrl_action == 'load') || (ev.shiftKey && shift_action == 'load') || (ev.altKey && alt_action == 'load')) {
+						loadCallback(profile);
+					}
+					else if ((modifiers === 0 && click_action == 'save') || (ev.ctrlKey && ctrl_action == 'save') || (ev.shiftKey && shift_action == 'save') || (ev.altKey && alt_action == 'save')) {
+						saveCallback(profile);
+					}
+					else {
+						throw Error('Unknown Configuration!');
 					}
 				} catch (e) {
 					(e as Error).message = 'Failed to handle status bar callback! ' + (e as Error).message;
 					console.error(e);
+					new Notice('Something went wrong check console for more information!');
 				}
 			});
 		}
@@ -797,6 +836,36 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	setProfileUpdate(value: boolean) {
 		this.vaultSettings.profileUpdate = value;
+	}
+
+	getStatusbarInteraction(mod?: 'ctrl' | 'shift' | 'alt') {
+		switch (mod) {
+			case 'ctrl':
+				return this.vaultSettings.statusbarInteraction.ctrl_click;
+			case 'shift':
+				return this.vaultSettings.statusbarInteraction.shift_click;
+			case 'alt':
+				return this.vaultSettings.statusbarInteraction.alt_click;
+			default:
+				return this.vaultSettings.statusbarInteraction.click;
+		}
+	}
+
+	setStatusbarInteraction(value: StatusbarClickAction, mod?: 'ctrl' | 'shift' | 'alt') {
+		switch (mod) {
+			case 'ctrl':
+				this.vaultSettings.statusbarInteraction.ctrl_click = value;
+				break;
+			case 'shift':
+				this.vaultSettings.statusbarInteraction.shift_click = value;
+				break;
+			case 'alt':
+				this.vaultSettings.statusbarInteraction.alt_click = value;
+				break;
+			default:
+				this.vaultSettings.statusbarInteraction.click = value;
+				break;
+		}
 	}
 
 	/**
