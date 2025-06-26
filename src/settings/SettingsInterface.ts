@@ -14,10 +14,10 @@ export type Device = Record<string, string>
 
 export type StatusbarClickAction = 'auto' | 'load' | 'switch' | 'save' | 'none';
 export const STATUSBAR_CLICK_ACTIONS: Record<StatusbarClickAction, string> = {
-	'auto': 'Automatically selects the most suitable',
-	'load': 'Always load from the current profile',
-	'switch': 'Open profile switcher',
-	'save': 'Always save to the current profile',
+	'auto': 'Auto',
+	'load': 'Load',
+	'switch': 'Switch',
+	'save': 'Save',
 	'none': 'Disabled'
 };
 

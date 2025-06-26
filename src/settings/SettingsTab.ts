@@ -218,57 +218,6 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				})
 				.toggleEl.setAttr('id', 'profile-update'));
 
-
-
-		new Setting(containerEl)
-			.setHeading()
-			.setName('Statusbar interaction')
-			.setDesc('Change the behavior when clicked on the Status bar Icon')
-		new Setting(containerEl)
-			.setName('Click')
-			.addDropdown(dropdown => dropdown
-				.addOptions(STATUSBAR_CLICK_ACTIONS)
-				.setValue(this.plugin.getStatusbarInteraction())
-				.onChange(value => {
-					const action = value as StatusbarClickAction;
-					this.plugin.setStatusbarInteraction(action);
-					this.display();
-				})
-			)
-		new Setting(containerEl)
-			.setName('Ctrl + Click')
-			.addDropdown(dropdown => dropdown
-				.addOptions(STATUSBAR_CLICK_ACTIONS)
-				.setValue(this.plugin.getStatusbarInteraction('ctrl'))
-				.onChange(value => {
-					const action = value as StatusbarClickAction;
-					this.plugin.setStatusbarInteraction(action, 'ctrl');
-					this.display();
-				})
-			)
-		new Setting(containerEl)
-			.setName('Shift + Click')
-			.addDropdown(dropdown => dropdown
-				.addOptions(STATUSBAR_CLICK_ACTIONS)
-				.setValue(this.plugin.getStatusbarInteraction('shift'))
-				.onChange(value => {
-					const action = value as StatusbarClickAction;
-					this.plugin.setStatusbarInteraction(action, 'shift');
-					this.display();
-				})
-			)
-		new Setting(containerEl)
-			.setName('Alt + Click')
-			.addDropdown(dropdown => dropdown
-				.addOptions(STATUSBAR_CLICK_ACTIONS)
-				.setValue(this.plugin.getStatusbarInteraction('alt'))
-				.onChange(value => {
-					const action = value as StatusbarClickAction;
-					this.plugin.setStatusbarInteraction(action, 'alt');
-					this.display();
-				})
-			)
-
 		if (this.plugin.getProfileUpdate()) {
 			new Setting(containerEl)
 				.setName('Profile update delay')
@@ -327,6 +276,55 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					})
 					.sliderEl.setAttr('id', 'update-delay'))
 		}
+
+		new Setting(containerEl)
+			.setHeading()
+			.setName('Statusbar interaction')
+			.setDesc('Change the behavior when clicked on the Status bar Icon');
+		new Setting(containerEl)
+			.setName('Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction())
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action);
+					this.display();
+				})
+			);
+		new Setting(containerEl)
+			.setName('Ctrl + Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction('ctrl'))
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action, 'ctrl');
+					this.display();
+				})
+			);
+		new Setting(containerEl)
+			.setName('Shift + Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction('shift'))
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action, 'shift');
+					this.display();
+				})
+			);
+		new Setting(containerEl)
+			.setName('Alt + Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction('alt'))
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action, 'alt');
+					this.display();
+				})
+			);
 
 		// Heading for Profiles
 		new Setting(containerEl)

@@ -46,6 +46,37 @@ Only visible if [Profile update](#Profile_update) enabled.
 **Max:** ``10000ms``
 
 **Default:** ``800ms``
+## Statusbar Interaction
+This setting controls what action is triggered when clicking on the statusbar icon. You can configure different actions for regular clicks and modifier key combinations (Ctrl, Shift, Alt).
+
+**Available Actions:**
+- **Auto** - Automatically selects the most suitable action based on the current profile state
+- **Load** - Always load settings from the current profile (requires Obsidian reload)
+- **Switch** - Open the profile switcher modal to change profiles
+- **Save** - Always save current settings to the active profile
+- **Disabled** - Deactivates the action. Falls back to regular click behavior when no other modifier actions are configured
+
+### Click
+Controls the action for a regular click (without modifier keys).
+
+**Default:** `Auto`
+
+### Ctrl + Click
+Controls the action when clicking while holding the Ctrl key.
+
+**Default:** `Disabled`
+
+### Shift + Click
+Controls the action when clicking while holding the Shift key.
+
+**Default:** `Disabled`
+
+### Alt + Click
+Controls the action when clicking while holding the Alt key.
+
+**Default:** `Disabled`
+
+**Note:** Only one modifier key can be used at a time. Using a modifier key that is disabled will **not** fallback to regular click action.
 ## Profiles ![plus](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/ec66911b-69dc-436a-9860-f9cdde4b27ac) *Button*
 Let you create a new profile with the current settings. Pressing on it will open a new window [Profile options](#Profile-options) here you can configure the profile. 
 ## Profiles ![refresh-cw](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/e3a66b68-d30d-4990-8938-20db7b5e7cdd) *Button*
