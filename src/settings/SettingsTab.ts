@@ -1,6 +1,6 @@
 import { App, Notice, PluginSettingTab, Setting, debounce } from 'obsidian';
 import SettingsProfilesPlugin from '../main';
-import { DEFAULT_PROFILE_OPTIONS, DEFAULT_PROFILE_PATH, DEFAULT_VAULT_SETTINGS } from './SettingsInterface';
+import { DEFAULT_PROFILE_OPTIONS, DEFAULT_PROFILE_PATH, DEFAULT_VAULT_SETTINGS, STATUSBAR_CLICK_ACTIONS, StatusbarClickAction } from './SettingsInterface';
 import { ProfileOptionsModal } from '../modals/ProfileOptionsModal';
 import { DialogModal } from 'src/modals/DialogModal';
 import { ICON_ADD_PROFILE, ICON_CURRENT_PROFILE, ICON_NOT_CURRENT_PROFILE, ICON_PROFILE_OPTIONS, ICON_PROFILE_REMOVE, ICON_PROFILE_SAVE, ICON_RELOAD_PROFILES, ICON_RESET } from 'src/constants';
@@ -81,7 +81,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									text.inputEl.addClass('mod-bad-input');
 									return;
 								}
-								
+
 								// Set profiles path to textbox value
 								this.plugin.setProfilePath(value);
 
@@ -217,6 +217,57 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					}
 				})
 				.toggleEl.setAttr('id', 'profile-update'));
+
+
+
+		new Setting(containerEl)
+			.setHeading()
+			.setName('Statusbar interaction')
+			.setDesc('Change the behavior when clicked on the Status bar Icon')
+		new Setting(containerEl)
+			.setName('Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction())
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action);
+					this.display();
+				})
+			)
+		new Setting(containerEl)
+			.setName('Ctrl + Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction('ctrl'))
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action, 'ctrl');
+					this.display();
+				})
+			)
+		new Setting(containerEl)
+			.setName('Shift + Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction('shift'))
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action, 'shift');
+					this.display();
+				})
+			)
+		new Setting(containerEl)
+			.setName('Alt + Click')
+			.addDropdown(dropdown => dropdown
+				.addOptions(STATUSBAR_CLICK_ACTIONS)
+				.setValue(this.plugin.getStatusbarInteraction('alt'))
+				.onChange(value => {
+					const action = value as StatusbarClickAction;
+					this.plugin.setStatusbarInteraction(action, 'alt');
+					this.display();
+				})
+			)
 
 		if (this.plugin.getProfileUpdate()) {
 			new Setting(containerEl)
