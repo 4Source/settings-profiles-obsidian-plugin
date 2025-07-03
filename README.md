@@ -1,5 +1,9 @@
 > [!IMPORTANT]
-> [Planned Refactoring: New Architecture, Profile Storage, and Multi-Device Support – Feedback Wanted!](https://github.com/4Source/settings-profiles-obsidian-plugin/discussions/72)
+> ***Refactoring in Progress – Feedback Wanted!***
+>
+> We are currently planning a significant refactoring of this plugin to improve its structure, maintainability, and future development.
+>
+> If you have suggestions, questions, ideas, or simply want to see what’s being planned, please check out the [discussion](https://github.com/4Source/settings-profiles-obsidian-plugin/discussions/72) and share your thoughts. Your feedback is greatly appreciated!
 
 Allows you to create various global settings profiles. You can sync them between different vaults. To keep all your settings in sync, you'll never have to manually adjust them again for every vault you have or create in the future.
 
