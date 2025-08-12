@@ -1,0 +1,118 @@
+name: Continuous Integration
+
+on: 
+  pull_request:
+    branches:
+      - master
+    paths: 
+      - 'src/**'
+      - 'test/**'
+  push: 
+    branches:
+      - master
+    paths: 
+      - 'src/**'
+      - 'test/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    name: Run unit tests
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository 
+        uses: actions/checkout@v4
+
+      - name: Use Node.js "18.x"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm run test
+
+  lint:
+    name: Run linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository 
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+      
+      - name: Install Dependencies
+        run: npm install
+      
+      - name: Run linter
+        run: npm run lint
+
+  build: 
+    name: Build Plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository 
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Build
+        run: npm run build
+  
+  audit: 
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository 
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Audit for vulnerabilities
+        run: npm audit --audit-level=moderate
+
+  version:
+    name: Version Bump 
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions: 
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+      - name: Bump version
+        uses: 4Source/version-control-action@v1
+        with: 
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repository:  ${{ github.event.repository.name }}
+          pr_number: ${{ github.event.number }}
+          tag_prefix: ''
+          dry_run: true

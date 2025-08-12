@@ -5,19 +5,20 @@
 
 ## Related Issues
 Fixes # <!-- Issue number --->
+### Missing changes
+<!-- Describe the changes what are missing which are describe in the Issue but are not implemented by this pull request --->
 
-## Checklist before requesting a review
-- [ ] I have followed the guidelines in our Contributing document
-- [ ] I have performed a self-review of my code
-- [ ] My code follows the style guidelines of this project
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My code fixes the feature discussed in [Related Issues](#related-issues)
-
-## How has this been tested?
+## Tests
+### How has this been tested?
 **OS:** <!-- e.g. Win10 --->
 
 **Obsidian Version:** <!-- e.g. v1.5.1 --->
 
-### Tests
-<!-- Please describe the tests that you ran to verify your changes and if there was successfull or not.--->
+<!-- Please describe the tests that you ran to verify your changes and if there was successful or not. --->
+
+## Checklist before requesting a review
+- [<!-- x --> ] I have performed a self-review of my code
+- [<!-- x --> ] I have commented my code, particularly in hard-to-understand areas
+- [<!-- x --> ] I have made corresponding changes to the documentation
+- [<!-- x --> ] I have tested my changes in Obsidian and describte how I tested in [Tests](#tests)
+- [<!-- x --> ] My code fixes the feature discussed in [Related Issues](#related-issues) if not or not fully describe what is missing in [Missing changes](#missing-changes)
