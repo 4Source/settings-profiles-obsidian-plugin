@@ -33,7 +33,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						// Get text component
 						const inputEl: HTMLInputElement | null = this.containerEl.querySelector('#profile-path');
 						if (!inputEl) {
-							throw Error("Input element not found! #profile-path");
+							throw Error('Input element not found! #profile-path');
 						}
 
 						inputEl.value = DEFAULT_PROFILE_PATH;
@@ -57,7 +57,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								this.plugin.refreshProfilesList();
 								this.display();
 							});
-					} catch (e) {
+					}
+					catch (e) {
 						(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
 						console.error(e);
 					}
@@ -67,7 +68,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.onChange(value => {
 					debounce((value: string) => {
 						try {
-							// Value is changed 
+							// Value is changed
 							if (value !== this.plugin.getProfilesPath()) {
 								// Textbox empty
 								if (value === '' || value.trim() === '') {
@@ -75,6 +76,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									text.inputEl.addClass('mod-bad-input');
 									return;
 								}
+
 								// Validate entry is path
 								else if (!isValidPath([value])) {
 									console.debug('Entry is not a valid path!');
@@ -97,7 +99,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 										this.display();
 									});
 							}
-						} catch (e) {
+						}
+						catch (e) {
 							(e as Error).message = 'Failed to change profiles path! ' + (e as Error).message;
 							console.error(e);
 						}
@@ -108,13 +111,13 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('UI update')
 			.setDesc(createFragment((fragment) => {
-				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads are performed. The status bar icon is deactivated.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads are performed. The status bar icon is deactivated.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
 			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getUiUpdate())
 				.onChange(value => {
 					try {
-						// Value is changed 
+						// Value is changed
 						if (value !== this.plugin.getUiUpdate()) {
 							// Set ui update to value
 							this.plugin.setUiUpdate(value);
@@ -125,7 +128,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									this.display();
 								});
 						}
-					} catch (e) {
+					}
+					catch (e) {
 						(e as Error).message = 'Failed to change ui update! ' + (e as Error).message;
 						console.error(e);
 					}
@@ -136,7 +140,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName('UI update interval')
 				.setDesc(createFragment((fragment) => {
-					fragment.append(fragment.createEl('div', { text: 'The time in ms in which ui is updated' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+					fragment.append(fragment.createEl('div', { text: 'The time in ms in which ui is updated' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
 				}))
 				.addExtraButton(button => button
 					.setIcon(ICON_RESET)
@@ -146,7 +150,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Get slider component
 							const sliderEl: HTMLInputElement | null = this.containerEl.querySelector('#ui-interval');
 							if (!sliderEl) {
-								throw Error("Input element not found! #ui-interval");
+								throw Error('Input element not found! #ui-interval');
 							}
 
 							sliderEl.valueAsNumber = DEFAULT_VAULT_SETTINGS.uiUpdateInterval;
@@ -159,7 +163,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								.then(() => {
 									this.display();
 								});
-						} catch (e) {
+						}
+						catch (e) {
 							(e as Error).message = 'Failed to reset ui update interval! ' + (e as Error).message;
 							console.error(e);
 						}
@@ -171,7 +176,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onChange(value => {
 						debounce((value: number) => {
 							try {
-								// Value is changed 
+								// Value is changed
 								if (value !== this.plugin.getUiRefreshInterval()) {
 									// Set interval to slider value
 									this.plugin.setUiRefreshInterval(value);
@@ -182,25 +187,26 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 											this.display();
 										});
 								}
-							} catch (e) {
+							}
+							catch (e) {
 								(e as Error).message = 'Failed to change ui update interval! ' + (e as Error).message;
 								console.error(e);
 							}
 						}, 500, true).call(this, value);
 					})
-					.sliderEl.setAttr('id', 'ui-interval'))
+					.sliderEl.setAttr('id', 'ui-interval'));
 		}
 
 		new Setting(containerEl)
 			.setName('Profile update')
 			.setDesc(createFragment((fragment) => {
-				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed. Changed settings are not saved automatically.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed. Changed settings are not saved automatically.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
 			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getProfileUpdate())
 				.onChange(value => {
 					try {
-						// Value is changed 
+						// Value is changed
 						if (value !== this.plugin.getProfileUpdate()) {
 							// Set profile update to value
 							this.plugin.setProfileUpdate(value);
@@ -211,7 +217,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									this.display();
 								});
 						}
-					} catch (e) {
+					}
+					catch (e) {
 						(e as Error).message = 'Failed to change profile update! ' + (e as Error).message;
 						console.error(e);
 					}
@@ -222,7 +229,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName('Profile update delay')
 				.setDesc(createFragment((fragment) => {
-					fragment.append(fragment.createEl('div', { text: 'The time in ms that must pass before the profile can be updated again' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }))
+					fragment.append(fragment.createEl('div', { text: 'The time in ms that must pass before the profile can be updated again' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
 				}))
 				.addExtraButton(button => button
 					.setIcon(ICON_RESET)
@@ -232,7 +239,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Get slider component
 							const sliderEl: HTMLInputElement | null = this.containerEl.querySelector('#update-delay');
 							if (!sliderEl) {
-								throw Error("Input element not found! #update-delay");
+								throw Error('Input element not found! #update-delay');
 							}
 
 							sliderEl.valueAsNumber = DEFAULT_VAULT_SETTINGS.profileUpdateDelay;
@@ -245,7 +252,8 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								.then(() => {
 									this.display();
 								});
-						} catch (e) {
+						}
+						catch (e) {
 							(e as Error).message = 'Failed to reset profile update interval! ' + (e as Error).message;
 							console.error(e);
 						}
@@ -257,7 +265,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 					.onChange(value => {
 						debounce((value: number) => {
 							try {
-								// Value is changed 
+								// Value is changed
 								if (value !== this.plugin.getProfileUpdateDelay()) {
 									// Set interval to slider value
 									this.plugin.setProfileUpdateDelay(value);
@@ -268,13 +276,14 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 											this.display();
 										});
 								}
-							} catch (e) {
+							}
+							catch (e) {
 								(e as Error).message = 'Failed to change profile update interval! ' + (e as Error).message;
 								console.error(e);
 							}
 						}, 500, true).call(this, value);
 					})
-					.sliderEl.setAttr('id', 'update-delay'))
+					.sliderEl.setAttr('id', 'update-delay'));
 		}
 
 		new Setting(containerEl)
@@ -351,7 +360,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				}));
 
 		this.plugin.getProfilesList().forEach(profile => {
-			new Setting(containerEl.createEl("div", { cls: "profiles-container" }))
+			new Setting(containerEl.createEl('div', { cls: 'profiles-container' }))
 				.setName(profile.name)
 				.setClass(this.plugin.isEnabled(profile) ? 'profile-enabled' : 'profile-disabled')
 				.addExtraButton(button => button
@@ -367,10 +376,13 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								});
 						}).open();
 					}))
-				// .addExtraButton(button => button
-				// 	.setIcon(ICON_PROFILE_ADD_HOTKEY)
-				// 	.setTooltip('Hotkeys')
-				// 	.onClick(() => {
+
+			/*
+			 * .addExtraButton(button => button
+			 * 	.setIcon(ICON_PROFILE_ADD_HOTKEY)
+			 * 	.setTooltip('Hotkeys')
+			 * 	.onClick(() => {
+			 */
 
 				// 	}))
 				.addExtraButton(button => button
@@ -385,6 +397,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 				.addExtraButton(button => button
 					.setIcon(ICON_PROFILE_SAVE)
 					.setTooltip('Save settings to profile')
+
 					// .setDisabled(!this.plugin.areSettingsChanged(profile) || this.plugin.areSettingsSaved(profile))
 					.onClick(() => {
 						new DialogModal(this.app, 'Save current settings to profile?', 'You are about to overwrite the current settings of this profile. This cannot be undone.', async () => {
@@ -393,18 +406,18 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									new Notice('Saved profile successfully.');
 									this.display();
 								});
-						}, async () => { }, "Override", true, "Cancel", false)
+						}, async () => { }, 'Override', true, 'Cancel', false)
 							.open();
 					}))
 				.addExtraButton(button => button
 					.setIcon(this.plugin.isEnabled(profile) ? ICON_CURRENT_PROFILE : ICON_NOT_CURRENT_PROFILE)
-					.setTooltip(this.plugin.isEnabled(profile) ? "Deselect profile" : 'Switch to profile')
+					.setTooltip(this.plugin.isEnabled(profile) ? 'Deselect profile' : 'Switch to profile')
 					.onClick(() => {
-						this.plugin.switchProfile(this.plugin.isEnabled(profile) ? "" : profile.name)
+						this.plugin.switchProfile(this.plugin.isEnabled(profile) ? '' : profile.name)
 							.then(() => {
 								this.display();
 							});
 					}));
-		})
+		});
 	}
 }

@@ -1,75 +1,75 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal, Setting } from 'obsidian';
 
 export class DialogModal extends Modal {
-    message: string;
-    submit: string;
+	message: string;
+	submit: string;
 	submitWarning: boolean;
-    deny: string;
+	deny: string;
 	denyWarning: boolean;
-    onSubmit: () => void;
-    onDeny: () => void;
+	onSubmit: () => void;
+	onDeny: () => void;
 
-    constructor(app: App, title: string, message: string, onSubmit: () => void, onDeny: () => void, submit = 'Agree', submitWarning = false, deny = 'Cancel', denyWarning = true) {
-        super(app);
+	constructor(app: App, title: string, message: string, onSubmit: () => void, onDeny: () => void, submit = 'Agree', submitWarning = false, deny = 'Cancel', denyWarning = true) {
+		super(app);
 
-        this.titleEl.setText(title);
+		this.titleEl.setText(title);
 
-        this.message = message;
-        this.onSubmit = onSubmit;
-        this.onDeny = onDeny;
-        this.submit = submit;
+		this.message = message;
+		this.onSubmit = onSubmit;
+		this.onDeny = onDeny;
+		this.submit = submit;
 		this.submitWarning = submitWarning;
-        this.deny = deny;
+		this.deny = deny;
 		this.denyWarning = denyWarning;
-    }
+	}
 
-    onOpen(): void {
-        const { contentEl } = this;
+	onOpen(): void {
+		const { contentEl } = this;
 
-        contentEl.createEl('span', { text: this.message });
+		contentEl.createEl('span', { text: this.message });
 
-        const setting = new Setting(contentEl);
+		const setting = new Setting(contentEl);
 		if(this.submitWarning) {
 			setting.addButton(button => button
-                .setButtonText(this.submit)
+				.setButtonText(this.submit)
 				.setWarning()
-                .onClick(() => {
-                    this.close();
-                    this.onSubmit();
-                }))
+				.onClick(() => {
+					this.close();
+					this.onSubmit();
+				}));
 		}
 		else {
 			setting.addButton(button => button
-                .setButtonText(this.submit)
-                .onClick(() => {
-                    this.close();
-                    this.onSubmit();
-                }))
+				.setButtonText(this.submit)
+				.onClick(() => {
+					this.close();
+					this.onSubmit();
+				}));
 		}
 
 		if(this.denyWarning) {
 			setting.addButton(button => button
-                .setButtonText(this.deny)
-                .setWarning()
-                .onClick(() => {
-                    this.close();
-                    this.onDeny();
-                }))
+				.setButtonText(this.deny)
+				.setWarning()
+				.onClick(() => {
+					this.close();
+					this.onDeny();
+				}));
 		}
 		else {
 			setting.addButton(button => button
-                .setButtonText(this.deny)
-                .onClick(() => {
-                    this.close();
-                    this.onDeny();
-                }))
+				.setButtonText(this.deny)
+				.onClick(() => {
+					this.close();
+					this.onDeny();
+				}));
 		}
-            
-        setting.setClass('modal-buttons');
-    }
 
-    onClose(): void {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
+		setting.setClass('modal-buttons');
+	}
+
+	onClose(): void {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
 }

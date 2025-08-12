@@ -1,24 +1,155 @@
 {
-    "root": true,
-    "parser": "@typescript-eslint/parser",
-    "env": { "node": true },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/eslint-recommended",
-      "plugin:@typescript-eslint/recommended"
-    ],
-    "parserOptions": {
-        "sourceType": "module"
-    },
-    "rules": {
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
-      "@typescript-eslint/ban-ts-comment": "off",
-      "no-prototype-builtins": "off",
-      "@typescript-eslint/no-empty-function": "off",
-      "no-case-declarations": "off"
-    }
-  }
+	"root": true,
+	"parser": "@typescript-eslint/parser",
+	"env": {
+		"node": true
+	},
+	"plugins": [
+		"@typescript-eslint",
+		"@stylistic/eslint-plugin"
+	],
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/recommended"
+	],
+	"parserOptions": {
+		"sourceType": "module"
+	},
+	"rules": {
+		"@stylistic/indent": [
+			"error",
+			"tab"
+		],
+		"@stylistic/indent-binary-ops": [
+			"error",
+			"tab"
+		],
+		"@stylistic/quotes": [
+			"error",
+			"single"
+		],
+		"@stylistic/semi": [
+			"error",
+			"always"
+		],
+		"@stylistic/brace-style": [
+			"error",
+			"stroustrup",
+			{
+				"allowSingleLine": true
+			}
+		],
+		"@stylistic/comma-dangle": [
+			"error",
+			"always-multiline"
+		],
+		"comma-spacing": [
+			"error",
+			{
+				"before": false,
+				"after": true
+			}
+		],
+		"@stylistic/dot-location": [
+			"error",
+			"property"
+		],
+		"@stylistic/function-call-argument-newline": [
+			"error",
+			"consistent"
+		],
+		"@stylistic/function-call-spacing": "error",
+		"@stylistic/implicit-arrow-linebreak": "error",
+		"@stylistic/key-spacing": "error",
+		"@stylistic/lines-around-comment": [
+			"error",
+			{
+				"beforeBlockComment": true,
+				"afterBlockComment": false,
+				"beforeLineComment": true,
+				"afterLineComment": false,
+				"allowBlockStart": true,
+				"allowBlockEnd": false,
+				"allowClassStart": true,
+				"allowClassEnd": false,
+				"allowObjectStart": true,
+				"allowObjectEnd": false,
+				"allowArrayStart": true,
+				"allowArrayEnd": false,
+				"ignorePattern": "TODO|HACK|BUG|TEST",
+				"applyDefaultIgnorePatterns": false
+			}
+		],
+		"@stylistic/new-parens": "error",
+		"@stylistic/no-confusing-arrow": "error",
+		"@stylistic/no-extra-semi": "error",
+		"@stylistic/no-floating-decimal": "error",
+		"@stylistic/no-mixed-operators": "error",
+		"@stylistic/no-mixed-spaces-and-tabs": "error",
+		"@stylistic/no-multi-spaces": "error",
+		"@stylistic/no-multiple-empty-lines": [
+			"error",
+			{
+				"max": 1,
+				"maxEOF": 0,
+				"maxBOF": 0
+			}
+		],
+		"@stylistic/no-trailing-spaces": [
+			"error",
+			{
+				"skipBlankLines": false,
+				"ignoreComments": false
+			}
+		],
+		"@stylistic/nonblock-statement-body-position": "error",
+		"@stylistic/operator-linebreak": [
+			"error",
+			"after"
+		],
+		"@stylistic/padded-blocks": [
+			"error",
+			"never"
+		],
+		"@stylistic/padding-line-between-statements": "error",
+		"@stylistic/rest-spread-spacing": "error",
+		"@stylistic/semi-spacing": "error",
+		"@stylistic/semi-style": "error",
+		"@stylistic/space-before-blocks": "error",
+		"@stylistic/space-before-function-paren": [
+			"error",
+			{
+				"anonymous": "always",
+				"named": "never",
+				"asyncArrow": "always"
+			}
+		],
+		"@stylistic/arrow-spacing": "error",
+		"@stylistic/space-in-parens": "error",
+		"@stylistic/space-infix-ops": "error",
+		"@stylistic/space-unary-ops": "error",
+		"@stylistic/spaced-comment": [
+			"error",
+			"always"
+		],
+		"@stylistic/switch-colon-spacing": "error",
+		"@stylistic/template-curly-spacing": "error",
+		"@stylistic/type-generic-spacing": "error",
+		"@stylistic/type-named-tuple-spacing": "error",
+		"no-fallthrough": [
+			"error",
+			{
+				"allowEmptyCase": true
+			}
+		],
+		"line-comment-position": [
+			"error",
+			{
+				"position": "above",
+				"ignorePattern": "TODO|HACK|BUG|TEST",
+				"applyDefaultIgnorePatterns": false
+			}
+		]
+	}
+}
