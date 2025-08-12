@@ -1,6 +1,7 @@
 import { join, normalize, sep as slash } from 'path';
 
-import '@folder/xdg';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const xdg = require('@folder/xdg');
 
 export interface GlobalSettings {
 	profilesList: ProfileOptions[];

@@ -16,6 +16,6 @@ declare module 'obsidian' {
 	interface SuggestModalChooser<T, TModal> {
 		chooser: TModal;
 		values: T[] | null;
-		useSelectedItem(evt: MouseEvent | KeyboardEvent): void;
+		useSelectedItem(evt: MouseEvent | KeyboardEvent): boolean;
 	}
 }
