@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: Community Support
-    url: "../../../discussions"
+    url: https://github.com/4Source/settings-profiles-obsidian-plugin/discussions
     about: Please ask and answer questions here.
+  - name: Documentation
+    url: https://github.com/4Source/settings-profiles-obsidian-plugin/wiki
+    about: Check out the documentation if you want to know what's possible.
+  - name: Contributing
+    url: https://github.com/4Source/settings-profiles-obsidian-plugin/blob/master/.github/CONTRIBUTING.md
+    about: Overview of the contribution workflow

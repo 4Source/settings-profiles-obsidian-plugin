@@ -1,0 +1,71 @@
+name: Continuous Deployment
+on:
+  pull_request:
+    types:
+      - closed
+    branches: 
+      - master  
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    permissions: 
+        pull-requests: write
+        contents: write
+
+    steps: 
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Bump version
+        id: version-bump
+        uses: 4Source/version-control-action@v1
+        with: 
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repository:  ${{ github.event.repository.name }}
+          pr_number: ${{ github.event.number }}
+          tag_prefix: ''
+          dry_run: true
+
+      - name: Configure git
+        run: |
+          git config --global user.name "4Source"
+          git config --global user.email "38220764+4Source@users.noreply.github.com."
+
+      - name: Change version in files
+        run: | 
+          npm run version -- --new_version=${{ steps.version-bump.outputs.new_version }}
+      
+      - name: Commit and push changes
+        run: |
+          git commit -a -m "Apply version ${{ steps.version-bump.outputs.new_version }}"
+          git push -f 
+      
+      - name: Push version tag
+        run: |
+          git tag -a ${{ steps.version-bump.outputs.new_version }} -m "${{ steps.version-bump.outputs.new_version }}"
+          git push -f origin ${{ steps.version-bump.outputs.new_version }}
+
+      - name: Build plugin
+        run: npm run build
+  
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version-bump.outputs.new_version }}" \
+            --title="${{ steps.version-bump.outputs.new_version }}" \
+            --draft \
+            main.js manifest.json styles.css

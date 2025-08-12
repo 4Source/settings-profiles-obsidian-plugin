@@ -1,0 +1,21 @@
+{
+	"extends": [
+		"./.eslintrc"
+	],
+	"rules": {
+		"no-console": [
+			"error",
+			{
+				"allow": [
+					"warn",
+					"error",
+					"debug"
+				]
+			}
+		],
+		"multiline-comment-style": [
+			"error",
+			"starred-block"
+		]
+	}
+}

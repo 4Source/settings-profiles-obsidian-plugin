@@ -1,12 +1,12 @@
-import { existsSync, readFileSync, statSync, writeFileSync } from "fs";
-import { join, normalize, sep as slash } from "path";
-import { PROFILE_OPTIONS_MAP, ProfileOptions } from "src/settings/SettingsInterface";
-import { ensurePathExist, filesEqual, getAllFiles, isValidPath } from "./FileSystem";
+import { existsSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { join, normalize, sep as slash } from 'path';
+import { PROFILE_OPTIONS_MAP, ProfileOptions } from 'src/settings/SettingsInterface';
+import { ensurePathExist, filesEqual, getAllFiles, isValidPath } from './FileSystem';
 
 /**
  * Saves the profile options data to the path.
  * @param profile The profile to save
- * @param profilesPath The path where the profile should be saved 
+ * @param profilesPath The path where the profile should be saved
  */
 export async function saveProfileOptions(profile: ProfileOptions, profilesPath: string) {
 	try {
@@ -14,18 +14,21 @@ export async function saveProfileOptions(profile: ProfileOptions, profilesPath: 
 		if (!profile) {
 			throw Error(`Can't save undefined profile! Profile: ${JSON.stringify(profile)}`);
 		}
+
 		// Ensure is valid path
 		if (!isValidPath([profilesPath, profile.name])) {
-			throw Error(`Invalid path received! ProfilesPath: ${profilesPath}`)
+			throw Error(`Invalid path received! ProfilesPath: ${profilesPath}`);
 		}
+
 		// Ensure path exist
 		ensurePathExist([profilesPath, profile.name]);
 
 		// Write profile settings to path
-		const file = join(profilesPath, profile.name, "profile.json");
+		const file = join(profilesPath, profile.name, 'profile.json');
 		const profileSettings = JSON.stringify(profile, null, 2);
 		writeFileSync(file, profileSettings, 'utf-8');
-	} catch (e) {
+	}
+	catch (e) {
 		(e as Error).message = 'Failed to save profile data! ' + (e as Error).message;
 		throw e;
 	}
@@ -34,7 +37,7 @@ export async function saveProfileOptions(profile: ProfileOptions, profilesPath: 
 /**
  * Saves the profiles options data to the path.
  * @param profilesList The profiles to save
- * @param profilesPath The path where the profiles should be saved 
+ * @param profilesPath The path where the profiles should be saved
  */
 export async function saveProfilesOptions(profilesList: ProfileOptions[], profilesPath: string) {
 	try {
@@ -43,19 +46,22 @@ export async function saveProfilesOptions(profilesList: ProfileOptions[], profil
 			if (!profile) {
 				throw Error(`Can't save undefined profile! Profile: ${JSON.stringify(profile)}`);
 			}
+
 			// Ensure is valid path
 			if (!isValidPath([profilesPath, profile.name])) {
-				throw Error(`Invalid path received! ProfilesPath: ${profilesPath}`)
+				throw Error(`Invalid path received! ProfilesPath: ${profilesPath}`);
 			}
+
 			// Ensure path exist
 			ensurePathExist([profilesPath, profile.name]);
 
 			// Write profile settings to path
-			const file = join(profilesPath, profile.name, "profile.json");
+			const file = join(profilesPath, profile.name, 'profile.json');
 			const profileSettings = JSON.stringify(profile, null, 2);
 			writeFileSync(file, profileSettings, 'utf-8');
 		});
-	} catch (e) {
+	}
+	catch (e) {
 		(e as Error).message = 'Failed to save profiles data! ' + (e as Error).message + ` ProfilesList: ${JSON.stringify(profilesList)}`;
 		throw e;
 	}
@@ -72,6 +78,7 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
 		if (!profile.name) {
 			throw Error(`Name is requierd! Profile: ${JSON.stringify(profile)}`);
 		}
+
 		// Search for all profiles existing
 		const file = join(profilesPath, profile.name, 'profile.json');
 		let profileData: ProfileOptions | undefined = undefined;
@@ -85,18 +92,19 @@ export function loadProfileOptions(profile: Partial<ProfileOptions>, profilesPat
 		}
 
 		// Read profile settings
-		const data = readFileSync(file, "utf-8");
+		const data = readFileSync(file, 'utf-8');
 		profileData = JSON.parse(data);
 
 		if (!profileData) {
-			throw Error(`Failed to read profile from file!`);
+			throw Error('Failed to read profile from file!');
 		}
 
 		// Convert date string to date
 		profileData.modifiedAt = new Date(profileData.modifiedAt);
 
 		return profileData;
-	} catch (e) {
+	}
+	catch (e) {
 		(e as Error).message = 'Failed to load profile data! ' + (e as Error).message;
 		throw e;
 	}
@@ -110,7 +118,7 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
 	try {
 		// Search for all profiles existing
 		const files = getAllFiles([profilesPath, `${slash}*${slash}profile.json`]);
-		let profilesList: ProfileOptions[] = [];
+		const profilesList: ProfileOptions[] = [];
 
 		// Read profile settings
 		files.forEach(file => {
@@ -121,11 +129,11 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
 			if (!statSync(file).isFile()) {
 				throw Error(`The path does not point to a file. Path: ${file}`);
 			}
-			const data = readFileSync(file, "utf-8");
-			let profileData = JSON.parse(data);
+			const data = readFileSync(file, 'utf-8');
+			const profileData = JSON.parse(data);
 
 			if (!profileData) {
-				throw Error(`Failed to read profile from file!`);
+				throw Error('Failed to read profile from file!');
 			}
 
 			// Convert date string to date
@@ -134,7 +142,8 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
 			profilesList.push(profileData);
 		});
 		return profilesList;
-	} catch (e) {
+	}
+	catch (e) {
 		(e as Error).message = 'Failed to load profiles data! ' + (e as Error).message;
 		throw e;
 	}
@@ -149,7 +158,7 @@ export function loadProfilesOptions(profilesPath: string): ProfileOptions[] {
 export function getConfigFilesList(profile: ProfileOptions): string[] {
 	const files = [];
 	for (const key in profile) {
-		if (profile.hasOwnProperty(key)) {
+		if (Object.prototype.hasOwnProperty.call(profile, key)) {
 			const value = profile[key as keyof ProfileOptions];
 			if (typeof value === 'boolean' && key !== 'enabled' && value) {
 				const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.file;
@@ -159,7 +168,7 @@ export function getConfigFilesList(profile: ProfileOptions): string[] {
 				else if (file && Array.isArray(file)) {
 					file.forEach(f => {
 						files.push(normalize(f));
-					})
+					});
 				}
 			}
 		}
@@ -179,12 +188,13 @@ export function getFilesWithoutPlaceholder(filesList: string[], path: string[]):
 	filesList.forEach(file => {
 		if ((file.includes(`${slash}*${slash}`) || file.includes(`${slash}*`))) {
 			const pathVariants = getAllFiles([...path, file])
+
 				// Trim the start of path
-				.map(value => value.split(slash).slice(-file.split(slash).length))
+				.map(value => value.split(slash).slice(-file.split(slash).length));
 
 			pathVariants.forEach(value => {
-				files.push(join(...value))
-			})
+				files.push(join(...value));
+			});
 		}
 		else {
 			files.push(file);
@@ -203,7 +213,7 @@ export function getFilesWithoutPlaceholder(filesList: string[], path: string[]):
 export function getIgnoreFilesList(profile: ProfileOptions): string[] {
 	const files = [];
 	for (const key in profile) {
-		if (profile.hasOwnProperty(key)) {
+		if (Object.prototype.hasOwnProperty.call(profile, key)) {
 			const value = profile[key as keyof ProfileOptions];
 			if (value && typeof value === 'boolean') {
 				const file = PROFILE_OPTIONS_MAP[key as keyof ProfileOptions]?.ignore;
@@ -213,7 +223,7 @@ export function getIgnoreFilesList(profile: ProfileOptions): string[] {
 				else if (file && Array.isArray(file)) {
 					file.forEach(f => {
 						files.push(normalize(f));
-					})
+					});
 				}
 			}
 		}
@@ -225,7 +235,7 @@ export function getIgnoreFilesList(profile: ProfileOptions): string[] {
 /**
  * Filter the file list to only include not ignore files
  * @param filesList Files list to compare
- * @param profile The profile for which the ignore files 
+ * @param profile The profile for which the ignore files
  * @returns The filtered files list
  */
 export function filterIgnoreFilesList(filesList: string[], profile: ProfileOptions): string[] {
@@ -236,7 +246,7 @@ export function filterIgnoreFilesList(filesList: string[], profile: ProfileOptio
 /**
  * Filter the file list to only include unchanged files
  * @param filesList Files list to compare
- * @param sourcePath The path to the source file 
+ * @param sourcePath The path to the source file
  * @param targetPath The path to the target file
  * @returns The filtered files list
  */
@@ -253,28 +263,31 @@ export function filterUnchangedFiles(filesList: string[], sourcePath: string[], 
 			return false;
 		}
 		const targetFile = join(...targetPath, file);
-		// Check target don't exist  
+
+		// Check target don't exist
 		if (!existsSync(targetFile)) {
 			return false;
 		}
 		const targetStat = statSync(targetFile);
+
 		// Check target is file
 		if (!targetStat.isFile()) {
 			return false;
 		}
+
 		// Check file size
 		if (sourceStat.size !== targetStat.size) {
 			return false;
 		}
 
 		return filesEqual(sourceFile, targetFile);
-	})
+	});
 }
 
 /**
  * Filter the file list to only include changed files
  * @param filesList Files list to compare
- * @param sourcePath The path to the source file 
+ * @param sourcePath The path to the source file
  * @param targetPath The path to the target file
  * @returns The filtered files list
  */
@@ -287,33 +300,37 @@ export function filterChangedFiles(filesList: string[], sourcePath: string[], ta
 			return false;
 		}
 		const sourceStat = statSync(sourceFile);
+
 		// Check source is file
 		if (!sourceStat.isFile()) {
 			return false;
 		}
 		const targetFile = join(...targetPath, file);
-		// Check target don't exist  
+
+		// Check target don't exist
 		if (!existsSync(targetFile)) {
 			return true;
 		}
 		const targetStat = statSync(targetFile);
+
 		// Check target is file
 		if (!targetStat.isFile()) {
 			return true;
 		}
+
 		// Check file size
 		if (sourceStat.size !== targetStat.size) {
 			return true;
 		}
 
 		return !filesEqual(sourceFile, targetFile);
-	})
+	});
 }
 
 /**
  * Filter the file list to only include the files there are newer in source than in target
  * @param filesList Files list to compare
- * @param sourcePath The path to the source file 
+ * @param sourcePath The path to the source file
  * @param targetPath The path to the target file
  * @returns The filterd files list
  */
@@ -330,20 +347,21 @@ export function filterNewerFiles(filesList: string[], sourcePath: string[], targ
 			return false;
 		}
 		const targetFile = join(...targetPath, file);
-		// Check target don't exist  
+
+		// Check target don't exist
 		if (!existsSync(targetFile)) {
 			return true;
 		}
 
 		const targetStat = statSync(targetFile);
 		return sourceStat.mtime.getTime() > targetStat.mtime.getTime();
-	})
+	});
 }
 
 /**
  * Check the files list contains a changed file
  * @param filesList Files list to compare
- * @param sourcePath The path to the source file 
+ * @param sourcePath The path to the source file
  * @param targetPath The path to the target file
  * @returns Is there a changed file
  */
@@ -360,20 +378,23 @@ export function containsChangedFiles(filesList: string[], sourcePath: string[], 
 			return true;
 		}
 		const targetFile = join(...targetPath, file);
-		// Check target don't exist  
+
+		// Check target don't exist
 		if (!existsSync(targetFile)) {
 			return false;
 		}
 		const targetStat = statSync(targetFile);
+
 		// Check target is file
 		if (!targetStat.isFile()) {
 			return false;
 		}
+
 		// Check file size
 		if (sourceStat.size !== targetStat.size) {
 			return false;
 		}
 
 		return await filesEqual(sourceFile, targetFile);
-	})
+	});
 }
