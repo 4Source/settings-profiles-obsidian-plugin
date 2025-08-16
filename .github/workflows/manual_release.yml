@@ -71,7 +71,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          FILES="main.js manifest.json"
+          if [ -f styles.css ]; then
+            FILES="$FILES styles.css"
+          fi
           gh release create "${{ steps.version-bump.outputs.new_version }}" \
-            --title="${{ steps.version-bump.outputs.new_version }}" \
-            --draft \
-            main.js manifest.json styles.css
+            --title "${{ steps.version-bump.outputs.new_version }}" \
+            --draft $FILES
