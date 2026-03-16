@@ -72,14 +72,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							if (value !== this.plugin.getProfilesPath()) {
 								// Textbox empty
 								if (value === '' || value.trim() === '') {
-									console.debug('Text box is empty!');
 									text.inputEl.addClass('mod-bad-input');
 									return;
 								}
 
 								// Validate entry is path
 								else if (!isValidPath([value])) {
-									console.debug('Entry is not a valid path!');
 									text.inputEl.addClass('mod-bad-input');
 									return;
 								}

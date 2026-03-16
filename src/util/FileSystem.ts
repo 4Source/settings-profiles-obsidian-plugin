@@ -18,11 +18,11 @@ export function getAllFiles(path: string[]): string[] {
 
 		if (pathSections.length > 0) {
 			if (!existsSync(pathSections[0])) {
-				console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 			if (!statSync(pathSections[0]).isDirectory()) {
-				console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 
@@ -43,11 +43,11 @@ export function getAllFiles(path: string[]): string[] {
 
 		if (pathSections.length > 0) {
 			if (!existsSync(pathSections[0])) {
-				console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 			if (!statSync(pathSections[0]).isDirectory()) {
-				console.debug(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 			const pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
@@ -81,11 +81,11 @@ export function getAllSubPaths(path: string[]): string[] {
 
 		if (pathSections.length > 0) {
 			if (!existsSync(pathSections[0])) {
-				console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
 				return paths;
 			}
 			if (!statSync(pathSections[0]).isDirectory()) {
-				console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
 				return paths;
 			}
 
