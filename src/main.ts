@@ -35,6 +35,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 						this.updateProfile();
 					}
 					else if (!getIgnoreFilesList(profile).contains(filename)) {
+						// TODO: Maybe use like git reference by content with a hash over the content to identify changes instead of modifiedAt date should be more stable with synchronizing across devices
 						profile.modifiedAt = new Date();
 						this.updateCurrentProfile(profile);
 					}
@@ -319,12 +320,12 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	/**
 	 * Check relevant files for profile are changed
 	 * @param profile The profile to check
-	 * @returns `ture` if at least one file has changed and is newer than the saved profile
+	 * @returns `true` if at least one file has changed and is newer than the saved profile
 	 */
 	areSettingsChanged(profile: ProfileOptions): boolean {
 		try {
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
+			const targetPath = [this.getAbsoluteProfilesPath(), profile.name];
 
 			// Check target dir exist
 			if (!existsSync(join(...sourcePath))) {
@@ -351,12 +352,12 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	/**
 	 * Check relevant files for profile are saved
 	 * @param profile The profile to check
-	 * @returns `ture` if at no file has changed or all are older than the saved profile
+	 * @returns `true` if at no file has changed or all are older than the saved profile
 	 */
 	areSettingsSaved(profile: ProfileOptions): boolean {
 		try {
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getAbsolutProfilesPath(), profile.name];
+			const targetPath = [this.getAbsoluteProfilesPath(), profile.name];
 
 			// Check target dir exist
 			if (!existsSync(join(...sourcePath))) {
@@ -392,7 +393,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Load profile data
 			this.getProfilesList().forEach((value, index, array) => {
 				if (value.name === profile.name) {
-					array[index] = loadProfileOptions(profile, this.getAbsolutProfilesPath()) || value;
+					array[index] = loadProfileOptions(profile, this.getAbsoluteProfilesPath()) || value;
 				}
 			});
 			return this.getProfile(profile.name);
@@ -413,7 +414,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			await this.saveProfile(profile.name);
 
 			// Save profile data
-			await saveProfileOptions(profile, this.getAbsolutProfilesPath());
+			await saveProfileOptions(profile, this.getAbsoluteProfilesPath());
 
 			// Reload profiles list from files
 			this.refreshProfilesList();
@@ -439,7 +440,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			if (profileName === '') {
 				// Open dialog save current profile
 				if (currentProfile) {
-					new DialogModal(this.app, 'Save befor deselect profile?', 'Otherwise, unsaved changes will be lost.', async () => {
+					new DialogModal(this.app, 'Save before deselect profile?', 'Otherwise, unsaved changes will be lost.', async () => {
 						// Save current profile
 						await this.saveProfileSettings(currentProfile);
 					}, async () => { }, 'Save', false, 'Do not Save')
@@ -459,7 +460,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 			// Check is current profile
 			if (currentProfile?.name === targetProfile.name) {
-				new Notice('Allready current profile!');
+				new Notice('Already current profile!');
 				return;
 			}
 
@@ -474,7 +475,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 					this.updateCurrentProfile(profile);
 				});
 
-			// Open dialog obsidain should be reloaded
+			// Open dialog obsidian should be reloaded
 			new DialogModal(this.app, 'Reload Obsidian now?', 'This is required for changes to take effect.', () => {
 				// Save Settings
 				this.saveSettings().then(() => {
@@ -503,7 +504,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			// Add profile to profileList
 			this.appendProfilesList(profile);
 
-			// Enabel new Profile
+			// Enable new Profile
 			const selectedProfile = this.getProfilesList().find(value => value.name === profile.name);
 			if (selectedProfile) {
 				// Sync the profile settings
@@ -578,7 +579,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			}
 
 			// Remove to profile settings
-			removeDirectoryRecursiveSync([this.getAbsolutProfilesPath(), profileName]);
+			removeDirectoryRecursiveSync([this.getAbsoluteProfilesPath(), profileName]);
 			this.refreshProfilesList();
 			await this.saveSettings();
 		}
@@ -599,7 +600,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 			const profile = this.getProfile(profileName);
 
 			const sourcePath = [getVaultPath(), this.app.vault.configDir];
-			const targetPath = [this.getAbsolutProfilesPath(), profileName];
+			const targetPath = [this.getAbsoluteProfilesPath(), profileName];
 			let changed = false;
 
 			// Check target dir exist
@@ -641,7 +642,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 		try {
 			const profile = this.getProfile(profileName);
 
-			const sourcePath = [this.getAbsolutProfilesPath(), profileName];
+			const sourcePath = [this.getAbsoluteProfilesPath(), profileName];
 			const targetPath = [getVaultPath(), this.app.vault.configDir];
 
 			// Check target dir exist
@@ -721,7 +722,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @throws {Error} If the device ID cannot be determined.
 	 * @throws {Error} If no valid profiles path can be found.
 	 */
-	getAbsolutProfilesPath(): string {
+	getAbsoluteProfilesPath(): string {
 		const relativePath = this.getProfilesPath();
 		let path = relativePath;
 
@@ -768,7 +769,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 */
 	refreshProfilesList() {
 		try {
-			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsolutProfilesPath());
+			this.globalSettings.profilesList = loadProfilesOptions(this.getAbsoluteProfilesPath());
 			return;
 		}
 		catch (e) {
@@ -827,7 +828,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	/**
 	 * Set the refresh interval in current settings
-	 * @param interval To what the invervall should be set to
+	 * @param interval To what the interval should be set to
 	 */
 	setUiRefreshInterval(interval: number) {
 		if (interval > 0 && interval < 900000) {
@@ -897,7 +898,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 
 	/**
 	 * Set the delay time for profile update in current settings
-	 * @param delay To what the invervall should be set to
+	 * @param delay To what the interval should be set to
 	 */
 	setProfileUpdateDelay(delay: number) {
 		if (delay > 100 && delay < 900000) {
@@ -926,7 +927,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Gets the currently enabeled profile.
+	 * Gets the currently enabled profile.
 	 * @returns The ProfileSetting object. Or undefined if not found.
 	 */
 	getCurrentProfile(): ProfileOptions | undefined {
@@ -973,9 +974,9 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	}
 
 	/**
-	 * Checks profile contains all requiered properties
+	 * Checks profile contains all required properties
 	 * @param profile The profile to check
-	 * @returns True if profile contains all requiered properties
+	 * @returns True if profile contains all required properties
 	 */
 	isValidProfile(profile: ProfileOptions): boolean {
 		let result = true;
@@ -1005,7 +1006,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is loaded profile newer/equal than saved profile
 	 */
 	isProfileUpToDate(profile: ProfileOptions): boolean {
-		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
+		const profileOptions = loadProfileOptions(profile, this.getAbsoluteProfilesPath());
 
 		if (!profileOptions || !profileOptions.modifiedAt) {
 			return true;
@@ -1024,7 +1025,7 @@ export default class SettingsProfilesPlugin extends PluginExtended {
 	 * @returns Is saved profile newer/equal than saved profile
 	 */
 	isProfileSaved(profile: ProfileOptions): boolean {
-		const profileOptions = loadProfileOptions(profile, this.getAbsolutProfilesPath());
+		const profileOptions = loadProfileOptions(profile, this.getAbsoluteProfilesPath());
 
 		if (!profileOptions || !profileOptions.modifiedAt) {
 			return false;
