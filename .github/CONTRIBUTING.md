@@ -25,7 +25,7 @@ If not related issue exists, open a new one using the appropriate <a href="../..
 ### Start working:
 #### 1. Fork the repository.
 #### 2. Create a new vault 
-Just for testing the plugin so you **can't** exedentially destroy your real vault
+Just for testing the plugin so you **can't** accidentally destroy your real vault
 #### 3. Clone repository to your local machine.
 ```shell
 cd path/to/vault

@@ -50,7 +50,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 						this.plugin.updateCurrentProfile(undefined);
 						this.plugin.setProfilesList([]);
 
-						// Save settins
+						// Save settings
 						this.plugin.saveSettings()
 							.then(() => {
 								// Reload the profiles at new path
@@ -72,14 +72,12 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							if (value !== this.plugin.getProfilesPath()) {
 								// Textbox empty
 								if (value === '' || value.trim() === '') {
-									console.debug('Text box is empty!');
 									text.inputEl.addClass('mod-bad-input');
 									return;
 								}
 
 								// Validate entry is path
 								else if (!isValidPath([value])) {
-									console.debug('Entry is not a valid path!');
 									text.inputEl.addClass('mod-bad-input');
 									return;
 								}
@@ -91,7 +89,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 								this.plugin.updateCurrentProfile(undefined);
 								this.plugin.setProfilesList([]);
 
-								// Save settins
+								// Save settings
 								this.plugin.saveSettings()
 									.then(() => {
 										// Reload the profiles at new path
@@ -111,7 +109,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('UI update')
 			.setDesc(createFragment((fragment) => {
-				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads are performed. The status bar icon is deactivated.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
+				fragment.append(fragment.createEl('div', { text: 'Controls UI update, when disabled, fewer file reads are performed. The status bar icon is deactivated.' }), fragment.createEl('div', { text: 'Requires reload for changes to take effect!', cls: 'mod-warning' }));
 			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getUiUpdate())
@@ -122,7 +120,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Set ui update to value
 							this.plugin.setUiUpdate(value);
 
-							// Save settins
+							// Save settings
 							this.plugin.saveSettings()
 								.then(() => {
 									this.display();
@@ -140,7 +138,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName('UI update interval')
 				.setDesc(createFragment((fragment) => {
-					fragment.append(fragment.createEl('div', { text: 'The time in ms in which ui is updated' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
+					fragment.append(fragment.createEl('div', { text: 'The time in ms in which ui is updated' }), fragment.createEl('div', { text: 'Requires reload for changes to take effect!', cls: 'mod-warning' }));
 				}))
 				.addExtraButton(button => button
 					.setIcon(ICON_RESET)
@@ -158,7 +156,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Set interval to slider value
 							this.plugin.setUiRefreshInterval(sliderEl.valueAsNumber);
 
-							// Save settins
+							// Save settings
 							this.plugin.saveSettings()
 								.then(() => {
 									this.display();
@@ -181,7 +179,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									// Set interval to slider value
 									this.plugin.setUiRefreshInterval(value);
 
-									// Save settins
+									// Save settings
 									this.plugin.saveSettings()
 										.then(() => {
 											this.display();
@@ -200,7 +198,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Profile update')
 			.setDesc(createFragment((fragment) => {
-				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed. Changed settings are not saved automatically.' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
+				fragment.append(fragment.createEl('div', { text: 'Controls profile update, when disabled, fewer file reads/writes are performed. Changed settings are not saved automatically.' }), fragment.createEl('div', { text: 'Requires reload for changes to take effect!', cls: 'mod-warning' }));
 			}))
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.getProfileUpdate())
@@ -211,7 +209,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Set profile update to value
 							this.plugin.setProfileUpdate(value);
 
-							// Save settins
+							// Save settings
 							this.plugin.saveSettings()
 								.then(() => {
 									this.display();
@@ -229,7 +227,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 			new Setting(containerEl)
 				.setName('Profile update delay')
 				.setDesc(createFragment((fragment) => {
-					fragment.append(fragment.createEl('div', { text: 'The time in ms that must pass before the profile can be updated again' }), fragment.createEl('div', { text: 'Requieres reload for changes to take effect!', cls: 'mod-warning' }));
+					fragment.append(fragment.createEl('div', { text: 'The time in ms that must pass before the profile can be updated again' }), fragment.createEl('div', { text: 'Requires reload for changes to take effect!', cls: 'mod-warning' }));
 				}))
 				.addExtraButton(button => button
 					.setIcon(ICON_RESET)
@@ -247,7 +245,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 							// Set interval to slider value
 							this.plugin.setProfileUpdateDelay(sliderEl.valueAsNumber);
 
-							// Save settins
+							// Save settings
 							this.plugin.saveSettings()
 								.then(() => {
 									this.display();
@@ -270,7 +268,7 @@ export class SettingsProfilesSettingTab extends PluginSettingTab {
 									// Set interval to slider value
 									this.plugin.setProfileUpdateDelay(value);
 
-									// Save settins
+									// Save settings
 									this.plugin.saveSettings()
 										.then(() => {
 											this.display();

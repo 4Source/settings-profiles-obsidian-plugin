@@ -11,14 +11,13 @@ Allows you to create various global settings profiles. You can sync them between
 ![SettingsProfiles-VaultSwitchDemo_v5](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/5c68105f-6613-4ba6-ab6b-c581b4badab7)
 The demo shows creating a new profile for an existing vault with a theme set and plugin installed. Then a new vault is created and settings profiles are installed. After installation, the previously created profile will be automatically recognized. This is selected and loads all settings including themes and plugins. The newly created vault will then have the same settings as the existing vault.
 
-
 # Usage
 After enabling the plugin in the settings menu, you need to create a new profile. 
 
-You can do this in the settings tab. Just click on the "Add new Profile". Give it a name and select whitch options should be enabled. To switch between profiles click on "Switch to Profile" obsidian should reload.
+You can do this in the settings tab. Just click on the "Add new Profile". Give it a name and select which options should be enabled. To switch between profiles click on "Switch to Profile" obsidian should reload.
 
 # Features
-- Multible profile settings
+- Multiple profile settings
 - Easy and fast switch settings
 - Global settings
 
@@ -91,7 +90,7 @@ The [profiles list](#Profiles-list) below will be reloaded from the files.
 ## Profiles list
 As soon as you have created a profile, all profiles stored in the [Profile save path](#Profile-save-path-) will be listed here.
 ### Profile ![settings](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/88596802-e7b7-4bba-986d-6972758fce99) *Button*
-Let you cange the [Profile options](#Profile-options) for the profile. 
+Let you change the [Profile options](#Profile-options) for the profile. 
 ### Profile ![trash-2](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/ec7767a9-1b49-4cc1-874e-7ee85aec907f) *Button*
 Deletes this profile and all settings. **Attention!** This will delete this profile globally. You can no longer access it in any vault.
 <!-- ### Profile ![plus-circle](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/228a9cd7-1904-48d2-9c9c-5c1b5f2691c9) *Button*
@@ -106,10 +105,10 @@ Indicates that this profile is not selected. By pressing this button you can swi
 
 # Profile options
 ### Name
-Containes the name of the profile.
+Contains the name of the profile.
 ### Auto-Sync
 If activated, changes in the settings are automatically saved as long as the profile is active and [Profile update](#Profile_update) is enabled.
-### Apperance
+### Appearance
 Controls whether the appearance settings should be saved in this profile. This includes CSS snippets and themes.
 ### App
 Controls whether the app settings should be saved in this profile. The app settings includes the "Editor"-tab and "Files and links"-tab.
@@ -118,11 +117,11 @@ Controls whether the bookmarks should be saved in this profile.
 ### Community plugins
 Controls the community plugins should be saved in this profile. This includes which plugins are activated, the source code and the settings that were made for the plugin.
 ### Core plugins
-Controls wheter the core plugins settings should be saved in this profile.
+Controls whether the core plugins settings should be saved in this profile.
 ### Graph
-Controls wheter the graph settings should be saved in this profile.
+Controls whether the graph settings should be saved in this profile.
 ### Hotkeys
-Controls wheter the hotkeys settings should be saved in this profile.
+Controls whether the hotkeys settings should be saved in this profile.
 
 # Status-Bar
 ### Status-Bar ![users](https://github.com/4Source/settings-profiles-obsidian-plugin/assets/38220764/d3bee41e-57be-478d-bbf0-a691f165a02e)
@@ -148,7 +147,7 @@ Updates the UI elements.
 
 # Admittance
 ### Access file outside vault
-Is requiered to save setting profiles at a global space so they could be accessed from different vaults.
+Is required to save setting profiles at a global space so they could be accessed from different vaults.
 
 # Contribution
 Feel free to contribute.

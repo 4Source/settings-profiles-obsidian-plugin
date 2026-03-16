@@ -4,7 +4,7 @@ import { basename, dirname, join, normalize, sep as slash } from 'path';
 import { PassThrough, Readable } from 'stream';
 
 /**
- * Retruns all files in this direcory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
+ * Returns all files in this directory. Could be used with placeholder /*\/ for all paths or /* for all files that match the pattern.
  * @param path Path to check for files
  * @returns an array of file names
  */
@@ -18,11 +18,11 @@ export function getAllFiles(path: string[]): string[] {
 
 		if (pathSections.length > 0) {
 			if (!existsSync(pathSections[0])) {
-				console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 			if (!statSync(pathSections[0]).isDirectory()) {
-				console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 
@@ -43,11 +43,11 @@ export function getAllFiles(path: string[]): string[] {
 
 		if (pathSections.length > 0) {
 			if (!existsSync(pathSections[0])) {
-				console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 			if (!statSync(pathSections[0]).isDirectory()) {
-				console.debug(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section is a file and is not inserted, does not match the pattern (/*)! PathSections: ${pathSections[0]}`);
 				return files;
 			}
 			const pathContent = readdirSync(pathSections[0]).map(value => join(pathSections[0], value));
@@ -81,11 +81,11 @@ export function getAllSubPaths(path: string[]): string[] {
 
 		if (pathSections.length > 0) {
 			if (!existsSync(pathSections[0])) {
-				console.debug(`The path section does not exist! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section does not exist! PathSections: ${pathSections[0]}`);
 				return paths;
 			}
 			if (!statSync(pathSections[0]).isDirectory()) {
-				console.debug(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
+				console.warn(`The path section is a file and is not inserted, does not match the pattern (/*/)! PathSections: ${pathSections[0]}`);
 				return paths;
 			}
 
@@ -116,7 +116,7 @@ export function getAllSubPaths(path: string[]): string[] {
 }
 
 /**
- * Compares to files and make them in both direcories equal.
+ * Compares to files and make them in both directories equal.
  * @param sourcePath The source file
  * @param targetPath The target file
  */
@@ -141,7 +141,7 @@ export function keepNewestFile(sourcePath: string[], targetPath: string[]) {
  * Copies a file from a source path to a target path
  * @param sourcePath The source file
  * @param targetPath The target file
- * @returns Copy was successfull
+ * @returns Copy was successful
  */
 export function copyFile(sourcePath: string[], targetPath: string[]) {
 	const sourceFile = normalize(join(...sourcePath));
@@ -167,7 +167,7 @@ export function copyFile(sourcePath: string[], targetPath: string[]) {
 }
 
 /**
- * Copy recursive Folder Strucure
+ * Copy recursive Folder Structure
  * @param sourcePath The source path to copy the subfolders/files
  * @param targetPath The target path where to copy the subfolders/files to
  */
@@ -185,7 +185,7 @@ export function copyFolderRecursiveSync(sourcePath: string[], targetPath: string
 
 	// Check target is a valid path and ensure exist
 	if (!isValidPath([target])) {
-		throw Error(`Target path is not a vaild path! Path: ${target}`);
+		throw Error(`Target path is not a valid path! Path: ${target}`);
 	}
 	ensurePathExist([target]);
 	if (!statSync(target).isDirectory()) {
@@ -249,7 +249,7 @@ export function isValidPath(path: string[]) {
 }
 
 /**
- * Remove recursive Folder Strucure
+ * Remove recursive Folder Structure
  * @param path The folder to remove
  */
 export function removeDirectoryRecursiveSync(path: string[]) {
@@ -282,7 +282,7 @@ export function removeDirectoryRecursiveSync(path: string[]) {
 
 /**
  * Get the absolute path of this vault
- * @returns Returns the Absolut path
+ * @returns Returns the Absolute path
  */
 export function getVaultPath() {
 	const adapter = this.app.vault.adapter;
@@ -308,7 +308,7 @@ export const FILE_IGNORE_LIST = [
 /**
  * Checks the file content of the file is equal
  * @param file1 File path of first file
- * @param file2 File path of seccond file
+ * @param file2 File path of second file
  * @returns Are the files equal
  */
 export function filesEqual(file1: string, file2: string): Promise<boolean> {

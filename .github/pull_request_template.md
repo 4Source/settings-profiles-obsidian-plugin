@@ -20,5 +20,5 @@ Fixes # <!-- Issue number --->
 - [<!-- x --> ] I have performed a self-review of my code
 - [<!-- x --> ] I have commented my code, particularly in hard-to-understand areas
 - [<!-- x --> ] I have made corresponding changes to the documentation
-- [<!-- x --> ] I have tested my changes in Obsidian and describte how I tested in [Tests](#tests)
+- [<!-- x --> ] I have tested my changes in Obsidian and described how I tested in [Tests](#tests)
 - [<!-- x --> ] My code fixes the feature discussed in [Related Issues](#related-issues) if not or not fully describe what is missing in [Missing changes](#missing-changes)
